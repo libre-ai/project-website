@@ -1,0 +1,52 @@
+version = 1
+
+# This repository carries no application and no product code: the READMEs are
+# editorial documentation and first-party project records. Annotations follow
+# the canonical policy in libre-ai/libre-ai/LICENSING.md; the last matching
+# annotation wins within this file.
+[[annotations]]
+path = ["*.md", "**/*.md"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Libre AI contributors"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+# First-party software by default: repository workflows and configuration,
+# matching the canonical `.github/**` annotation.
+[[annotations]]
+path = [".github/**", ".gitignore", ".env.example"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Libre AI contributors"
+SPDX-License-Identifier = "EUPL-1.2"
+
+# Project state card (γ 3.6) — same licence as the repository doctrine.
+[[annotations]]
+path = ["project.v1.yaml"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Libre AI contributors"
+SPDX-License-Identifier = "EUPL-1.2"
+
+# Static publisher bootstrap (γ 3.6) — code EUPL-1.2 like the doctrine.
+[[annotations]]
+path = ["src/**", "tools/**", "e2e/**", "site/**", "Caddyfile", "package.json", "bun.lock", "bunfig.toml", "tsconfig.json", "biome.json", "playwright.config.ts", ".gitignore"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Libre AI contributors"
+SPDX-License-Identifier = "EUPL-1.2"
+
+# CDC migrated from the hub (γ 3.6) — documentation grant.
+[[annotations]]
+path = ["docs/**"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Libre AI contributors"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+# Preserved documentary material and recovery records.
+[[annotations]]
+path = ["docs/portfolio-material.json", "docs/code-recovery-provenance.json", "docs/source-licensing/**"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Libre AI contributors"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = ["docs/DEVELOPMENT.md", "docs/verification-status.json"]
+SPDX-FileCopyrightText = "2026 Libre AI contributors"
+SPDX-License-Identifier = "CC-BY-4.0"

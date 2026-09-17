@@ -1,0 +1,47 @@
+import { join } from "node:path";
+
+import { buildStaticPortfolioSite, writeStaticSite } from "./build";
+
+export interface PreviewArguments {
+  readonly governanceRoot: string;
+  readonly uiRoot: string;
+  readonly outputRoot: ".preview";
+}
+
+function flagValue(args: readonly string[], flag: string): string {
+  const index = args.indexOf(flag);
+  const value = index === -1 ? undefined : args[index + 1];
+  if (value === undefined || value.trim() === "") {
+    throw new Error(`brand.preview_argument_missing:${flag}`);
+  }
+  return value;
+}
+
+export function parsePreviewArguments(args: readonly string[]): PreviewArguments {
+  return {
+    governanceRoot: flagValue(args, "--governance-root"),
+    uiRoot: flagValue(args, "--ui-root"),
+    outputRoot: ".preview",
+  };
+}
+
+export async function writeBrandPreview(
+  args: PreviewArguments,
+  workingDirectory = process.cwd(),
+): Promise<number> {
+  const [portfolio, uiStyles, uiTokens] = await Promise.all([
+    Bun.file(join(args.governanceRoot, "ecosystem/portfolio.v1.json")).json(),
+    Bun.file(join(args.uiRoot, "src/styles.css")).text(),
+    Bun.file(join(args.uiRoot, "src/tokens.css")).text(),
+  ]);
+  const files = buildStaticPortfolioSite({ portfolio, uiStyles, uiTokens });
+  await writeStaticSite(join(workingDirectory, args.outputRoot), files);
+
+  return files.size;
+}
+
+if (import.meta.main) {
+  const args = parsePreviewArguments(process.argv.slice(2));
+  const fileCount = await writeBrandPreview(args);
+  console.log(`Wrote ${fileCount} guarded preview files to ${args.outputRoot}.`);
+}

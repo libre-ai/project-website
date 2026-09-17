@@ -1,0 +1,12 @@
+[install]
+linker = "isolated"
+minimumReleaseAge = 259200
+minimumReleaseAgeExcludes = []
+
+[test]
+root = "."
+coverage = true
+coverageReporter = ["text", "lcov"]
+coverageDir = "./coverage"
+coverageThreshold = 0.9
+coverageSkipTestFiles = true

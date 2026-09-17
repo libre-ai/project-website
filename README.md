@@ -13,7 +13,7 @@ The planned website is for people discovering Libre AI who want to:
 
 ## Where to start
 
-This repository describes the website project; it does not yet contain an installable website or a service to open.
+The static website generator and tests are present. The local catalogue covers the twenty projects; it is not a deployed service. See the [development guide](docs/DEVELOPMENT.md).
 
 To explore the projects today, visit the [Libre AI catalogue](https://github.com/libre-ai/.github/blob/main/profile/README.md).
 

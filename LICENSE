@@ -1,0 +1,21 @@
+This repository holds the Libre AI website. It currently contains no
+application and no product code: its tracked files are editorial documentation
+and repository workflows.
+
+The licence for each file is declared through REUSE.toml:
+
+- CC-BY-4.0: the READMEs — editorial documentation and first-party project
+  records;
+- EUPL-1.2: the workflows under `.github/` and the repository configuration,
+  first-party software by default.
+
+Full licence texts are stored in LICENSES/.
+
+The organization-wide licensing policy — scope, precedence, historical grants,
+data and contribution rules — is the canonical one and is not restated here:
+https://github.com/libre-ai/libre-ai/blob/main/LICENSING.md
+
+This repository carried no LICENSE file before 2026-07-25, so no MIT or
+Apache-2.0 grant was ever made here and none is withdrawn. The revisions
+published under the EUPL-1.2 declaration that preceded this per-path one
+remain available under those terms.

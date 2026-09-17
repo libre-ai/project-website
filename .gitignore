@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.preview/
+playwright-report/
+test-results/
+coverage/
+
+# Local code-recovery verification outputs.
+node_modules/
+coverage/
+playwright-report/
+test-results/

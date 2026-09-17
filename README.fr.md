@@ -13,7 +13,7 @@ Le site prévu s'adresse aux personnes qui découvrent Libre AI et souhaitent :
 
 ## Où commencer ?
 
-Ce dépôt présente le projet de site ; il ne contient pas encore de site à installer ou de service à ouvrir.
+Le générateur de site statique et ses tests sont présents. Le catalogue local couvre les vingt projets ; ce n’est pas un service déployé. Consultez le [guide de développement](docs/DEVELOPMENT.md).
 
 Pour découvrir les projets dès maintenant, consultez le [catalogue Libre AI](https://github.com/libre-ai/.github/blob/main/profile/README.fr.md).
 
