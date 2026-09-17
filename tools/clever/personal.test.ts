@@ -182,7 +182,7 @@ function createDependencies(
   const state: FakeState = {
     profile: validProfile(),
     applications: [],
-    gitOrigin: "https://github.com/libre-ai/website.git",
+    gitOrigin: "https://github.com/libre-ai/project-website.git",
     dirtyGit: false,
     loginCreatesCredentials: true,
     failingInteractive: null,
@@ -535,6 +535,19 @@ describe("personal Clever doctor", () => {
     expect(await runPersonalClever(["doctor"], dependencies)).toBe(1);
     expect(calls).toEqual([]);
     expect(errors.join("\n")).toContain("UNSAFE_ENVIRONMENT");
+  });
+
+  test("refuses the retired website origin before querying Clever", async () => {
+    const home = await createTemporaryHome();
+    await writeProtectedContext(home);
+    const { dependencies, calls, errors, apiUrls } = createDependencies(home, {
+      gitOrigin: "https://github.com/libre-ai/website.git",
+    });
+
+    expect(await runPersonalClever(["doctor"], dependencies)).toBe(1);
+    expect(errors.join("\n")).toContain("WRONG_REPOSITORY");
+    expect(calls.some((call) => call.command === "clever")).toBe(false);
+    expect(apiUrls).toEqual([]);
   });
 
   test("refuses a different repository before querying Clever", async () => {
