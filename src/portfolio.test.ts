@@ -6,13 +6,13 @@ const data = await Bun.file(
 ).json();
 
 describe("current portfolio", () => {
-  test("keeps the twenty repositories in their eight/nine/three groups", () => {
+  test("keeps the nineteen repositories in their seven/nine/three groups", () => {
     const portfolio = parsePortfolio(data);
-    expect(portfolio.items).toHaveLength(20);
-    expect(portfolio.items.filter((item) => item.group === "products")).toHaveLength(8);
+    expect(portfolio.items).toHaveLength(19);
+    expect(portfolio.items.filter((item) => item.group === "products")).toHaveLength(7);
     expect(portfolio.items.filter((item) => item.group === "components")).toHaveLength(9);
     expect(portfolio.items.filter((item) => item.group === "project")).toHaveLength(3);
-    expect(new Set(portfolio.items.map((item) => item.repository)).size).toBe(20);
+    expect(new Set(portfolio.items.map((item) => item.repository)).size).toBe(19);
     expect(portfolio.items.every((item) => item.status === "code_integration_local")).toBe(true);
   });
 
@@ -51,7 +51,7 @@ describe("current portfolio", () => {
     const portfolio = parsePortfolio(data);
     for (const language of ["fr", "en"] as const) {
       const html = renderPortfolio(portfolio, language);
-      expect((html.match(/class="product-card/g) ?? []).length).toBe(20);
+      expect((html.match(/class="product-card/g) ?? []).length).toBe(19);
       for (const item of portfolio.items) {
         expect(html).toContain(`https://github.com/libre-ai/${item.repository}`);
       }

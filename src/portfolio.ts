@@ -34,7 +34,6 @@ const repositories: Readonly<Record<Group, readonly string[]>> = {
     "personal-knowledge-notebook",
     "information-feed-filter",
     "travel-itinerary-planner",
-    "public-vote-comparison",
   ],
   components: [
     "application-development-toolkit",
@@ -79,7 +78,7 @@ export function parsePortfolio(value: unknown): Portfolio {
   if (
     input.schemaVersion !== "libre-ai.portfolio.v1" ||
     !Array.isArray(input.items) ||
-    input.items.length !== 20
+    input.items.length !== 19
   )
     throw new Error("portfolio.scope_invalid");
   const seen = new Set<string>();

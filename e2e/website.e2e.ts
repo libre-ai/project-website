@@ -4,19 +4,19 @@ import { expect, test } from "@playwright/test";
 
 const outputRoot = resolve(process.env.LIBRE_AI_WEBSITE_OUTPUT_ROOT ?? "dist");
 const homeUrl = pathToFileURL(join(outputRoot, "index.html")).href;
-test("renders the twenty current projects in their three groups", async ({ page }) => {
+test("renders the nineteen current projects in their three groups", async ({ page }) => {
   await page.goto(homeUrl);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Travailler et apprendre avec l’IA",
   );
-  await expect(page.locator("#products article")).toHaveCount(8);
+  await expect(page.locator("#products article")).toHaveCount(7);
   await expect(page.locator("#components article")).toHaveCount(9);
   await expect(page.locator("#project article")).toHaveCount(3);
   await expect(page.locator(".availability")).toContainText("intégration et de test local");
   await expect(page.locator("script")).toHaveCount(0);
   await page.getByRole("link", { name: "English", exact: true }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Work and learn with AI");
-  await expect(page.locator("article")).toHaveCount(20);
+  await expect(page.locator("article")).toHaveCount(19);
 });
 
 test("loads no remote resource", async ({ page }) => {
