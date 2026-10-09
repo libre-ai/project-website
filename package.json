@@ -8,9 +8,9 @@
     "bun": ">=1.4.0"
   },
   "overrides": {
-    "fast-uri": "4.1.4",
+    "fast-uri": "4.1.5",
     "lodash": "4.18.1",
-    "simple-git": "3.36.0",
+    "simple-git": "4.0.2",
     "@libre-ai/governance": "file:../project-governance",
     "@libre-ai/contracts-authority": "file:../schemas-and-contracts",
     "@libre-ai/contracts": "file:../schemas-and-contracts/packages/sdk-ts",
