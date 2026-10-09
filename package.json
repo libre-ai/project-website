@@ -29,7 +29,7 @@
     "@libre-ai/contracts-authority": "file:../schemas-and-contracts",
     "@libre-ai/governance": "file:../project-governance",
     "@libre-ai/ui": "file:../application-development-toolkit/packages/ui",
-    "@playwright/test": "1.61.1",
+    "@playwright/test": "1.62.1",
     "@types/bun": "1.3.14",
     "clever-tools": "4.11.0",
     "typescript": "7.0.2"
