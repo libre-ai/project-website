@@ -31,7 +31,7 @@ describe("static brand templates", () => {
     expect(html.indexOf("Possédez la fabrique.")).toBeLessThan(html.indexOf("Voir les preuves."));
     expect(html).toContain("Fabrique ouverte de logiciels d’IA");
     expect(html).toContain(
-      'href="https://github.com/libre-ai/starter/blob/acccae671aa46419fce9d0b7ff7cbe2511f073a6/starter/README.md#d%C3%A9marrage-rapide"',
+      'href="https://github.com/libre-ai/application-development-toolkit/blob/HEAD/packages/starter/starter/README.md"',
     );
     expect(html).toContain("Démonstration exécutable, pas application prête pour la production.");
     expect(html).toContain("Content-Security-Policy");
