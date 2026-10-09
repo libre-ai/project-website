@@ -31,7 +31,7 @@ const repositories: Readonly<Record<Group, readonly string[]>> = {
     "ai-model-policy",
     "ai-practice-workbench",
     "learning-session-facilitation",
-    "personal-knowledge-notebook",
+    "personal-knowledge-workspace",
     "information-feed-filter",
     "travel-itinerary-planner",
   ],
