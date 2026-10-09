@@ -12,7 +12,7 @@ const layerLabels: Readonly<Record<string, string>> = {
 };
 
 const starterQuickstartUrl = requirePublicHttpsUrl(
-  "https://github.com/libre-ai/starter/blob/acccae671aa46419fce9d0b7ff7cbe2511f073a6/starter/README.md#d%C3%A9marrage-rapide",
+  "https://github.com/libre-ai/application-development-toolkit/blob/HEAD/packages/starter/starter/README.md",
 ).href;
 
 export interface HomePageInput {
@@ -138,6 +138,6 @@ export function renderBrandGuide(input: BrandGuidePageInput): string {
     : '<h2>Actifs figuratifs</h2><p class="pending">Les actifs figuratifs ne sont pas encore publiés.</p><p>Le mot-symbole textuel « Libre AI » reste la seule identité publiable tant que la licence exacte et le dossier de similarité ne sont pas acceptés.</p>';
   return page(
     "Libre AI — Guide de marque",
-    `<section class="section lai-page"><p class="section-index">GUIDE DE MARQUE</p><h1>${escapeHtml(copy.promise)}</h1><p>${escapeHtml(copy.tension)}</p><p>${escapeHtml(copy.explanation)}</p><h2>Architecture de gamme</h2><p>Chaque produit se nomme « Libre AI &lt;Produit&gt; ». Le nom du produit reste du texte, jamais un dessin.</p><h2>Couleurs</h2><p>Jade porte l'action et l'ouverture ; iris structure l'information secondaire. Ils ne forment jamais un dégradé.</p>${assets}<h2>Usage des noms</h2><p>Une référence nominative exacte ne doit jamais suggérer certification, partenariat ou approbation. Les forks utilisent un nom et une identité distincts.</p><p><a href="https://github.com/libre-ai/governance/blob/main/TRADEMARKS.md">Politique de marques</a></p></section>`,
+    `<section class="section lai-page"><p class="section-index">GUIDE DE MARQUE</p><h1>${escapeHtml(copy.promise)}</h1><p>${escapeHtml(copy.tension)}</p><p>${escapeHtml(copy.explanation)}</p><h2>Architecture de gamme</h2><p>Chaque produit se nomme « Libre AI &lt;Produit&gt; ». Le nom du produit reste du texte, jamais un dessin.</p><h2>Couleurs</h2><p>Jade porte l'action et l'ouverture ; iris structure l'information secondaire. Ils ne forment jamais un dégradé.</p>${assets}<h2>Usage des noms</h2><p>Une référence nominative exacte ne doit jamais suggérer certification, partenariat ou approbation. Les forks utilisent un nom et une identité distincts.</p><p><a href="https://github.com/libre-ai/project-governance/blob/HEAD/TRADEMARKS.md">Politique de marques</a></p></section>`,
   );
 }
