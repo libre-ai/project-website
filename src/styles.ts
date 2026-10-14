@@ -236,6 +236,27 @@ thead th {
   }
 }
 
+/* Type scale: body 1rem, section 1.375rem, page title 2rem. A flat scale reads as one level of text. */
+body {
+  font-size: 1rem;
+  line-height: 1.55;
+  max-width: 40rem;
+  margin-inline: auto;
+  padding: var(--lai-space-4, 1rem);
+}
+
+h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin-block: 1rem 0.75rem;
+}
+
+h2 {
+  font-size: 1.375rem;
+  line-height: 1.3;
+  margin-block: 1.5rem 0.5rem;
+}
+
 /* The proofs table and long commands must wrap, never widen the page (FR-06 at 360 px). */
 table {
   width: 100%;
