@@ -141,3 +141,20 @@ test.describe("FR-12 : URL canonique et citation exportable", () => {
     expect(await response.text()).toMatch(/Vérifié le \d{4}-\d{2}-\d{2}/);
   });
 });
+
+test.describe("G6 : aucun défilement horizontal à 360, 390 et 1440 px", () => {
+  for (const width of [360, 390, 1440]) {
+    test(`no horizontal scroll at ${width} px on the home, list and a product page`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 900 });
+      for (const path of ["/", "/produits", SAMPLE_PRODUCT]) {
+        await page.goto(path);
+        const overflow = await page.evaluate(
+          () => document.documentElement.scrollWidth - window.innerWidth,
+        );
+        expect(overflow, `${path} at ${width}px`).toBeLessThanOrEqual(0);
+      }
+    });
+  }
+});
