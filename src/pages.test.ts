@@ -48,11 +48,20 @@ describe("renderPages (G1, FR-07, FR-09, FR-12)", () => {
     }
   });
 
-  test("an idea card never links to an application (FR-02)", () => {
+  test("no public page shows an exposure or maturity label (ADR 0003)", () => {
+    for (const [path, html] of pages) {
+      expect(html, path).not.toContain('class="label"');
+      expect(html, path).not.toMatch(
+        /Exposition :|Maturité :|Spécification publiée|Utilisable et vérifiable/,
+      );
+    }
+  });
+
+  test("every product page links to its source repository, where the state is read (ADR 0003)", () => {
     const html = pages.get("/produits/sketch") ?? "";
-    expect(html).not.toContain("Ouvrir le produit");
-    expect(html).not.toContain('href="https://sketch');
-    expect(html).toContain("Suivre la fiche");
+    expect(html).toContain(
+      '<a href="https://github.com/libre-ai/sketch" rel="noopener noreferrer">Code source</a>',
+    );
   });
 
   test("a usable-verifiable card links to its application with noopener noreferrer (FR-09)", () => {
@@ -61,12 +70,21 @@ describe("renderPages (G1, FR-07, FR-09, FR-12)", () => {
     expect(html).toMatch(/rel="noopener noreferrer"/);
   });
 
-  test("a usable-verifiable card without an application URL shows no empty link", () => {
+  test("a card without an application URL shows no empty link and no state notice", () => {
     const withoutUrl = [card("nourl", "usable-verifiable", { maturity: "usable" })];
     const html = renderPages(buildCorpus(withoutUrl), withoutUrl).get("/produits/nourl") ?? "";
     expect(html).not.toContain('href=""');
     expect(html).not.toContain("Ouvrir le produit");
-    expect(html).toContain("Adresse applicative non publiée");
+    expect(html).not.toContain("Adresse applicative non publiée");
+    expect(html).toContain("Code source");
+  });
+
+  test("an idea card with an application URL links to it (ADR 0003)", () => {
+    const withUrl = [card("sketch", "idea", { application_url: "https://sketch.example.test/" })];
+    const html = renderPages(buildCorpus(withUrl), withUrl).get("/produits/sketch") ?? "";
+    expect(html).toContain(
+      'href="https://sketch.example.test/" rel="noopener noreferrer">Ouvrir le produit',
+    );
   });
 
   test("a product page shows its limits as a non-empty list (FR-03)", () => {
@@ -141,15 +159,10 @@ describe("brand grammar in the markup (ADR 0002)", () => {
     }
   });
 
-  test("the product list shows each product in a frame with a status label", () => {
+  test("the product list shows each product in a frame with its summary (ADR 0003)", () => {
     const html = pages.get("/produits") ?? "";
     expect(html).toContain(
-      '<li class="frame"><a href="/produits/sketch">sketch</a> <span class="label">Idée</span></li>',
+      '<li class="frame"><a href="/produits/sketch">sketch</a> <span class="summary">Résumé court.</span></li>',
     );
-  });
-
-  test("a product page shows its exposure and maturity as labels", () => {
-    const html = pages.get("/produits/notebook") ?? "";
-    expect(html).toContain('<span class="label">Utilisable et vérifiable</span>');
   });
 });

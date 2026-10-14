@@ -77,23 +77,19 @@ describe("checkProjectCardGates (FR-02, FR-03)", () => {
     expect(report).toEqual({ examined: 2, violations: [] });
   });
 
-  test("fails when an idea card carries an application URL (FR-02)", () => {
+  // ADR 0003: an application URL is accepted whatever the exposure; the state is not a gate.
+  test("accepts an application URL on an idea or spec-published card (ADR 0003)", () => {
     const report = checkProjectCardGates([
       parseProjectCard({ ...idea, application_url: "https://sketch.example.test/" }),
-    ]);
-    expect(report.violations).toEqual(["fiche.application_url_forbidden:sketch"]);
-  });
-
-  test("fails when a spec-published card carries an application URL (FR-02)", () => {
-    const report = checkProjectCardGates([
       parseProjectCard({
         ...idea,
+        project: "drafted",
         exposure: "spec-published",
         maturity: "specified",
-        application_url: "https://sketch.example.test/",
+        application_url: "https://drafted.example.test/",
       }),
     ]);
-    expect(report.violations).toEqual(["fiche.application_url_forbidden:sketch"]);
+    expect(report).toEqual({ examined: 2, violations: [] });
   });
 
   test("allows an application URL for usable-verifiable and proven cards", () => {

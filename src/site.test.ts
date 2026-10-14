@@ -73,18 +73,19 @@ describe("buildSite (G1, G2, G3, G4, G9 : gates bloquants, compteurs imprimés)"
     expect(result.report.textsExamined).toBeGreaterThan(0);
   });
 
-  test("refuses the whole build when an idea card carries an application URL (FR-02)", () => {
-    expect(() =>
-      buildSite(
-        [
-          {
-            name: "sketch.project.v1.yaml",
-            text: cardText("sketch", "idea", `application_url: "https://sketch.example.test/"`),
-          },
-        ],
-        assets,
-      ),
-    ).toThrow("fiche.application_url_forbidden:sketch");
+  test("builds an idea card carrying an application URL and links to it (ADR 0003)", () => {
+    const result = buildSite(
+      [
+        {
+          name: "sketch.project.v1.yaml",
+          text: cardText("sketch", "idea", `application_url: "https://sketch.example.test/"`),
+        },
+      ],
+      assets,
+    );
+    expect(result.files.get("produits/sketch/index.html")).toContain(
+      'href="https://sketch.example.test/"',
+    );
   });
 
   test("refuses the whole build when a card has no Limites (FR-03)", () => {

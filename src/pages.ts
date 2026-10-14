@@ -5,26 +5,11 @@
  */
 import { type Corpus, SITE_ORIGIN } from "./corpus";
 import { citationFor } from "./feed";
-import type { Exposure, Maturity, ProjectCard } from "./project-card";
+import type { ProjectCard } from "./project-card";
 import { escapeHtml } from "./security";
 
-const EXPOSURE_LABELS: Readonly<Record<Exposure, string>> = {
-  idea: "Idée",
-  "spec-published": "Spécification publiée",
-  "usable-verifiable": "Utilisable et vérifiable",
-  proven: "Éprouvé",
-};
-
-const MATURITY_LABELS: Readonly<Record<Maturity, string>> = {
-  idea: "Idée",
-  specified: "Spécifié",
-  usable: "Utilisable",
-  proven: "Éprouvé",
-};
-
-// Exposures whose application URL may be shown (FR-02). Others get a follow link only.
-const EXPOSURES_WITH_APPLICATION: readonly Exposure[] = ["usable-verifiable", "proven"];
-
+// ADR 0003: exposure and maturity are read and validated, never shown on public pages.
+// The state of a project is read in its repository, which every product page links to.
 const FORGE_URL = "https://github.com/libre-ai";
 
 function layout(title: string, path: string, body: string): string {
@@ -53,27 +38,26 @@ function layout(title: string, path: string, body: string): string {
 
 function productItem(card: ProjectCard): string {
   // Each product sits in a square frame; its exposure is an explicit label, never colour alone.
-  return `<li class="frame"><a href="/produits/${escapeHtml(card.project)}">${escapeHtml(card.project)}</a> <span class="label">${escapeHtml(EXPOSURE_LABELS[card.exposure])}</span></li>`;
+  // ADR 0003: the list names each product and its summary; no state label on public pages.
+  return `<li class="frame"><a href="/produits/${escapeHtml(card.project)}">${escapeHtml(card.project)}</a> <span class="summary">${escapeHtml(card.summary)}</span></li>`;
 }
 
 function productPage(card: ProjectCard): string {
   const limits = card.limits.map((entry) => `<li>${escapeHtml(entry)}</li>`).join("");
   // A link is rendered only when there is a real URL: an empty href would be a dead control.
-  let action = "<p>Suivre la fiche sur la forge.</p>";
-  if (EXPOSURES_WITH_APPLICATION.includes(card.exposure)) {
-    action =
-      card.applicationUrl === null
-        ? "<p>Adresse applicative non publiée.</p>"
-        : `<p><a href="${escapeHtml(card.applicationUrl)}" rel="noopener noreferrer">Ouvrir le produit</a> (application externe)</p>`;
-  }
+  // A link is rendered only when there is a real URL: an empty href would be a dead control.
+  const action =
+    card.applicationUrl === null
+      ? ""
+      : `<p><a href="${escapeHtml(card.applicationUrl)}" rel="noopener noreferrer">Ouvrir le produit</a> (application externe)</p>`;
+  const sourceUrl = `https://github.com/${escapeHtml(card.repository)}`;
   return [
     `<h1>${escapeHtml(card.project)}</h1>`,
     `<p>${escapeHtml(card.summary)}</p>`,
-    `<p>Exposition : <span class="label">${escapeHtml(EXPOSURE_LABELS[card.exposure])}</span> Maturité : <span class="label">${escapeHtml(MATURITY_LABELS[card.maturity])}</span></p>`,
     `<h2>Situation actuelle</h2><p>${escapeHtml(card.currentSituation)}</p>`,
     `<h2>Limites</h2><ul>${limits}</ul>`,
     action,
-    `<p><a href="${FORGE_URL}" rel="noopener noreferrer">Forge publique</a></p>`,
+    `<p><a href="${sourceUrl}" rel="noopener noreferrer">Code source</a> (dépôt public : l'état détaillé du projet s'y lit)</p>`,
     // The date is kept on one line: a hyphen inside it is not a place to wrap a citation.
     `<h2>Citer</h2><p>${escapeHtml(citationFor(card)).replace(escapeHtml(card.lastVerifiedOn), `<span class="nowrap">${escapeHtml(card.lastVerifiedOn)}</span>`)}</p>`,
   ].join("");
@@ -120,7 +104,7 @@ function fixedBody(
     case "/methode":
       return {
         title: "Méthode",
-        body: "<h1>Méthode</h1><p>Chaque affirmation sur un produit porte son état, ses limites et la date de sa vérification. Les contrôles du dépôt échouent sur une source illisible au lieu de passer.</p>",
+        body: "<h1>Méthode</h1><p>Chaque produit est décrit avec ses limites, la date de sa vérification et son code source. L'état détaillé de chaque projet se lit dans son dépôt. Les contrôles du dépôt échouent sur une source illisible au lieu de passer.</p>",
       };
     case "/produits":
       return {

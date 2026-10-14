@@ -10,13 +10,13 @@ le lit et ne le réécrit jamais.
 | --- | --- | --- |
 | `project` | texte | nom de la route `/produits/<project>` |
 | `repository` | texte | `libre-ai/<project>`, lien vers la forge |
-| `exposure` | `idea`, `spec-published`, `usable-verifiable`, `proven` | état affiché, et autorisation d'un lien applicatif (FR-02) |
+| `exposure` | `idea`, `spec-published`, `usable-verifiable`, `proven` | lu et validé, **non affiché** (ADR 0003) |
 | `maturity` | `idea`, `specified`, `usable`, `proven` | maturité affichée |
 | `summary` | texte non vide | résumé de la fiche |
 | `current_situation` | texte, au moins 10 caractères | situation actuelle, état présent uniquement |
 | `non_goals` | liste de textes | section « Limites » (FR-03) : non vide |
 | `freshness.last_verified_on` | date réelle `AAAA-MM-JJ` | date de vérification, citation et flux (FR-12) |
-| `application_url` | URL, optionnel | lien applicatif ; **interdit** pour `idea` et `spec-published` (FR-02) |
+| `application_url` | URL, optionnel | lien « Ouvrir le produit », affiché dès qu'il existe (ADR 0003) |
 
 Le champ `application_url` n'existe pas encore dans le schéma `project.v1` de `project-governance` :
 la proposition est dans le scratchpad du travail, à faire valider côté governance.
@@ -46,4 +46,4 @@ freshness:
 ```
 
 Une fiche `usable-verifiable` ou `proven` peut porter `application_url`. Sans cette URL, la page
-affiche « Adresse applicative non publiée », jamais un lien vide.
+affiche seulement le lien « Code source » vers son dépôt, jamais un lien vide.

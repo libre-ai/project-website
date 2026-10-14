@@ -31,13 +31,16 @@ test.describe("FR-01 : mission visible sans défilement", () => {
   });
 });
 
-test.describe("FR-02 : aucune URL applicative pour idea ou spec-published", () => {
-  test("a spec-published product offers a follow link and no application link", async ({
+test.describe("FR-02 (amendé, ADR 0003) : aucun état affiché, code source lié", () => {
+  test("a product page shows no exposure or maturity and links to its repository", async ({
     page,
   }) => {
     await page.goto(SAMPLE_PRODUCT);
-    await expect(page.getByText("Suivre la fiche sur la forge.")).toBeVisible();
-    await expect(page.getByRole("link", { name: "Ouvrir le produit" })).toHaveCount(0);
+    await expect(page.getByText(/Exposition :|Maturité :/)).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Code source" })).toHaveAttribute(
+      "href",
+      "https://github.com/libre-ai/execution-sandbox",
+    );
   });
 });
 

@@ -10,7 +10,6 @@ const EXPOSURES = ["idea", "spec-published", "usable-verifiable", "proven"] as c
 const MATURITIES = ["idea", "specified", "usable", "proven"] as const;
 
 // Exposures below this line must not link to an application (FR-02).
-const EXPOSURES_WITHOUT_APPLICATION: readonly Exposure[] = ["idea", "spec-published"];
 
 export type Exposure = (typeof EXPOSURES)[number];
 export type Maturity = (typeof MATURITIES)[number];
@@ -93,9 +92,6 @@ export function parseProjectCard(value: unknown): ProjectCard {
 export function checkProjectCardGates(cards: readonly ProjectCard[]): ProjectCardGateReport {
   const violations: string[] = [];
   for (const card of cards) {
-    if (card.applicationUrl !== null && EXPOSURES_WITHOUT_APPLICATION.includes(card.exposure)) {
-      violations.push(`fiche.application_url_forbidden:${card.project}`);
-    }
     if (card.limits.every((entry) => entry.trim() === "")) {
       violations.push(`fiche.limits_missing:${card.project}`);
     }

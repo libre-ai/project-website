@@ -16,7 +16,8 @@ function atomInstant(day: string): string {
 }
 
 export function citationFor(card: ProjectCard): string {
-  return `${AUTHOR}. « ${card.project} ». Exposition : ${card.exposure}. Vérifié le ${card.lastVerifiedOn}. ${SITE_ORIGIN}/produits/${card.project}`;
+  // ADR 0003: the citation names author, verification date and source; it carries no state.
+  return `${AUTHOR}. « ${card.project} ». Vérifié le ${card.lastVerifiedOn}. ${SITE_ORIGIN}/produits/${card.project}`;
 }
 
 export function renderAtom(corpus: Corpus, cards: readonly ProjectCard[]): string {
