@@ -39,8 +39,14 @@ test("keeps the skip path and narrow reflow usable", async ({ page }) => {
 
   for (const width of [640, 320]) {
     await page.setViewportSize({ width, height: 900 });
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
-    expect(overflow).toBeLessThanOrEqual(0);
+    // Poll rather than sample once: under prefers-reduced-motion the shared UI
+    // stylesheet sets `transition-duration: 0.01ms` on `*`, whose default
+    // `transition-property: all` lets font-size/width settle one or more frames
+    // after the resize. The threshold is unchanged and a page that never reflows
+    // still fails once the poll times out.
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth - innerWidth))
+      .toBeLessThanOrEqual(0);
   }
 });
 
