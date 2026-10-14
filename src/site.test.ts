@@ -13,6 +13,8 @@ const cardText = (project: string, exposure: string, extra = "") =>
     `current_situation: "Aucun code n'existe encore à ce stade."`,
     `non_goals:`,
     `  - "Pas d'engagement de date."`,
+    `freshness:`,
+    `  last_verified_on: "2026-10-08"`,
     extra,
     "",
   ].join("\n");
@@ -29,6 +31,8 @@ describe("buildSite (G1, G2, G3, G4, G9 : gates bloquants, compteurs imprimés)"
     expect(result.files.has("produits/drafted/index.html")).toBe(true);
     expect(result.files.has("sitemap.xml")).toBe(true);
     expect(result.files.has("robots.txt")).toBe(true);
+    expect(result.files.has("atom.xml")).toBe(true);
+    expect(result.files.has("produits/sketch/citation.txt")).toBe(true);
     expect(result.report).toEqual({
       cardsRead: 2,
       productPages: 2,

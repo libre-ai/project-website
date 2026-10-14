@@ -5,6 +5,7 @@
  */
 import { checkForbiddenClaims } from "./claims";
 import { buildCorpus, renderRobots, renderSitemap } from "./corpus";
+import { citationFor, renderAtom } from "./feed";
 import { renderPages } from "./pages";
 import { checkProjectCardGates, type ProjectCard, parseProjectCard } from "./project-card";
 import { checkResourceGates, type Resource } from "./resource";
@@ -62,6 +63,10 @@ export function buildSite(sources: readonly SourceFile[]): SiteResult {
   for (const [route, html] of pages) files.set(outputPath(route), html);
   files.set("sitemap.xml", renderSitemap(corpus));
   files.set("robots.txt", renderRobots());
+  files.set("atom.xml", renderAtom(corpus, cards));
+  // A citation is exported next to its product page, as plain text a reader can copy.
+  for (const card of cards)
+    files.set(`produits/${card.project}/citation.txt`, `${citationFor(card)}\n`);
 
   const productPages = corpus.pages.filter((page) => page.kind === "product").length;
   return {

@@ -11,6 +11,7 @@ const usable = {
   current_situation: "Parcours local vérifié sur la branche servie.",
   non_goals: ["Pas de synchronisation cloud."],
   application_url: "https://notebook.example.test/",
+  freshness: { last_verified_on: "2026-10-08" },
 };
 
 const idea = {
@@ -21,7 +22,27 @@ const idea = {
   summary: "Idée non spécifiée.",
   current_situation: "Aucun code n'existe encore à ce stade.",
   non_goals: ["Pas d'engagement de date."],
+  freshness: { last_verified_on: "2026-10-08" },
 };
+
+describe("parseProjectCard (FR-12 : date de vérification lue)", () => {
+  test("reads the verification date from freshness.last_verified_on", () => {
+    expect(parseProjectCard(usable).lastVerifiedOn).toBe("2026-10-08");
+  });
+
+  test("rejects a card without a verification date instead of defaulting it", () => {
+    const { freshness: _omitted, ...withoutFreshness } = usable;
+    expect(() => parseProjectCard(withoutFreshness)).toThrow(
+      "project_card.last_verified_on_invalid:notebook",
+    );
+  });
+
+  test("rejects a verification date that is not a real calendar day", () => {
+    expect(() =>
+      parseProjectCard({ ...usable, freshness: { last_verified_on: "2026-02-30" } }),
+    ).toThrow("project_card.last_verified_on_invalid:notebook");
+  });
+});
 
 describe("parseProjectCard (FR-02 : état lu, jamais saisi)", () => {
   test("reads exposure and maturity from the card", () => {

@@ -3,6 +3,7 @@
  * `project.v1` record, never typed into the site. The site renders what the
  * card states and refuses any card that claims an application it cannot prove.
  */
+import { isoDay } from "./calendar";
 
 // Exposure follows the I-15 proof scale carried by the card since ADR-0020.
 const EXPOSURES = ["idea", "spec-published", "usable-verifiable", "proven"] as const;
@@ -24,6 +25,8 @@ export interface ProjectCard {
   // Limites (FR-03) are carried by non_goals, which the schema already requires non-empty.
   readonly limits: readonly string[];
   readonly applicationUrl: string | null;
+  // Date the card's evidence was last re-verified (freshness); the citation and the feed rely on it.
+  readonly lastVerifiedOn: string;
 }
 
 export interface ProjectCardGateReport {
@@ -76,6 +79,10 @@ export function parseProjectCard(value: unknown): ProjectCard {
       `project_card.current_situation_invalid:${project}`,
     ),
     limits: limits(input.non_goals, project),
+    lastVerifiedOn: isoDay(
+      record(input.freshness, `project_card.last_verified_on_invalid:${project}`).last_verified_on,
+      `project_card.last_verified_on_invalid:${project}`,
+    ),
     applicationUrl:
       applicationUrl === undefined
         ? null

@@ -3,6 +3,7 @@
  * declared AI assistance, its nature (§9) and a real review date. A resource
  * missing any of them is refused at construction, never published with a gap.
  */
+import { isoDay } from "./calendar";
 
 // Nature follows the content charter (PRD §9): fact, analysis, opinion or guide.
 const NATURES = ["fait", "analyse", "opinion", "guide"] as const;
@@ -31,17 +32,6 @@ function record(value: unknown, error: string): Record<string, unknown> {
 function text(value: unknown, error: string): string {
   if (typeof value !== "string" || value.trim() === "") throw new Error(error);
   return value;
-}
-
-// A real calendar day, not a shape: 2026-02-30 is refused.
-function isoDay(value: unknown, error: string): string {
-  const candidate = text(value, error);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(candidate)) throw new Error(error);
-  const parsed = new Date(`${candidate}T00:00:00.000Z`);
-  if (Number.isNaN(parsed.valueOf()) || parsed.toISOString().slice(0, 10) !== candidate) {
-    throw new Error(error);
-  }
-  return candidate;
 }
 
 export function parseResource(value: unknown): Resource {

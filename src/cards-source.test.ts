@@ -16,6 +16,8 @@ const card = (project: string) =>
     `current_situation: "Aucun code n'existe encore à ce stade."`,
     `non_goals:`,
     `  - "Pas d'engagement de date."`,
+    `freshness:`,
+    `  last_verified_on: "2026-10-08"`,
     "",
   ].join("\n");
 

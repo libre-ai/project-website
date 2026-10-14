@@ -13,6 +13,7 @@ const card = (project: string, exposure: string, extra: Record<string, unknown> 
     summary: "Résumé court.",
     current_situation: "Aucun code n'existe encore à ce stade.",
     non_goals: ["Pas d'engagement de date."],
+    freshness: { last_verified_on: "2026-10-08" },
     ...extra,
   });
 
@@ -60,10 +61,31 @@ describe("renderPages (G1, FR-07, FR-09, FR-12)", () => {
     expect(html).toMatch(/rel="noopener noreferrer"/);
   });
 
+  test("a usable-verifiable card without an application URL shows no empty link", () => {
+    const withoutUrl = [card("nourl", "usable-verifiable", { maturity: "usable" })];
+    const html = renderPages(buildCorpus(withoutUrl), withoutUrl).get("/produits/nourl") ?? "";
+    expect(html).not.toContain('href=""');
+    expect(html).not.toContain("Ouvrir le produit");
+    expect(html).toContain("Adresse applicative non publiée");
+  });
+
   test("a product page shows its limits as a non-empty list (FR-03)", () => {
     const html = pages.get("/produits/sketch") ?? "";
     expect(html).toContain("Limites");
     expect(html).toContain("Pas d&#39;engagement de date.");
+  });
+
+  test("a product page shows its citation with author, verification date and source (FR-12)", () => {
+    const html = pages.get("/produits/sketch") ?? "";
+    expect(html).toContain("Libre AI");
+    expect(html).toContain("Vérifié le 2026-10-08");
+    expect(html).toContain(`${SITE_ORIGIN}/produits/sketch`);
+  });
+
+  test("every page advertises the Atom feed to machines", () => {
+    for (const html of pages.values()) {
+      expect(html).toContain('<link rel="alternate" type="application/atom+xml" href="/atom.xml">');
+    }
   });
 
   test("escapes card text instead of injecting it", () => {

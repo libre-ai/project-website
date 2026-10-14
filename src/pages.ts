@@ -4,6 +4,7 @@
  * escapeHtml. Copy states only what the repository proves.
  */
 import { type Corpus, SITE_ORIGIN } from "./corpus";
+import { citationFor } from "./feed";
 import type { Exposure, Maturity, ProjectCard } from "./project-card";
 import { escapeHtml } from "./security";
 
@@ -36,6 +37,7 @@ function layout(title: string, path: string, body: string): string {
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
     `<title>${escapeHtml(title)} · Libre AI</title>`,
     `<link rel="canonical" href="${canonical}">`,
+    '<link rel="alternate" type="application/atom+xml" href="/atom.xml">',
     '<link rel="stylesheet" href="/assets/tokens.css">',
     "</head>",
     "<body>",
@@ -54,9 +56,14 @@ function productItem(card: ProjectCard): string {
 
 function productPage(card: ProjectCard): string {
   const limits = card.limits.map((entry) => `<li>${escapeHtml(entry)}</li>`).join("");
-  const action = EXPOSURES_WITH_APPLICATION.includes(card.exposure)
-    ? `<p><a href="${escapeHtml(card.applicationUrl ?? "")}" rel="noopener noreferrer">Ouvrir le produit</a> (application externe)</p>`
-    : "<p>Suivre la fiche sur la forge.</p>";
+  // A link is rendered only when there is a real URL: an empty href would be a dead control.
+  let action = "<p>Suivre la fiche sur la forge.</p>";
+  if (EXPOSURES_WITH_APPLICATION.includes(card.exposure)) {
+    action =
+      card.applicationUrl === null
+        ? "<p>Adresse applicative non publiée.</p>"
+        : `<p><a href="${escapeHtml(card.applicationUrl)}" rel="noopener noreferrer">Ouvrir le produit</a> (application externe)</p>`;
+  }
   return [
     `<h1>${escapeHtml(card.project)}</h1>`,
     `<p>${escapeHtml(card.summary)}</p>`,
@@ -65,6 +72,7 @@ function productPage(card: ProjectCard): string {
     `<h2>Limites</h2><ul>${limits}</ul>`,
     action,
     `<p><a href="${FORGE_URL}" rel="noopener noreferrer">Forge publique</a></p>`,
+    `<h2>Citer</h2><p>${escapeHtml(citationFor(card))}</p>`,
   ].join("");
 }
 
