@@ -56,8 +56,17 @@ test.describe("FR-05 : journal des corrections dans le pied de page", () => {
 });
 
 test.describe("FR-06 : page des preuves listant chaque gate", () => {
-  // Not implemented: /preuves states that counters are printed, but does not yet list the gates.
-  test.fixme("the proofs page lists each gate with its counter and command", async () => {});
+  test("the proofs page lists each gate with its counter and reproduction command", async ({
+    page,
+  }) => {
+    await page.goto("/preuves");
+    const rows = page.locator("table tbody tr");
+    await expect(rows).toHaveCount(3);
+    await expect(rows.nth(0).locator("td").nth(0)).toHaveText("G2 fiches lues");
+    await expect(rows.nth(0).locator("code")).toContainText("bun run build");
+    await expect(rows.nth(1).locator("td").nth(0)).toHaveText("G3 ressources examinées");
+    await expect(rows.nth(2).locator("td").nth(0)).toHaveText("G9 textes examinés");
+  });
 });
 
 test.describe("FR-07 : lecture sans JavaScript", () => {

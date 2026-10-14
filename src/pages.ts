@@ -77,7 +77,33 @@ function productPage(card: ProjectCard): string {
   ].join("");
 }
 
-function fixedBody(path: string, cards: readonly ProjectCard[]): { title: string; body: string } {
+// One control's result as printed on the proofs page: what it examined, what it refused, and
+// the command that reproduces it (FR-06). The numbers come from the gates, never typed here.
+export interface Proof {
+  readonly gate: string;
+  readonly examined: number;
+  readonly violations: number;
+  readonly command: string;
+}
+
+function proofsBody(proofs: readonly Proof[]): string {
+  if (proofs.length === 0) {
+    return "<h1>Preuves</h1><p>Aucun résultat de contrôle n'est fourni à cette construction.</p>";
+  }
+  const rows = proofs
+    .map(
+      (proof) =>
+        `<tr><td>${escapeHtml(proof.gate)}</td><td>${proof.examined}</td><td>${proof.violations}</td><td><code>${escapeHtml(proof.command)}</code></td></tr>`,
+    )
+    .join("");
+  return `<h1>Preuves</h1><table><thead><tr><th>Contrôle</th><th>Examinés</th><th>Violations</th><th>Commande</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function fixedBody(
+  path: string,
+  cards: readonly ProjectCard[],
+  proofs: readonly Proof[],
+): { title: string; body: string } {
   switch (path) {
     case "/":
       return {
@@ -102,7 +128,7 @@ function fixedBody(path: string, cards: readonly ProjectCard[]): { title: string
     case "/preuves":
       return {
         title: "Preuves",
-        body: "<h1>Preuves</h1><p>Les compteurs de chaque contrôle sont affichés à chaque construction.</p>",
+        body: proofsBody(proofs),
       };
     case "/gouvernance":
       return {
@@ -127,11 +153,12 @@ function fixedBody(path: string, cards: readonly ProjectCard[]): { title: string
 export function renderPages(
   corpus: Corpus,
   cards: readonly ProjectCard[],
+  proofs: readonly Proof[] = [],
 ): ReadonlyMap<string, string> {
   const pages = new Map<string, string>();
   for (const page of corpus.pages) {
     if (page.kind === "fixed") {
-      const { title, body } = fixedBody(page.path, cards);
+      const { title, body } = fixedBody(page.path, cards, proofs);
       pages.set(page.path, layout(title, page.path, body));
       continue;
     }

@@ -82,6 +82,24 @@ describe("renderPages (G1, FR-07, FR-09, FR-12)", () => {
     expect(html).toContain(`${SITE_ORIGIN}/produits/sketch`);
   });
 
+  test("the proofs page lists each gate with its counter and the command that reproduces it (FR-06)", () => {
+    const proofs = [
+      { gate: "G2 fiches lues", examined: 2, violations: 0, command: "bun src/build-site.ts" },
+      { gate: "G9 textes examinés", examined: 10, violations: 0, command: "bun src/build-site.ts" },
+    ];
+    const html = renderPages(corpus, cards, proofs).get("/preuves") ?? "";
+    expect(html).toContain(
+      "<td>G2 fiches lues</td><td>2</td><td>0</td><td><code>bun src/build-site.ts</code></td>",
+    );
+    expect(html).toContain("G9 textes examinés");
+    expect(html).not.toContain("Les compteurs de chaque contrôle sont affichés");
+  });
+
+  test("the proofs page says so when no gate result is supplied", () => {
+    const html = renderPages(corpus, cards).get("/preuves") ?? "";
+    expect(html).toContain("Aucun résultat de contrôle n'est fourni");
+  });
+
   test("every page advertises the Atom feed to machines", () => {
     for (const html of pages.values()) {
       expect(html).toContain('<link rel="alternate" type="application/atom+xml" href="/atom.xml">');

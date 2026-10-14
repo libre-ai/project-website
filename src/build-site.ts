@@ -8,6 +8,7 @@ import { join } from "node:path";
 import { writeStaticSite } from "./build";
 import { buildSite, type SourceFile } from "./site";
 import { renderSiteCss } from "./styles";
+import { checkCardUniverse, type Exclusion } from "./universe";
 
 const CARD_SUFFIX = ".project.v1.yaml";
 
@@ -31,7 +32,25 @@ const assets = {
 };
 
 const result = buildSite(sources, assets);
+
+// The portfolio is the authority for which repositories are products; the exclusions are data.
+const portfolio = (await Bun.file(
+  join(process.cwd(), "node_modules/@libre-ai/governance/ecosystem/portfolio.v1.json"),
+).json()) as { items: { repository: string }[] };
+const exclusions = (await Bun.file(
+  join(import.meta.dir, "data/card-exclusions.json"),
+).json()) as Exclusion[];
+const universe = checkCardUniverse({
+  repositories: portfolio.items.map((item) => item.repository),
+  cards: result.projects,
+  exclusions,
+});
+if (universe.violations.length > 0) {
+  throw new Error(`site.universe_refused:${universe.violations.join(",")}`);
+}
+
 await writeStaticSite(join(process.cwd(), "dist"), result.files);
+console.log(`G2 univers: ${universe.universe}, fiches couvrant l'univers: ${universe.covered}`);
 console.log(
   `G2 fiches lues: ${result.report.cardsRead}, pages produit: ${result.report.productPages}`,
 );
