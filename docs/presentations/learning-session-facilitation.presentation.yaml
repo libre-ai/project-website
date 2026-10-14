@@ -1,0 +1,13 @@
+project: learning-session-facilitation
+title: learning-session-facilitation
+author: "À renseigner par le relecteur"
+ai_assistance: "Brouillon rédigé par un modèle de langage le 2026-10-14 à partir des champs scope et statement de la fiche project.v1 du dépôt, traduits en français ; relecture et signature humaines requises avant publication."
+nature: analyse
+review_date: "2026-10-14"
+reviewed: false
+pitch: "learning-session-facilitation rassemble des sources citées pour un atelier ou une formation, clarifie ce que les participants doivent faire et ce qui peut être délégué, et garde la trace de la session pour la revoir ensuite."
+capabilities:
+  - "Rassembler des sources citées pour appuyer un atelier ou une formation."
+  - "Clarifier ce que les participants doivent faire et quelles tâches peuvent être déléguées."
+  - "Suivre les événements de la session et revoir ce qui s'est passé ensuite."
+audience: "Formateurs et animateurs d'ateliers."

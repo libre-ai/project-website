@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import { AUTHOR_PLACEHOLDER, parsePresentation } from "./presentation";
 import { buildSite } from "./site";
 
 const assets = { tokens: ":root { --lai-color-ink: #110f0c; }\n", styles: "body { margin: 0; }\n" };
@@ -67,10 +68,82 @@ describe("buildSite (G1, G2, G3, G4, G9 : gates bloquants, compteurs imprimés)"
       productPages: 2,
       fixedPages: 8,
       resourcesExamined: 0,
+      presentationsDrafted: 0,
+      presentationsReviewed: 0,
       textsExamined: result.report.textsExamined,
       claimViolations: 0,
     });
     expect(result.report.textsExamined).toBeGreaterThan(0);
+  });
+
+  test("a reviewed presentation replaces the card text and counts as a resource (ADR 0003)", () => {
+    const presentation = parsePresentation({
+      project: "sketch",
+      title: "Sketch",
+      author: "Relecteur nommé",
+      ai_assistance: "Brouillon assisté, relu.",
+      nature: "analyse",
+      review_date: "2026-10-14",
+      reviewed: true,
+      pitch: "Sketch prépare votre voyage.",
+      capabilities: ["Décrire des contraintes."],
+      audience: "Voyageurs.",
+    });
+    const result = buildSite(
+      [{ name: "sketch.project.v1.yaml", text: cardText("sketch", "idea") }],
+      assets,
+      [presentation],
+    );
+    const html = result.files.get("produits/sketch/index.html") ?? "";
+    expect(html).toContain("<h1>Sketch</h1>");
+    expect(html).toContain("Sketch prépare votre voyage.");
+    expect(html).not.toContain("Situation actuelle");
+    expect(result.report.resourcesExamined).toBe(1);
+    expect(result.report.presentationsReviewed).toBe(1);
+  });
+
+  test("a draft presentation is examined but not published: the card text stays (ADR 0003)", () => {
+    const draft = parsePresentation({
+      project: "sketch",
+      title: "Sketch",
+      author: AUTHOR_PLACEHOLDER,
+      ai_assistance: "Brouillon assisté, non relu.",
+      nature: "analyse",
+      review_date: "2026-10-14",
+      reviewed: false,
+      pitch: "Sketch prépare votre voyage.",
+      capabilities: ["Décrire des contraintes."],
+      audience: "Voyageurs.",
+    });
+    const result = buildSite(
+      [{ name: "sketch.project.v1.yaml", text: cardText("sketch", "idea") }],
+      assets,
+      [draft],
+    );
+    const html = result.files.get("produits/sketch/index.html") ?? "";
+    expect(html).toContain("Situation actuelle");
+    expect(html).not.toContain("Sketch prépare votre voyage.");
+    expect(result.report).toMatchObject({ presentationsDrafted: 1, presentationsReviewed: 0 });
+  });
+
+  test("refuses a presentation whose project has no card", () => {
+    const orphan = parsePresentation({
+      project: "ghost",
+      title: "Ghost",
+      author: "Relecteur nommé",
+      ai_assistance: "Relu.",
+      nature: "analyse",
+      review_date: "2026-10-14",
+      reviewed: true,
+      pitch: "Un produit sans fiche.",
+      capabilities: ["Rien."],
+      audience: "Personne.",
+    });
+    expect(() =>
+      buildSite([{ name: "sketch.project.v1.yaml", text: cardText("sketch", "idea") }], assets, [
+        orphan,
+      ]),
+    ).toThrow("presentation.unknown_project:ghost");
   });
 
   test("builds an idea card carrying an application URL and links to it (ADR 0003)", () => {

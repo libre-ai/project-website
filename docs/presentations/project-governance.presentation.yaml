@@ -1,0 +1,13 @@
+project: project-governance
+title: project-governance
+author: "À renseigner par le relecteur"
+ai_assistance: "Brouillon rédigé par un modèle de langage le 2026-10-14 à partir des champs scope et statement de la fiche project.v1 du dépôt ; relecture et signature humaines requises avant publication."
+nature: analyse
+review_date: "2026-10-14"
+reviewed: false
+pitch: "project-governance est l'autorité de doctrine de la constellation : décisions, invariants, index d'écosystème, schéma de fiches et outillage de flotte, consommés par SHA et surveillés par des gates de dérive."
+capabilities:
+  - "S'appuyer sur une doctrine et des gates uniques au lieu de règles recopiées d'un dépôt à l'autre."
+  - "Consommer un gabarit de flotte épinglé par SHA."
+  - "Surveiller la dérive de toute la constellation."
+audience: "Projets de la constellation Libre AI et leurs contributeurs."

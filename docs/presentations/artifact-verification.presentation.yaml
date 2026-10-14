@@ -1,0 +1,13 @@
+project: artifact-verification
+title: artifact-verification
+author: "À renseigner par le relecteur"
+ai_assistance: "Brouillon rédigé par un modèle de langage le 2026-10-14 à partir des champs scope et statement de la fiche project.v1 du dépôt, traduits en français ; relecture et signature humaines requises avant publication."
+nature: analyse
+review_date: "2026-10-14"
+reviewed: false
+pitch: "artifact-verification détecte les fichiers modifiés, manquants ou inattendus dans un artefact, compare leur contenu aux tailles et empreintes déclarées, et vérifie les signatures exigées par les règles de confiance choisies."
+capabilities:
+  - "Détecter les fichiers modifiés, manquants ou inattendus dans un artefact."
+  - "Comparer le contenu des fichiers aux tailles et empreintes déclarées dans un manifeste."
+  - "Vérifier les preuves de signature exigées par les règles de confiance choisies pour cet artefact."
+audience: "Opérateurs qui doivent vérifier un artefact avant de le déployer."

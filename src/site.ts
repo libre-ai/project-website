@@ -7,6 +7,7 @@ import { checkForbiddenClaims } from "./claims";
 import { buildCorpus, renderRobots, renderSitemap } from "./corpus";
 import { citationFor, renderAtom } from "./feed";
 import { type Proof, renderPages } from "./pages";
+import type { Presentation } from "./presentation";
 import { checkProjectCardGates, type ProjectCard, parseProjectCard } from "./project-card";
 import { checkResourceGates, type Resource } from "./resource";
 
@@ -20,6 +21,8 @@ export interface SiteReport {
   readonly productPages: number;
   readonly fixedPages: number;
   readonly resourcesExamined: number;
+  readonly presentationsDrafted: number;
+  readonly presentationsReviewed: number;
   readonly textsExamined: number;
   readonly claimViolations: number;
 }
@@ -45,7 +48,11 @@ export interface SiteAssets {
   readonly styles: string;
 }
 
-export function buildSite(sources: readonly SourceFile[], assets: SiteAssets): SiteResult {
+export function buildSite(
+  sources: readonly SourceFile[],
+  assets: SiteAssets,
+  presentations: readonly Presentation[] = [],
+): SiteResult {
   const cardSources = sources.filter((source) => source.name.endsWith(CARD_SUFFIX));
   if (cardSources.length === 0) throw new Error("cards.source_empty");
 
@@ -53,13 +60,21 @@ export function buildSite(sources: readonly SourceFile[], assets: SiteAssets): S
     parseProjectCard(Bun.YAML.parse(source.text)),
   );
   const cardGates = checkProjectCardGates(cards);
-  const resources: Resource[] = [];
+  // Presentations are the site's resources (FR-04): each one is examined, drafts included.
+  const resources: Resource[] = [...presentations];
   const resourceGates = checkResourceGates(resources);
+  // A presentation for a project that has no card is an orphan: refused, never silently dropped.
+  const projects = new Set(cards.map((card) => card.project));
+  const orphanViolations = presentations
+    .filter((presentation) => !projects.has(presentation.project))
+    .map((presentation) => `presentation.unknown_project:${presentation.project}`);
+  const presentationByProject = new Map(presentations.map((entry) => [entry.project, entry]));
+  const presentationsReviewed = presentations.filter((entry) => entry.reviewed).length;
 
   const corpus = buildCorpus(cards);
   // The proofs page is generated from the gates' own counters, so the claim gate scans the
   // other pages only: it holds machine output, never authored copy, and scanning it would be circular.
-  const draftPages = renderPages(corpus, cards);
+  const draftPages = renderPages(corpus, cards, [], presentationByProject);
   const texts = [...draftPages]
     .filter(([path]) => path !== "/preuves")
     .map(([path, html]) => ({ id: path, text: html }));
@@ -68,6 +83,7 @@ export function buildSite(sources: readonly SourceFile[], assets: SiteAssets): S
   const violations = [
     ...cardGates.violations,
     ...resourceGates.violations,
+    ...orphanViolations,
     ...claimGates.violations,
   ];
   if (violations.length > 0) throw new Error(`site.gate_refused:${violations.join(",")}`);
@@ -78,13 +94,19 @@ export function buildSite(sources: readonly SourceFile[], assets: SiteAssets): S
     { gate: "G2 fiches lues", examined: cards.length, violations: 0, command },
     { gate: "G3 ressources examinées", examined: resourceGates.examined, violations: 0, command },
     {
+      gate: "ADR 0003 présentations publiées (relues sur rédigées)",
+      examined: presentationsReviewed,
+      violations: presentations.length - presentationsReviewed,
+      command,
+    },
+    {
       gate: "G9 textes examinés",
       examined: claimGates.examined,
       violations: claimGates.violations.length,
       command,
     },
   ];
-  const pages = renderPages(corpus, cards, proofs);
+  const pages = renderPages(corpus, cards, proofs, presentationByProject);
 
   const files = new Map<string, string>();
   for (const [route, html] of pages) files.set(outputPath(route), html);
@@ -106,6 +128,8 @@ export function buildSite(sources: readonly SourceFile[], assets: SiteAssets): S
       productPages,
       fixedPages: corpus.pages.length - productPages,
       resourcesExamined: resourceGates.examined,
+      presentationsDrafted: presentations.length,
+      presentationsReviewed,
       textsExamined: claimGates.examined,
       claimViolations: claimGates.violations.length,
     },

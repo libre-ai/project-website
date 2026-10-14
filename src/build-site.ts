@@ -7,6 +7,7 @@ import { join } from "node:path";
 
 import { writeStaticSite } from "./build";
 import { FONT_FILE, FONT_LICENSE_FILE, renderFontFace } from "./font";
+import { loadPresentations } from "./presentation";
 import { buildSite, type SourceFile } from "./site";
 import { renderSiteCss } from "./styles";
 import { checkCardUniverse, type Exclusion } from "./universe";
@@ -33,7 +34,9 @@ const assets = {
   styles: `${renderFontFace()}\n${(await readFile(join(uiRoot, "styles.css"), "utf8")).trimEnd()}\n\n${renderSiteCss()}`,
 };
 
-const result = buildSite(sources, assets);
+// Presentations are editorial content of this repository (docs/, CC-BY-4.0), one file per product.
+const presentations = await loadPresentations(join(process.cwd(), "docs/presentations"));
+const result = buildSite(sources, assets, presentations);
 
 // The portfolio is the authority for which repositories are products; the exclusions are data.
 const portfolio = (await Bun.file(
@@ -69,6 +72,9 @@ console.log(
 );
 console.log(`G1 pages fixes: ${result.report.fixedPages}, fichiers écrits: ${result.files.size}`);
 console.log(`G3 ressources examinées: ${result.report.resourcesExamined}`);
+console.log(
+  `ADR 0003 présentations: ${result.report.presentationsDrafted} rédigées, ${result.report.presentationsReviewed} relues et publiées`,
+);
 console.log(
   `G9 textes examinés: ${result.report.textsExamined}, violations: ${result.report.claimViolations}`,
 );

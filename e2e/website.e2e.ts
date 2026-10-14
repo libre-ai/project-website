@@ -76,11 +76,12 @@ test.describe("FR-06 : page des preuves listant chaque gate", () => {
   }) => {
     await page.goto("/preuves");
     const rows = page.locator("table tbody tr");
-    await expect(rows).toHaveCount(3);
+    await expect(rows).toHaveCount(4);
     await expect(rows.nth(0).locator("td").nth(0)).toHaveText("G2 fiches lues");
     await expect(rows.nth(0).locator("code")).toContainText("bun run build");
     await expect(rows.nth(1).locator("td").nth(0)).toHaveText("G3 ressources examinées");
-    await expect(rows.nth(2).locator("td").nth(0)).toHaveText("G9 textes examinés");
+    await expect(rows.nth(2).locator("td").nth(0)).toContainText("ADR 0003 présentations");
+    await expect(rows.nth(3).locator("td").nth(0)).toHaveText("G9 textes examinés");
   });
 });
 
