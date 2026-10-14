@@ -280,7 +280,7 @@ code {
     width: 100%;
   }
   tr {
-    border-block-end: 1px solid var(--lai-color-border-subtle, #dad5cf);
+    border-block-end: 1px solid var(--lai-color-border-subtle);
     padding-block: 0.5rem;
   }
   td::before {
