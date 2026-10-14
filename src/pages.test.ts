@@ -78,7 +78,7 @@ describe("renderPages (G1, FR-07, FR-09, FR-12)", () => {
   test("a product page shows its citation with author, verification date and source (FR-12)", () => {
     const html = pages.get("/produits/sketch") ?? "";
     expect(html).toContain("Libre AI");
-    expect(html).toContain("Vérifié le 2026-10-08");
+    expect(html).toContain('Vérifié le <span class="nowrap">2026-10-08</span>');
     expect(html).toContain(`${SITE_ORIGIN}/produits/sketch`);
   });
 
@@ -98,6 +98,16 @@ describe("renderPages (G1, FR-07, FR-09, FR-12)", () => {
   test("the proofs page says so when no gate result is supplied", () => {
     const html = renderPages(corpus, cards).get("/preuves") ?? "";
     expect(html).toContain("Aucun résultat de contrôle n'est fourni");
+  });
+
+  test("a verification date in a citation never breaks at its hyphens (1440 px defect)", () => {
+    const html = pages.get("/produits/sketch") ?? "";
+    expect(html).toContain('<span class="nowrap">2026-10-08</span>');
+  });
+
+  test("the governance link name never breaks at its hyphen (1440 px defect)", () => {
+    const html = pages.get("/gouvernance") ?? "";
+    expect(html).toContain('<span class="nowrap">project-governance</span>');
   });
 
   test("every page advertises the Atom feed to machines", () => {

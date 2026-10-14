@@ -73,7 +73,8 @@ function productPage(card: ProjectCard): string {
     `<h2>Limites</h2><ul>${limits}</ul>`,
     action,
     `<p><a href="${FORGE_URL}" rel="noopener noreferrer">Forge publique</a></p>`,
-    `<h2>Citer</h2><p>${escapeHtml(citationFor(card))}</p>`,
+    // The date is kept on one line: a hyphen inside it is not a place to wrap a citation.
+    `<h2>Citer</h2><p>${escapeHtml(citationFor(card)).replace(escapeHtml(card.lastVerifiedOn), `<span class="nowrap">${escapeHtml(card.lastVerifiedOn)}</span>`)}</p>`,
   ].join("");
 }
 
@@ -133,7 +134,7 @@ function fixedBody(
     case "/gouvernance":
       return {
         title: "Gouvernance",
-        body: `<h1>Gouvernance</h1><p>Les décisions et les rôles sont tenus dans le dépôt de gouvernance, <a href="${FORGE_URL}/project-governance" rel="noopener noreferrer">project-governance</a>.</p>`,
+        body: `<h1>Gouvernance</h1><p>Les décisions et les rôles sont tenus dans le dépôt de gouvernance, <a href="${FORGE_URL}/project-governance" rel="noopener noreferrer"><span class="nowrap">project-governance</span></a>.</p>`,
       };
     case "/corrections":
       return {

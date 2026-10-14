@@ -267,6 +267,11 @@ code {
   overflow-wrap: anywhere;
 }
 
+/* Identifiers and dates stay on one line; the browser may not split them at a hyphen. */
+.nowrap {
+  white-space: nowrap;
+}
+
 /* Narrow screens: each proof row becomes a block that names its own columns, so no header breaks mid-word. */
 @media (max-width: 40rem) {
   thead {
