@@ -109,7 +109,7 @@ function fixedBody(
     case "/":
       return {
         title: "Accueil",
-        body: '<h1>Possédez la fabrique.</h1><p>Libre AI aide chacun à comprendre, choisir et utiliser l\'IA sans subir les discours marketing ni les dépendances irréversibles.</p><p><a href="/produits">Voir les produits</a></p>',
+        body: '<h1>Possédez la fabrique.</h1><p>Libre AI aide chacun à comprendre, choisir et utiliser l\'IA sans subir les discours marketing ni les dépendances irréversibles.</p><p class="actions"><a href="/produits">Prenez les clés.</a> <a href="/preuves">Voir les preuves.</a></p>',
       };
     case "/mission":
       return {

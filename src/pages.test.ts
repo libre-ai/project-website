@@ -110,6 +110,13 @@ describe("renderPages (G1, FR-07, FR-09, FR-12)", () => {
     expect(html).toContain('<span class="nowrap">project-governance</span>');
   });
 
+  test("the home page carries the two calls to action validated by the brand platform", () => {
+    const html = pages.get("/") ?? "";
+    expect(html).toContain('<a href="/produits">Prenez les clés.</a>');
+    expect(html).toContain('<a href="/preuves">Voir les preuves.</a>');
+    expect(html).not.toContain("Voir les produits");
+  });
+
   test("every page advertises the Atom feed to machines", () => {
     for (const html of pages.values()) {
       expect(html).toContain('<link rel="alternate" type="application/atom+xml" href="/atom.xml">');
