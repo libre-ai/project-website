@@ -42,7 +42,7 @@ function layout(title: string, path: string, body: string): string {
     '<link rel="stylesheet" href="/assets/styles.css">',
     "</head>",
     "<body>",
-    '<header><a href="/">Libre AI</a></header>',
+    '<header class="site-header"><a class="wordmark" href="/">Libre AI</a><nav><a href="/produits">Produits</a> <a href="/preuves">Preuves</a> <a href="/methode">Méthode</a></nav></header>',
     `<main>${body}</main>`,
     '<footer><a href="/corrections">Journal des corrections</a></footer>',
     "</body>",
@@ -52,7 +52,8 @@ function layout(title: string, path: string, body: string): string {
 }
 
 function productItem(card: ProjectCard): string {
-  return `<li><a href="/produits/${escapeHtml(card.project)}">${escapeHtml(card.project)}</a> : ${escapeHtml(EXPOSURE_LABELS[card.exposure])}</li>`;
+  // Each product sits in a square frame; its exposure is an explicit label, never colour alone.
+  return `<li class="frame"><a href="/produits/${escapeHtml(card.project)}">${escapeHtml(card.project)}</a> <span class="label">${escapeHtml(EXPOSURE_LABELS[card.exposure])}</span></li>`;
 }
 
 function productPage(card: ProjectCard): string {
@@ -68,7 +69,7 @@ function productPage(card: ProjectCard): string {
   return [
     `<h1>${escapeHtml(card.project)}</h1>`,
     `<p>${escapeHtml(card.summary)}</p>`,
-    `<p>Exposition : ${escapeHtml(EXPOSURE_LABELS[card.exposure])}. Maturité : ${escapeHtml(MATURITY_LABELS[card.maturity])}.</p>`,
+    `<p>Exposition : <span class="label">${escapeHtml(EXPOSURE_LABELS[card.exposure])}</span> Maturité : <span class="label">${escapeHtml(MATURITY_LABELS[card.maturity])}</span></p>`,
     `<h2>Situation actuelle</h2><p>${escapeHtml(card.currentSituation)}</p>`,
     `<h2>Limites</h2><ul>${limits}</ul>`,
     action,

@@ -130,3 +130,26 @@ describe("renderPages (G1, FR-07, FR-09, FR-12)", () => {
     expect(html).toContain("&lt;img");
   });
 });
+
+describe("brand grammar in the markup (ADR 0002)", () => {
+  test("every page has the wordmark and the three section links in its header", () => {
+    for (const html of pages.values()) {
+      expect(html).toContain(
+        '<header class="site-header"><a class="wordmark" href="/">Libre AI</a>',
+      );
+      expect(html).toContain('<a href="/produits">Produits</a>');
+    }
+  });
+
+  test("the product list shows each product in a frame with a status label", () => {
+    const html = pages.get("/produits") ?? "";
+    expect(html).toContain(
+      '<li class="frame"><a href="/produits/sketch">sketch</a> <span class="label">Idée</span></li>',
+    );
+  });
+
+  test("a product page shows its exposure and maturity as labels", () => {
+    const html = pages.get("/produits/notebook") ?? "";
+    expect(html).toContain('<span class="label">Utilisable et vérifiable</span>');
+  });
+});

@@ -272,6 +272,60 @@ code {
   white-space: nowrap;
 }
 
+/* Brand grammar (ADR 0002): an open frame around each item, square corners (orthogonal joint),
+   a status label that carries its meaning in words, and a rule that marks each assembly line. */
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding-block-end: 0.75rem;
+  border-block-end: 1px solid var(--lai-color-border-subtle);
+}
+
+.wordmark {
+  font-weight: 700;
+  color: var(--lai-color-text-primary);
+  text-decoration: none;
+}
+
+.frame {
+  border: 1px solid var(--lai-color-border-default);
+  border-radius: 0;
+  padding: 0.5rem 0.75rem;
+  margin-block-end: 0.5rem;
+  list-style: none;
+}
+
+/* A list made of frames starts on the text column, not indented like a bullet list. */
+ul:has(> .frame) {
+  padding-inline-start: 0;
+}
+
+.label {
+  display: inline-block;
+  border: 1px solid var(--lai-color-border-default);
+  border-radius: 0;
+  padding: 0 0.4rem;
+  font-size: 0.875rem;
+}
+
+h2 {
+  border-block-start: 1px solid var(--lai-color-border-subtle);
+  padding-block-start: 1rem;
+}
+
+/* Motion: colour transitions only, switched off for users who ask for reduced motion. */
+a {
+  transition: color 0.15s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  a {
+    transition: none;
+  }
+}
+
 /* Narrow screens: each proof row becomes a block that names its own columns, so no header breaks mid-word. */
 @media (max-width: 40rem) {
   thead {
