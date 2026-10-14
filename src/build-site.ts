@@ -6,6 +6,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { writeStaticSite } from "./build";
+import { FONT_FILE, FONT_LICENSE_FILE, renderFontFace } from "./font";
 import { buildSite, type SourceFile } from "./site";
 import { renderSiteCss } from "./styles";
 import { checkCardUniverse, type Exclusion } from "./universe";
@@ -26,9 +27,10 @@ for (const name of names.sort()) {
 
 // The UI package is the authority for tokens and base styles, read from the pinned install.
 const uiRoot = join(process.cwd(), "node_modules/@libre-ai/ui/src");
+const fontRoot = join(process.cwd(), "node_modules/@fontsource-variable/source-sans-3");
 const assets = {
   tokens: await readFile(join(uiRoot, "tokens.css"), "utf8"),
-  styles: `${(await readFile(join(uiRoot, "styles.css"), "utf8")).trimEnd()}\n\n${renderSiteCss()}`,
+  styles: `${renderFontFace()}\n${(await readFile(join(uiRoot, "styles.css"), "utf8")).trimEnd()}\n\n${renderSiteCss()}`,
 };
 
 const result = buildSite(sources, assets);
@@ -49,7 +51,18 @@ if (universe.violations.length > 0) {
   throw new Error(`site.universe_refused:${universe.violations.join(",")}`);
 }
 
-await writeStaticSite(join(process.cwd(), "dist"), result.files);
+// Binary assets are copied byte for byte; the licence ships with the font it covers.
+const binaries = new Map<string, Uint8Array>([
+  [
+    `assets/fonts/${FONT_FILE}`,
+    new Uint8Array(await Bun.file(join(fontRoot, "files", FONT_FILE)).arrayBuffer()),
+  ],
+  [FONT_LICENSE_FILE, new Uint8Array(await Bun.file(join(fontRoot, "LICENSE")).arrayBuffer())],
+]);
+await writeStaticSite(
+  join(process.cwd(), "dist"),
+  new Map<string, string | Uint8Array>([...result.files, ...binaries]),
+);
 console.log(`G2 univers: ${universe.universe}, fiches couvrant l'univers: ${universe.covered}`);
 console.log(
   `G2 fiches lues: ${result.report.cardsRead}, pages produit: ${result.report.productPages}`,

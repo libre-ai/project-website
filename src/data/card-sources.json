@@ -1,0 +1,32 @@
+[
+  { "repository": "ai-work-supervision", "sha": "a03a68aa03c34c4361f561761618a21039a8f225" },
+  { "repository": "ai-model-policy", "sha": "ffceefef4bba19c0badbff671a3eb66b3a978032" },
+  {
+    "repository": "learning-session-facilitation",
+    "sha": "96cf3227ec922d7fe1b5496163c4db45f2bdc6d5"
+  },
+  {
+    "repository": "personal-knowledge-workspace",
+    "sha": "765ae46b225f2a59ca8be8af1d2a15838ee17fef"
+  },
+  { "repository": "travel-itinerary-planner", "sha": "cce55b6edafcd4655f014a4d39eae6ab96b741d6" },
+  {
+    "repository": "application-development-toolkit",
+    "sha": "57b5ea592c28270101880b44883d17e4a77f56a5"
+  },
+  { "repository": "schemas-and-contracts", "sha": "216ffb9207f1afc831d50c6c97b7020da9bb7ae1" },
+  { "repository": "collaborative-data-sync", "sha": "843f50c55764254f902017765346100a6d6305d8" },
+  {
+    "repository": "execution-continuity-evaluator",
+    "sha": "5d3275ec6bf5d48cf3cf4fba5ebf81945e11ab90"
+  },
+  { "repository": "execution-sandbox", "sha": "d1ffdd2bb2f2c8398861c041cf622dfb78a42e64" },
+  { "repository": "capability-authorization", "sha": "2642abf5c00e525aeac5d26ffed1a359eb26fe81" },
+  {
+    "repository": "organization-data-lifecycle",
+    "sha": "05375bd58ebbdb6620dea654ca28eea3792b4212"
+  },
+  { "repository": "database-policy-inspector", "sha": "e23b7c4392f8bc03cd1cf2f2d08f65fc4b2ba5e2" },
+  { "repository": "artifact-verification", "sha": "a88f252b540211463c15e6c8149dceb05c30d9a6" },
+  { "repository": "project-governance", "sha": "49b7d45346263857ab503bad81d20ab289ca064c" }
+]

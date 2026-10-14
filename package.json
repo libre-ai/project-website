@@ -27,6 +27,7 @@
     "@axe-core/playwright": "4.13.0",
     "@biomejs/biome": "2.5.3",
     "@clevercloud/client": "12.0.0",
+    "@fontsource-variable/source-sans-3": "5.3.0",
     "@libre-ai/contracts-authority": "file:../schemas-and-contracts",
     "@libre-ai/governance": "file:../project-governance",
     "@libre-ai/ui": "file:../application-development-toolkit/packages/ui",
