@@ -89,7 +89,7 @@ describe("renderPages (G1, FR-07, FR-09, FR-12)", () => {
     ];
     const html = renderPages(corpus, cards, proofs).get("/preuves") ?? "";
     expect(html).toContain(
-      "<td>G2 fiches lues</td><td>2</td><td>0</td><td><code>bun src/build-site.ts</code></td>",
+      '<td data-label="Contrôle">G2 fiches lues</td><td data-label="Examinés">2</td><td data-label="Violations">0</td><td data-label="Commande"><code>bun src/build-site.ts</code></td>',
     );
     expect(html).toContain("G9 textes examinés");
     expect(html).not.toContain("Les compteurs de chaque contrôle sont affichés");

@@ -93,7 +93,7 @@ function proofsBody(proofs: readonly Proof[]): string {
   const rows = proofs
     .map(
       (proof) =>
-        `<tr><td>${escapeHtml(proof.gate)}</td><td>${proof.examined}</td><td>${proof.violations}</td><td><code>${escapeHtml(proof.command)}</code></td></tr>`,
+        `<tr><td data-label="Contrôle">${escapeHtml(proof.gate)}</td><td data-label="Examinés">${proof.examined}</td><td data-label="Violations">${proof.violations}</td><td data-label="Commande"><code>${escapeHtml(proof.command)}</code></td></tr>`,
     )
     .join("");
   return `<h1>Preuves</h1><table><thead><tr><th>Contrôle</th><th>Examinés</th><th>Violations</th><th>Commande</th></tr></thead><tbody>${rows}</tbody></table>`;

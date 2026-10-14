@@ -263,10 +263,30 @@ table {
   border-collapse: collapse;
 }
 
-th,
-td,
 code {
   overflow-wrap: anywhere;
+}
+
+/* Narrow screens: each proof row becomes a block that names its own columns, so no header breaks mid-word. */
+@media (max-width: 40rem) {
+  thead {
+    display: none;
+  }
+  table,
+  tbody,
+  tr,
+  td {
+    display: block;
+    width: 100%;
+  }
+  tr {
+    border-block-end: 1px solid var(--lai-color-border-subtle, #dad5cf);
+    padding-block: 0.5rem;
+  }
+  td::before {
+    content: attr(data-label) " : ";
+    font-weight: 600;
+  }
 }
 `;
 
