@@ -36,7 +36,14 @@ function outputPath(route: string): string {
   return route === "/" ? "index.html" : `${route.slice(1)}/index.html`;
 }
 
-export function buildSite(sources: readonly SourceFile[]): SiteResult {
+// The stylesheets are supplied by the caller: the build reads them from the pinned UI
+// package, so this module stays free of file-system access and remains testable.
+export interface SiteAssets {
+  readonly tokens: string;
+  readonly styles: string;
+}
+
+export function buildSite(sources: readonly SourceFile[], assets: SiteAssets): SiteResult {
   const cardSources = sources.filter((source) => source.name.endsWith(CARD_SUFFIX));
   if (cardSources.length === 0) throw new Error("cards.source_empty");
 
@@ -63,6 +70,8 @@ export function buildSite(sources: readonly SourceFile[]): SiteResult {
   for (const [route, html] of pages) files.set(outputPath(route), html);
   files.set("sitemap.xml", renderSitemap(corpus));
   files.set("robots.txt", renderRobots());
+  files.set("assets/tokens.css", assets.tokens);
+  files.set("assets/styles.css", assets.styles);
   files.set("atom.xml", renderAtom(corpus, cards));
   // A citation is exported next to its product page, as plain text a reader can copy.
   for (const card of cards)

@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 // One block per requirement of the V1 PRD (§5). The server serves the built dist/ over HTTP,
@@ -155,6 +156,39 @@ test.describe("G6 : aucun défilement horizontal à 360, 390 et 1440 px", () => 
         );
         expect(overflow, `${path} at ${width}px`).toBeLessThanOrEqual(0);
       }
+    });
+  }
+});
+
+test.describe("G6 : zéro violation serious ou critical (axe, WCAG 2.2 AA)", () => {
+  // axe injects its own script, so it cannot run with JavaScript disabled. The no-JS project
+  // checks readability on its own (FR-07), and this block runs on the JavaScript-enabled project.
+
+  const routes = [
+    "/",
+    "/mission",
+    "/methode",
+    "/produits",
+    "/preuves",
+    "/gouvernance",
+    "/corrections",
+    "/contribuer",
+    SAMPLE_PRODUCT,
+  ];
+  for (const path of routes) {
+    test(`no serious or critical axe violation on ${path}`, async ({ page }, testInfo) => {
+      test.skip(testInfo.project.name === "chromium-no-js", "axe needs JavaScript");
+      await page.goto(path);
+      const results = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
+        .analyze();
+      const blocking = results.violations.filter(
+        (violation) => violation.impact === "serious" || violation.impact === "critical",
+      );
+      expect(
+        blocking.map((violation) => `${violation.id}: ${violation.nodes.length} nœud(s)`),
+        path,
+      ).toEqual([]);
     });
   }
 });

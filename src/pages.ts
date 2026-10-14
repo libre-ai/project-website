@@ -39,6 +39,7 @@ function layout(title: string, path: string, body: string): string {
     `<link rel="canonical" href="${canonical}">`,
     '<link rel="alternate" type="application/atom+xml" href="/atom.xml">',
     '<link rel="stylesheet" href="/assets/tokens.css">',
+    '<link rel="stylesheet" href="/assets/styles.css">',
     "</head>",
     "<body>",
     '<header><a href="/">Libre AI</a></header>',

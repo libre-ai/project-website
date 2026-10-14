@@ -24,6 +24,7 @@
     "@libre-ai/auth-web": "file:../ai-work-supervision/packages/auth-web"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@biomejs/biome": "2.5.3",
     "@clevercloud/client": "12.0.0",
     "@libre-ai/contracts-authority": "file:../schemas-and-contracts",
@@ -38,7 +39,8 @@
     "check:bun:runtime": "bun node_modules/@libre-ai/governance/tools/quality/check-bun-minimum.ts",
     "check:bun": "bun run check:bun:runtime && bun node_modules/@libre-ai/governance/tools/quality/check-bun-manifests.ts",
     "check:toolchain": "bun run check:bun && bun node_modules/@libre-ai/governance/tools/quality/check-toolchain.ts",
-    "build": "bun run check:bun && bun src/build.ts",
+    "build": "bun run check:bun && bun src/build-site.ts",
+    "build:brand": "bun run check:bun:runtime && bun src/build.ts",
     "sync:deployment-artifact": "bun run check:bun:runtime && bun tools/clever/sync-site.ts",
     "preview:brand": "bun run check:bun:runtime && bun src/preview.ts",
     "clever:personal": "bun run check:bun:runtime && bun tools/clever/personal.ts",
