@@ -1,0 +1,134 @@
+/**
+ * Page renderer (G1, FR-07, FR-09, FR-12): one HTML document per corpus page.
+ * No script element is ever emitted, and every card value passes through
+ * escapeHtml. Copy states only what the repository proves.
+ */
+import { type Corpus, SITE_ORIGIN } from "./corpus";
+import type { Exposure, Maturity, ProjectCard } from "./project-card";
+import { escapeHtml } from "./security";
+
+const EXPOSURE_LABELS: Readonly<Record<Exposure, string>> = {
+  idea: "Idée",
+  "spec-published": "Spécification publiée",
+  "usable-verifiable": "Utilisable et vérifiable",
+  proven: "Éprouvé",
+};
+
+const MATURITY_LABELS: Readonly<Record<Maturity, string>> = {
+  idea: "Idée",
+  specified: "Spécifié",
+  usable: "Utilisable",
+  proven: "Éprouvé",
+};
+
+// Exposures whose application URL may be shown (FR-02). Others get a follow link only.
+const EXPOSURES_WITH_APPLICATION: readonly Exposure[] = ["usable-verifiable", "proven"];
+
+const FORGE_URL = "https://github.com/libre-ai";
+
+function layout(title: string, path: string, body: string): string {
+  const canonical = `${SITE_ORIGIN}${path}`;
+  return [
+    "<!doctype html>",
+    '<html lang="fr">',
+    "<head>",
+    '<meta charset="utf-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    `<title>${escapeHtml(title)} · Libre AI</title>`,
+    `<link rel="canonical" href="${canonical}">`,
+    '<link rel="stylesheet" href="/assets/tokens.css">',
+    "</head>",
+    "<body>",
+    '<header><a href="/">Libre AI</a></header>',
+    `<main>${body}</main>`,
+    '<footer><a href="/corrections">Journal des corrections</a></footer>',
+    "</body>",
+    "</html>",
+    "",
+  ].join("\n");
+}
+
+function productItem(card: ProjectCard): string {
+  return `<li><a href="/produits/${escapeHtml(card.project)}">${escapeHtml(card.project)}</a> : ${escapeHtml(EXPOSURE_LABELS[card.exposure])}</li>`;
+}
+
+function productPage(card: ProjectCard): string {
+  const limits = card.limits.map((entry) => `<li>${escapeHtml(entry)}</li>`).join("");
+  const action = EXPOSURES_WITH_APPLICATION.includes(card.exposure)
+    ? `<p><a href="${escapeHtml(card.applicationUrl ?? "")}" rel="noopener noreferrer">Ouvrir le produit</a> (application externe)</p>`
+    : "<p>Suivre la fiche sur la forge.</p>";
+  return [
+    `<h1>${escapeHtml(card.project)}</h1>`,
+    `<p>${escapeHtml(card.summary)}</p>`,
+    `<p>Exposition : ${escapeHtml(EXPOSURE_LABELS[card.exposure])}. Maturité : ${escapeHtml(MATURITY_LABELS[card.maturity])}.</p>`,
+    `<h2>Situation actuelle</h2><p>${escapeHtml(card.currentSituation)}</p>`,
+    `<h2>Limites</h2><ul>${limits}</ul>`,
+    action,
+    `<p><a href="${FORGE_URL}" rel="noopener noreferrer">Forge publique</a></p>`,
+  ].join("");
+}
+
+function fixedBody(path: string, cards: readonly ProjectCard[]): { title: string; body: string } {
+  switch (path) {
+    case "/":
+      return {
+        title: "Accueil",
+        body: '<h1>Possédez la fabrique.</h1><p>Libre AI aide chacun à comprendre, choisir et utiliser l\'IA sans subir les discours marketing ni les dépendances irréversibles.</p><p><a href="/produits">Voir les produits</a></p>',
+      };
+    case "/mission":
+      return {
+        title: "Mission",
+        body: "<h1>Mission</h1><p>Le site a une seule tâche : rendre visible l'état réel de chaque produit, avec sa limite et sa preuve.</p>",
+      };
+    case "/methode":
+      return {
+        title: "Méthode",
+        body: "<h1>Méthode</h1><p>Chaque affirmation sur un produit porte son état, ses limites et la date de sa vérification. Les contrôles du dépôt échouent sur une source illisible au lieu de passer.</p>",
+      };
+    case "/produits":
+      return {
+        title: "Produits",
+        body: `<h1>Produits</h1><ul>${cards.map(productItem).join("")}</ul>`,
+      };
+    case "/preuves":
+      return {
+        title: "Preuves",
+        body: "<h1>Preuves</h1><p>Les compteurs de chaque contrôle sont affichés à chaque construction.</p>",
+      };
+    case "/gouvernance":
+      return {
+        title: "Gouvernance",
+        body: `<h1>Gouvernance</h1><p>Les décisions et les rôles sont tenus dans le dépôt de gouvernance, <a href="${FORGE_URL}/project-governance" rel="noopener noreferrer">project-governance</a>.</p>`,
+      };
+    case "/corrections":
+      return {
+        title: "Corrections",
+        body: "<h1>Journal des corrections</h1><p>Aucune correction publiée à ce jour.</p>",
+      };
+    case "/contribuer":
+      return {
+        title: "Contribuer",
+        body: `<h1>Contribuer</h1><p>Les propositions passent par la forge publique : <a href="${FORGE_URL}" rel="noopener noreferrer">${FORGE_URL}</a>.</p>`,
+      };
+    default:
+      throw new Error(`pages.route_unknown:${path}`);
+  }
+}
+
+export function renderPages(
+  corpus: Corpus,
+  cards: readonly ProjectCard[],
+): ReadonlyMap<string, string> {
+  const pages = new Map<string, string>();
+  for (const page of corpus.pages) {
+    if (page.kind === "fixed") {
+      const { title, body } = fixedBody(page.path, cards);
+      pages.set(page.path, layout(title, page.path, body));
+      continue;
+    }
+    const card = cards.find((entry) => `/produits/${entry.project}` === page.path);
+    if (card === undefined) throw new Error(`pages.card_missing:${page.path}`);
+    pages.set(page.path, layout(card.project, page.path, productPage(card)));
+  }
+  return pages;
+}
