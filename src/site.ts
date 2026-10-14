@@ -52,6 +52,8 @@ export function buildSite(
   sources: readonly SourceFile[],
   assets: SiteAssets,
   presentations: readonly Presentation[] = [],
+  // Gates the caller ran before this assembly (the snapshot check), listed first on /preuves.
+  priorProofs: readonly Proof[] = [],
 ): SiteResult {
   const cardSources = sources.filter((source) => source.name.endsWith(CARD_SUFFIX));
   if (cardSources.length === 0) throw new Error("cards.source_empty");
@@ -89,8 +91,9 @@ export function buildSite(
   if (violations.length > 0) throw new Error(`site.gate_refused:${violations.join(",")}`);
 
   // One row per gate, each taken from that gate's own result; the command is the one that reproduces it.
-  const command = "LIBRE_AI_CARDS_DIR=<dossier des fiches> bun run build";
+  const command = "bun run build";
   const proofs: Proof[] = [
+    ...priorProofs,
     { gate: "G2 fiches lues", examined: cards.length, violations: 0, command },
     { gate: "G3 ressources examinées", examined: resourceGates.examined, violations: 0, command },
     {

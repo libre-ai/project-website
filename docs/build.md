@@ -6,36 +6,45 @@
 - Les dépendances `file:` installées selon la procédure de composition de `project-governance`
   (`docs/LOCAL-COMPOSITION.md`). `node_modules/@libre-ai/ui` et `node_modules/@libre-ai/governance`
   doivent exister.
-- Un dossier de fiches `project.v1.yaml` (voir `docs/content-format.md`).
+
+## Source des fiches
+
+Les fiches `project.v1.yaml` sont une **copie versionnée** sous `src/data/cards/`, prise dans
+chaque dépôt au commit épinglé dans `src/data/card-sources.json`, qui enregistre aussi le SHA-256
+de chaque fichier. Le build vérifie la copie contre ces empreintes avant toute autre chose et
+refuse une copie modifiée à la main, manquante ou non épinglée (`site.snapshot_refused:…`).
+L'autorité reste le dépôt de chaque produit ; la copie est contrôlée, pas saisie.
+
+Mettre à jour la copie et ses empreintes (réseau, `gh` authentifié) :
+
+```sh
+bun src/fetch-cards-cli.ts          # écrit src/data/cards et met à jour card-sources.json
+git diff src/data                   # relire avant de committer
+```
+
+Pour changer de commit, éditer `sha` dans `card-sources.json` puis relancer la commande.
+`LIBRE_AI_CARDS_DIR=<dossier>` remplace la copie par un autre dossier pour un essai local ; la
+copie versionnée est tout de même vérifiée.
 
 ## Commandes
 
 ```sh
-# Construire dist/ à partir d'un dossier de fiches. Échoue fermé sans la variable.
-LIBRE_AI_CARDS_DIR=<dossier des fiches> bun run build
-
-# Suite complète : toolchain, build, secrets, données personnelles, licences, lint, typecheck, tests.
-LIBRE_AI_CARDS_DIR=<dossier des fiches> bun run check
-
-# Tests de bout en bout sur dist/ (serveur local sur http://localhost:8080).
-# Nécessite dist/ construit et les navigateurs Playwright installés.
-bunx playwright test --project=chromium --project=chromium-no-js
-```
-
-L'ancien générateur, fondé sur le portefeuille seul, reste disponible :
-
-```sh
-bun run build:brand
+bun run build                       # construit dist/, sans réseau ni variable
+bun run check                       # toolchain, build, secrets, données personnelles, licences, lint, typecheck, tests
+bunx playwright test                # e2e sur dist/, serveur local http://localhost:8080 (navigateurs : bunx playwright install firefox webkit)
+bun run build:brand                 # ancien générateur, fondé sur le portefeuille seul
 ```
 
 ## Ce que le build imprime
 
 Chaque contrôle imprime ses compteurs, y compris les contrôles réussis :
 
+- `G2 instantané` : fiches vérifiées contre leurs empreintes, et la source lue.
 - `G2 univers` : dépôts du portefeuille, dont couverts par une fiche.
 - `G2 fiches lues` : fiches lues et pages produit générées.
 - `G1 pages fixes` : routes fixes et fichiers écrits.
-- `G3 ressources examinées` : ressources contrôlées (0 tant qu'il n'y a pas de corpus de ressources).
+- `G3 ressources examinées` : présentations examinées (brouillons compris).
+- `ADR 0003 présentations` : rédigées, relues et publiées.
 - `G9 textes examinés` : textes passés au contrôle des mots interdits, et violations.
 
 La page `/preuves` reprend les mêmes compteurs, avec la commande de reproduction.

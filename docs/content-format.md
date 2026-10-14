@@ -1,8 +1,9 @@
 # Format de fiche produit
 
-Une fiche est un fichier `<repository>.project.v1.yaml` dans le dossier passé à la construction
-par `LIBRE_AI_CARDS_DIR`. La source de vérité est le `project.v1.yaml` du dépôt produit ; le site
-le lit et ne le réécrit jamais.
+Une fiche est un fichier `<repository>.project.v1.yaml`, copié sous `src/data/cards/` depuis le
+dépôt produit au commit épinglé dans `src/data/card-sources.json` (voir `docs/build.md`). La
+source de vérité est le `project.v1.yaml` du dépôt produit ; la copie est vérifiée par empreinte
+et jamais éditée à la main.
 
 ## Champs lus par le site
 

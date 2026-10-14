@@ -1,14 +1,16 @@
 /**
  * Card fetch entry (G2): reads `project.v1.yaml` from each repository at the commit pinned in
- * src/data/card-sources.json, and writes `<repository>.project.v1.yaml` into the target
- * directory. Fails closed: every card is read before anything is written, so a partial
- * directory can never reach the build.
+ * src/data/card-sources.json, writes the versioned snapshot under src/data/cards, and records
+ * the SHA-256 of each file next to its pin. Fails closed: every card is read before anything is
+ * written, so a partial snapshot can never reach the build. Review the diff of both the snapshot
+ * and card-sources.json before committing.
  *
- * Usage: bun src/fetch-cards-cli.ts <directory>
+ * Usage: bun src/fetch-cards-cli.ts [directory]   (default: src/data/cards)
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import { sha256Hex } from "./cards-snapshot";
 import { type CardSource, cardUrl, parseCardSources } from "./fetch-cards";
 
 export async function fetchCardText(source: CardSource): Promise<string> {
@@ -26,22 +28,27 @@ export async function fetchCardText(source: CardSource): Promise<string> {
 export async function fetchCards(
   sources: readonly CardSource[],
   directory: string,
-): Promise<number> {
+): Promise<readonly CardSource[]> {
   const texts = new Map<string, string>();
   for (const source of sources) texts.set(source.repository, await fetchCardText(source));
   await mkdir(directory, { recursive: true });
-  for (const [repository, text] of texts) {
-    await writeFile(join(directory, `${repository}.project.v1.yaml`), text, "utf8");
+  const updated: CardSource[] = [];
+  for (const source of sources) {
+    const text = texts.get(source.repository) ?? "";
+    await writeFile(join(directory, `${source.repository}.project.v1.yaml`), text, "utf8");
+    updated.push({ ...source, sha256: sha256Hex(text) });
   }
-  return texts.size;
+  return updated;
 }
 
 if (import.meta.main) {
-  const sources = parseCardSources(
-    await Bun.file(join(import.meta.dir, "data/card-sources.json")).json(),
+  const pinsPath = join(import.meta.dir, "data/card-sources.json");
+  const sources = parseCardSources(await Bun.file(pinsPath).json());
+  const directory = process.argv[2] ?? join(import.meta.dir, "data/cards");
+  const updated = await fetchCards(sources, directory);
+  const changed = updated.filter((entry, index) => entry.sha256 !== sources[index]?.sha256).length;
+  await writeFile(pinsPath, `${JSON.stringify(updated, null, 2)}\n`, "utf8");
+  console.log(
+    `G2 fiches récupérées: ${updated.length} / ${sources.length} dépôts épinglés, empreintes modifiées: ${changed}`,
   );
-  const directory = process.argv[2];
-  if (directory === undefined || directory === "") throw new Error("card_fetch.directory_not_set");
-  const count = await fetchCards(sources, directory);
-  console.log(`G2 fiches récupérées: ${count} / ${sources.length} dépôts épinglés`);
 }

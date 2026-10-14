@@ -6,6 +6,8 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { writeStaticSite } from "./build";
+import { verifyCardSnapshot } from "./cards-snapshot";
+import { parseCardSources } from "./fetch-cards";
 import { FONT_FILE, FONT_LICENSE_FILE, renderFontFace } from "./font";
 import { loadPresentations } from "./presentation";
 import { buildSite, type SourceFile } from "./site";
@@ -14,12 +16,30 @@ import { checkCardUniverse, type Exclusion } from "./universe";
 
 const CARD_SUFFIX = ".project.v1.yaml";
 
-// The card directory is named explicitly, never guessed.
-const cardsDirectory = process.env.LIBRE_AI_CARDS_DIR;
-if (cardsDirectory === undefined || cardsDirectory === "") {
-  throw new Error("cards.directory_not_set");
+// Owner decision of 2026-10-14 (option 3): the build reads the versioned snapshot by default, so
+// it needs no network and no variable. The snapshot is checked against the digests recorded at
+// fetch time before anything else runs. LIBRE_AI_CARDS_DIR overrides the directory for local work.
+const snapshotDirectory = join(import.meta.dir, "data/cards");
+const pins = parseCardSources(
+  await Bun.file(join(import.meta.dir, "data/card-sources.json")).json(),
+);
+const snapshotNames = (await readdir(snapshotDirectory)).filter((name) =>
+  name.endsWith(CARD_SUFFIX),
+);
+const snapshot = verifyCardSnapshot(
+  pins,
+  await Promise.all(
+    snapshotNames.map(async (name) => ({
+      repository: name.replace(CARD_SUFFIX, ""),
+      text: await readFile(join(snapshotDirectory, name), "utf8"),
+    })),
+  ),
+);
+if (snapshot.violations.length > 0) {
+  throw new Error(`site.snapshot_refused:${snapshot.violations.join(",")}`);
 }
 
+const cardsDirectory = process.env.LIBRE_AI_CARDS_DIR || snapshotDirectory;
 const names = (await readdir(cardsDirectory)).filter((name) => name.endsWith(CARD_SUFFIX));
 const sources: SourceFile[] = [];
 for (const name of names.sort()) {
@@ -36,7 +56,13 @@ const assets = {
 
 // Presentations are editorial content of this repository (docs/, CC-BY-4.0), one file per product.
 const presentations = await loadPresentations(join(process.cwd(), "docs/presentations"));
-const result = buildSite(sources, assets, presentations);
+const snapshotProof = {
+  gate: "G2 instantané des fiches vérifié contre les empreintes épinglées",
+  examined: snapshot.examined,
+  violations: snapshot.violations.length,
+  command: "bun run build",
+};
+const result = buildSite(sources, assets, presentations, [snapshotProof]);
 
 // The portfolio is the authority for which repositories are products; the exclusions are data.
 const portfolio = (await Bun.file(
@@ -65,6 +91,9 @@ const binaries = new Map<string, Uint8Array>([
 await writeStaticSite(
   join(process.cwd(), "dist"),
   new Map<string, string | Uint8Array>([...result.files, ...binaries]),
+);
+console.log(
+  `G2 instantané: ${snapshot.examined} fiches vérifiées contre leurs empreintes (source: ${cardsDirectory === snapshotDirectory ? "instantané versionné" : cardsDirectory})`,
 );
 console.log(`G2 univers: ${universe.universe}, fiches couvrant l'univers: ${universe.covered}`);
 console.log(

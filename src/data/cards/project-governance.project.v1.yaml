@@ -1,0 +1,73 @@
+# Fiche d'état du projet — autorité de l'état depuis ADR-0020 (design §6.2).
+# La section statut du README est générée depuis cette fiche (sentinelles).
+schema_version: libre-ai.project.v1
+project: project-governance
+repository: libre-ai/project-governance
+kind: authority
+layer: transverse
+statement:
+  for: "les projets de la constellation Libre AI"
+  who_faces: "le coût et la dérive de machineries recopiées d'un repo à l'autre"
+  enables: "s'appuyer sur une doctrine et des gates uniques au lieu de règles recopiées"
+  producing:
+    - "un gabarit de flotte consommé par SHA et des gates qui surveillent toute la constellation"
+  without_depending_on:
+    - "aucun service tiers, aucune copie non vérifiée — consommation épinglée et gates de dérive"
+summary: "Autorité de doctrine : décisions, invariants, index d'écosystème, schéma de fiches, outillage de flotte."
+current_situation: >-
+  Autorité de doctrine et d'outillage de flotte depuis le transfert tracé du
+  2026-10-07, qui exécute la direction propriétaire du 2026-09-29 : doctrine
+  (ADR 0001 à 0043, LEXICON, registres d'invariants et de décisions), gates
+  d'écosystème, workflows réutilisables et gate de composition multi-dépôts.
+  Mesures du 2026-10-08 : le gate de dérive d'inventaire est vert (24 dépôts
+  déclarés, 24 observés, 0 dérive) ; le gate d'épinglage lit 60 pins sur 20 des
+  22 cibles, 0 illisible, contre 10 générations déclarées ; la présentation de
+  flotte tient sur 24 dépôts. Restent rouges la conformité de contexte (1 sur 24 :
+  application-development-toolkit, sans AGENTS.md sur sa branche servie) et
+  celle de Dependabot (2 sur 24 : application-development-toolkit sans copie,
+  `.github` sans variante publiée pour son jeu de manifestes). Le corpus
+  historique de `governance` (docs/reviews, la majorité de docs/superpowers)
+  reste dans l'archive vérifiée, non déclaré supersédé.
+scope:
+  - "Autorité de doctrine : décisions, invariants, index d'écosystème, schéma de fiches, outillage de flotte."
+  - "Autorité de marque : plateforme verbale, exigences de preuve et projection publique générée."
+non_goals:
+  - "aucune seconde implémentation durable de ce domaine ailleurs dans la constellation"
+dependencies:
+  # 2026-10-07 : l'entrée précédente déclarait `libre-ai/governance`, le dépôt
+  # que cette autorité remplace (ADR-0041). Elle ne dépendait pas de lui : elle
+  # EST désormais le gabarit de flotte et les gates de qualité. Restent ses deux
+  # dépendances réelles, aux pins qu'elle porte effectivement.
+  - on: libre-ai/schemas-and-contracts
+    why: "autorité des contrats publics, consommée par les tests d'autorisation"
+    pinned: "github:libre-ai/schemas-and-contracts#d2767988c7b1a00b304b76c5d5ac92b93898bf30"
+  - on: libre-ai/capability-authorization
+    why: "seul foyer du patch biscuit-auth vendorisé (I-28), consommé sous [patch.crates-io]"
+    pinned: "7ce06366663ff8b4329d0bc25f589c8ef830aef0"
+maturity: usable
+confidence: medium
+exposure: usable-verifiable
+freshness:
+  last_verified_on: "2026-10-08"
+scope_stability: stable
+benchmark:
+  none: "n/a (governance authority, no external parity target)"
+phases:
+  - id: service
+    title: En service dans la constellation
+    exit_criteria:
+      - id: consumed-pinned
+        text: "Le gabarit de flotte (workflows réutilisables + outillage qualité) est consommé épinglé par les 20 dépôts consommateurs de la flotte de 24 (hors l'autorité elle-même, le profil d'organisation, le dépôt privé exclu de la lecture inter-dépôts et le moyeu archivé), chacun sur une génération déclarée dans ecosystem/fleet-pins.v1.yaml (19 sur 2024a488, 1 sur d083dd33) ; les gates de flotte (inventaire, pins) le vérifient dans le job Inventory drift à chaque push de la branche servie et à chaque pull request."
+        weight: 1
+        status: accepted
+        evidence:
+          date: "2026-10-09"
+          reference: "bun ecosystem/check-fleet-pins.ts sur f032f233396b96574646756a118f87562bfa1440 (2026-10-09) : 60 pin(s) read across 20 of 22 target(s), 0 unreadable, against 10 declared generation(s) ; même commit, run CI push https://github.com/libre-ai/project-governance/actions/runs/37850575256 (2026-10-08) : inventaire 24 déclarés / 23 observés, 0 dérive, pins identiques"
+      - id: compat-policy
+        text: "L'API est couverte par une politique de compatibilité déclarée et un versionnage de rupture outillé."
+        weight: 1
+        status: pending
+      - id: brand-authority-adoption
+        text: "La plateforme de marque est fusionnée sous signature propriétaire, ses projections aval épinglent des SHA revus et aucun asset figuratif n'est publié sans licence dédiée et contrôle de similarité archivé."
+        weight: 1
+        status: pending
