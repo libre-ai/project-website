@@ -40,4 +40,6 @@ try {
 } finally {
   await browser.close();
 }
-console.log(`G10 captures écrites: ${ROUTES.length * WIDTHS.length} (${ROUTES.length} gabarits × ${WIDTHS.length} largeurs)`);
+console.log(
+  `G10 captures écrites: ${ROUTES.length * WIDTHS.length} (${ROUTES.length} gabarits × ${WIDTHS.length} largeurs)`,
+);
