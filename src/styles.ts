@@ -235,6 +235,18 @@ thead th {
     gap: var(--lai-space-1);
   }
 }
+
+/* The proofs table and long commands must wrap, never widen the page (FR-06 at 360 px). */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td,
+code {
+  overflow-wrap: anywhere;
+}
 `;
 
 export function renderSiteCss(): string {

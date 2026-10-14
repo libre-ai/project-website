@@ -4,6 +4,18 @@ import { expect, test } from "@playwright/test";
 // One block per requirement of the V1 PRD (§5). The server serves the built dist/ over HTTP,
 // never file:, so relative and canonical URLs behave as they will in production.
 const SAMPLE_PRODUCT = "/produits/execution-sandbox";
+// The nine route templates of PRD §6, with one product page as the template for /produits/:id.
+const ROUTES = [
+  "/",
+  "/mission",
+  "/methode",
+  "/produits",
+  "/preuves",
+  "/gouvernance",
+  "/corrections",
+  "/contribuer",
+  SAMPLE_PRODUCT,
+];
 // Same origin as SITE_ORIGIN in src/corpus.ts: the canonical URLs must match what is served.
 const LOCAL_ORIGIN = "http://localhost:8080";
 const EXTERNAL_PREFIX = /^https?:\/\/(?!localhost:8080)/;
@@ -158,7 +170,8 @@ test.describe("G6 : aucun défilement horizontal à 360, 390 et 1440 px", () => 
       page,
     }) => {
       await page.setViewportSize({ width, height: 900 });
-      for (const path of ["/", "/produits", SAMPLE_PRODUCT]) {
+      // Every route, not a sample: a wide table on one page is exactly what a sample misses.
+      for (const path of [...ROUTES]) {
         await page.goto(path);
         const overflow = await page.evaluate(
           () => document.documentElement.scrollWidth - window.innerWidth,
