@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D-03 · Parcours décideur</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper: #f5f5f5;
+      --color-ink: #2d3142;
+      --color-muted: #4f5d75;
+      --color-accent: #bf4520;
+      --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      --font-mono: ui-monospace, Menlo, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1rem;
+    }
+    .frame { max-width: 1000px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 { font-size: clamp(1.25rem, 2vw + 0.75rem, 1.75rem); font-weight: 600; margin-bottom: 1.25rem; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    svg { width: 100%; min-width: 640px; display: block; }
+    @media print { .diagram-container { overflow-x: visible; } svg { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Flowchart · D-03 · Vérifier (P2)</p>
+    <h1>Parcours décideur : utilisable maintenant ?</h1>
+    <div class="diagram-container">
+      <svg viewBox="0 0 1000 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d03-title d03-desc">
+        <title id="d03-title">Parcours décideur : utilisable maintenant ?</title>
+        <desc id="d03-desc">Le décideur ouvre la liste des produits, lit la fiche avec ses preuves et ses limites, puis choisit : ouvrir le produit si son exposition est utilisable et vérifiable, sinon suivre la fiche.</desc>
+        <defs>
+          <marker id="d03-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="d03-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#bf4520"/></marker>
+        </defs>
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- Arrows, drawn first -->
+        <line x1="500" y1="88" x2="500" y2="120" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d03-arrow)"/>
+        <line x1="500" y1="168" x2="500" y2="200" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d03-arrow)"/>
+        <line x1="500" y1="248" x2="500" y2="296" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d03-arrow)"/>
+        <line x1="600" y1="344" x2="720" y2="344" stroke="#bf4520" stroke-width="1.4" marker-end="url(#d03-accent)"/>
+        <line x1="500" y1="392" x2="500" y2="416" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#d03-arrow)"/>
+
+        <!-- Arrow labels -->
+        <rect x="640" y="334" width="40" height="14" rx="2" fill="#f5f5f5"/>
+        <text x="660" y="345" fill="#bf4520" font-size="9" font-family="ui-monospace, monospace" text-anchor="middle">OUI</text>
+        <rect x="508" y="398" width="32" height="14" rx="2" fill="#f5f5f5"/>
+        <text x="524" y="409" fill="#4f5d75" font-size="9" font-family="ui-monospace, monospace" text-anchor="middle">NON</text>
+
+        <!-- Start oval -->
+        <rect x="420" y="40" width="160" height="48" rx="20" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="500" y="68" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Liste des produits</text>
+
+        <!-- Step: read the card -->
+        <rect x="420" y="120" width="160" height="48" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="500" y="141" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Ouvrir la fiche</text>
+        <text x="500" y="156" fill="#4f5d75" font-size="9" font-family="ui-monospace, monospace" text-anchor="middle">exposition, maturité</text>
+
+        <!-- Step: proofs and limits -->
+        <rect x="420" y="200" width="160" height="48" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="500" y="221" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Lire preuves et limites</text>
+        <text x="500" y="236" fill="#4f5d75" font-size="9" font-family="ui-monospace, monospace" text-anchor="middle">date, commande</text>
+
+        <!-- Decision -->
+        <polygon points="500,296 600,344 500,392 400,344" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="500" y="340" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Utilisable</text>
+        <text x="500" y="354" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">maintenant ?</text>
+
+        <!-- Yes: open the product (exposure usable-verifiable or proven only) -->
+        <rect x="720" y="320" width="200" height="48" rx="20" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1"/>
+        <text x="820" y="341" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Ouvrir le produit</text>
+        <text x="820" y="356" fill="#4f5d75" font-size="9" font-family="ui-monospace, monospace" text-anchor="middle">exposition vérifiable ou éprouvée</text>
+
+        <!-- No: follow the card -->
+        <rect x="420" y="416" width="160" height="48" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="500" y="437" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Suivre la fiche</text>
+        <text x="500" y="452" fill="#4f5d75" font-size="9" font-family="ui-monospace, monospace" text-anchor="middle">lien vers la forge, sans URL</text>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>
