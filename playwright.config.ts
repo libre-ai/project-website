@@ -1,8 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
 // The e2e run serves a dist/ built by src/build-site.ts (see README), over HTTP on 8080.
-// Firefox and WebKit are not declared here: the browsers are not installed in this environment,
-// and a project that cannot launch is reported as a failure rather than skipped.
+// Browsers are installed with `bunx playwright install firefox webkit` (see docs/build.md). A project
+// that cannot launch is reported as a failure rather than skipped.
 export default defineConfig({
   testDir: "./e2e",
   testMatch: "*.e2e.ts",
@@ -22,6 +22,8 @@ export default defineConfig({
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+    { name: "webkit", use: { ...devices["Desktop Safari"] } },
     {
       name: "chromium-no-js",
       use: { ...devices["Desktop Chrome"], javaScriptEnabled: false },
