@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { join } from "node:path";
 import { parsePortfolio, renderPortfolio } from "./portfolio";
 
+// Read from the pinned install, like the build: no sibling checkout is assumed (S6.3).
 const data = await Bun.file(
-  new URL("../../project-governance/ecosystem/portfolio.v1.json", import.meta.url),
+  join(process.cwd(), "node_modules/@libre-ai/governance/ecosystem/portfolio.v1.json"),
 ).json();
 
 describe("current portfolio", () => {
