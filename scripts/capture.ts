@@ -14,6 +14,7 @@ const ROUTES = [
   "/methode",
   "/produits",
   "/fabrique",
+  "/offres",
   "/preuves",
   "/gouvernance",
   "/corrections",

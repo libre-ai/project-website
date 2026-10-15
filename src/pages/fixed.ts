@@ -13,6 +13,7 @@ import { fabriqueBody } from "./fabrique";
 import { homeBody } from "./home";
 import { FORGE_URL } from "./layout";
 import { methodBody } from "./method";
+import { offresBody } from "./offres";
 import { productList } from "./product";
 import { type Proof, proofsBody } from "./proofs";
 import { signalerBody } from "./signaler";
@@ -44,6 +45,8 @@ export function fixedBody(
         title: "Produits",
         body: `<h1>Produits</h1>${productList(cards, presentations)}`,
       };
+    case "/offres":
+      return { title: "Offres", body: offresBody() };
     case "/deployer":
       return {
         title: "Déployer",
