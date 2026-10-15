@@ -47,6 +47,26 @@ describe("repository diagrams", () => {
     expect(diagrams.length).toBeGreaterThan(0);
   });
 
+  // DIAG-5 (ADR 0003): no diagram carries a state name, in any file of the folder.
+  test("no diagram or source uses an exposure or maturity name", () => {
+    const names = [
+      "exposition",
+      "maturité",
+      "utilisable",
+      "éprouvé",
+      "usable-verifiable",
+      "spec-published",
+    ];
+    let examined = 0;
+    for (const file of readdirSync(directory).filter((n) => /\.(html|txt)$/.test(n))) {
+      const text = readFileSync(join(directory, file), "utf8").toLowerCase();
+      examined += 1;
+      for (const name of names) expect(text, `${file}: ${name}`).not.toContain(name);
+    }
+    console.log(`DIAG-5 files examined: ${examined}`);
+    expect(examined).toBeGreaterThan(0);
+  });
+
   for (const name of diagrams) {
     test(`${name}: every node is in its source, every source line is rendered`, () => {
       const source = readFileSync(join(directory, name.replace(/\.html$/, ".nodes.txt")), "utf8");

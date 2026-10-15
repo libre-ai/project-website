@@ -6,7 +6,7 @@ section du PRD indiquée ci-dessous.
 
 | Fichier | Diagramme | Type | Source du texte |
 | --- | --- | --- | --- |
-| `d-03-decideur.html` | D-03, parcours décideur | flowchart | PRD §3.2, J2 |
+| `d-03-decideur.html` | D-03, parcours décideur (sans branche d'état, ADR 0003) | flowchart | PRD §3.2, J2 |
 | `d-04-contributeur.html` | D-04, parcours contributeur | process | PRD §3.2, J3 |
 | `d-05-carte.html` | D-05, carte du site | tree | PRD §6 |
 

@@ -42,11 +42,11 @@
 <body>
   <div class="frame">
     <p class="eyebrow">Flowchart · D-03 · Vérifier (P2)</p>
-    <h1>Parcours décideur : utilisable maintenant ?</h1>
+    <h1>Parcours décideur : de la liste au code source</h1>
     <div class="diagram-container">
       <svg viewBox="0 0 1000 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d03-title d03-desc">
-        <title id="d03-title">Parcours décideur : utilisable maintenant ?</title>
-        <desc id="d03-desc">Le décideur ouvre la liste des produits, lit la fiche avec ses preuves et ses limites, puis choisit : ouvrir le produit si son exposition est utilisable et vérifiable, sinon suivre la fiche.</desc>
+        <title id="d03-title">Parcours décideur : de la liste au code source</title>
+        <desc id="d03-desc">Le décideur ouvre la liste des produits, lit la fiche avec ses limites et sa date, puis choisit : ouvrir le produit si la fiche déclare une adresse, sinon lire le code source.</desc>
         <defs>
           <marker id="d03-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
           <marker id="d03-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#bf4520"/></marker>
@@ -73,27 +73,27 @@
         <!-- Step: read the card -->
         <rect x="420" y="120" width="160" height="48" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
         <text x="500" y="141" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Ouvrir la fiche</text>
-        <text x="500" y="156" fill="#4f5d75" font-size="11" font-family="ui-monospace, monospace" text-anchor="middle">exposition, maturité</text>
+        <text x="500" y="156" fill="#4f5d75" font-size="11" font-family="ui-monospace, monospace" text-anchor="middle">couche, type</text>
 
         <!-- Step: proofs and limits -->
         <rect x="420" y="200" width="160" height="48" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
-        <text x="500" y="221" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Lire preuves et limites</text>
-        <text x="500" y="236" fill="#4f5d75" font-size="11" font-family="ui-monospace, monospace" text-anchor="middle">date, commande</text>
+        <text x="500" y="221" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Lire limites et date</text>
+        <text x="500" y="236" fill="#4f5d75" font-size="11" font-family="ui-monospace, monospace" text-anchor="middle">dépôt, citation</text>
 
         <!-- Decision -->
         <polygon points="500,296 600,344 500,392 400,344" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
-        <text x="500" y="340" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Utilisable</text>
-        <text x="500" y="354" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">maintenant ?</text>
+        <text x="500" y="340" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Adresse</text>
+        <text x="500" y="354" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">déclarée ?</text>
 
-        <!-- Yes: open the product (exposure usable-verifiable or proven only) -->
+        <!-- Yes: open the product (the card declares an application address) -->
         <rect x="720" y="320" width="200" height="48" rx="20" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1"/>
         <text x="820" y="341" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Ouvrir le produit</text>
-        <text x="820" y="356" fill="#4f5d75" font-size="11" font-family="ui-monospace, monospace" text-anchor="middle">exposition vérifiable ou éprouvée</text>
+        <text x="820" y="356" fill="#4f5d75" font-size="11" font-family="ui-monospace, monospace" text-anchor="middle">adresse de la fiche, externe</text>
 
-        <!-- No: follow the card -->
+        <!-- No: read the source code -->
         <rect x="420" y="416" width="160" height="48" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
-        <text x="500" y="437" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Suivre la fiche</text>
-        <text x="500" y="452" fill="#4f5d75" font-size="11" font-family="ui-monospace, monospace" text-anchor="middle">lien vers la forge, sans URL</text>
+        <text x="500" y="437" fill="#2d3142" font-size="12" font-weight="600" text-anchor="middle">Lire le code source</text>
+        <text x="500" y="452" fill="#4f5d75" font-size="11" font-family="ui-monospace, monospace" text-anchor="middle">lien vers la forge</text>
       </svg>
     </div>
   </div>
