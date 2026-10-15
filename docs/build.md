@@ -50,6 +50,10 @@ Chaque contrôle imprime ses compteurs, y compris les contrôles réussis :
   `src/data/licences`, épinglées dans `src/data/licence-sources.json`) et dépôts rendus sur
   `/licences`. Mise à jour : `bun src/fetch-licences-cli.ts` (réseau, relire le diff). Un dépôt
   sans identifiant SPDX lisible refuse la construction.
+- `S3.3 déployer` : document `LOCAL-COMPOSITION.md` vérifié contre son empreinte (copie sous
+  `src/data/deploy`, épinglée dans `src/data/deploy-source.json`) et nombre de révisions citées
+  (3 attendues). Mise à jour : `bun src/fetch-deploy-cli.ts` (réseau, relire le diff) ; une
+  constante absente ou une révision qui n'est pas un commit complet refuse la construction.
 - `NFR déterminisme` : deux assemblages du même contenu, fichiers comparés octet pour octet ;
   toute différence refuse la construction.
 - `NFR poids` : pages mesurées (document, feuilles liées, polices chargées) et la plus lourde,

@@ -35,10 +35,11 @@ describe("buildCorpus (G1 : 8 routes fixes + 1 gabarit fiche = 9 gabarits)", () 
       "/gouvernance",
       "/corrections",
       "/contribuer",
+      "/deployer",
       "/licences",
       "/signaler",
     ]);
-    expect(corpus.pages).toHaveLength(11 + cards.length);
+    expect(corpus.pages).toHaveLength(12 + cards.length);
   });
 
   test("gives each card a product route keyed by its project name", () => {

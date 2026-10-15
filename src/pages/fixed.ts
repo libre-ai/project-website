@@ -3,6 +3,7 @@
  * An unknown path throws instead of rendering an empty page.
  */
 import { constellationOf } from "../constellation";
+import { deployBody } from "../deploy";
 import type { PublicBrandCopy, PublicProof } from "../domain";
 import { licencesBody } from "../licences";
 import type { Presentation } from "../presentation";
@@ -42,6 +43,14 @@ export function fixedBody(
       return {
         title: "Produits",
         body: `<h1>Produits</h1>${productList(cards, presentations)}`,
+      };
+    case "/deployer":
+      return {
+        title: "Déployer",
+        body:
+          extras.deploy === undefined
+            ? "<h1>Déployer</h1><p>Aucune donnée de déploiement n'est fournie à cette construction.</p>"
+            : deployBody(extras.deploy.facts, extras.deploy.commit),
       };
     case "/licences":
       return {

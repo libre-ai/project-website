@@ -8,6 +8,7 @@ import { join } from "node:path";
 import { checkBudget, PAGE_BUDGET_BYTES } from "./budget";
 import { writeStaticSite } from "./build";
 import { verifyCardSnapshot } from "./cards-snapshot";
+import { DEPLOY_REPOSITORY, parseDeployFacts } from "./deploy";
 import { diffOutputs } from "./determinism";
 import { parseBrandProjection } from "./domain";
 import { parseCardSources } from "./fetch-cards";
@@ -64,11 +65,28 @@ const licenceSnapshot = verifyCardSnapshot(licencePins, licenceFiles);
 if (licenceSnapshot.violations.length > 0) {
   throw new Error(`site.licences_refused:${licenceSnapshot.violations.join(",")}`);
 }
+// S3.3: the deploy document, a versioned copy verified like the cards; its revisions are read
+// from the text itself and a missing or non-commit revision refuses the build.
+const deployPins = parseCardSources(
+  await Bun.file(join(import.meta.dir, "data/deploy-source.json")).json(),
+);
+const deployFile = {
+  repository: DEPLOY_REPOSITORY,
+  text: await readFile(join(import.meta.dir, "data/deploy/LOCAL-COMPOSITION.md"), "utf8"),
+};
+const deploySnapshot = verifyCardSnapshot(deployPins, [deployFile]);
+if (deploySnapshot.violations.length > 0) {
+  throw new Error(`site.deploy_refused:${deploySnapshot.violations.join(",")}`);
+}
+const deployPin = deployPins[0];
+if (deployPin === undefined) throw new Error("site.deploy_refused:pin_missing");
+
 const extras: PageExtras = {
   licences: {
     rows: licenceFiles.map((file) => parseLicences(file.repository, file.text)),
     commits: new Map(licencePins.map((pin) => [pin.repository, pin.sha])),
   },
+  deploy: { facts: parseDeployFacts(deployFile.text), commit: deployPin.sha },
 };
 
 const cardsDirectory = process.env.LIBRE_AI_CARDS_DIR || snapshotDirectory;
@@ -160,6 +178,9 @@ console.log(
 console.log(`G1 pages fixes: ${result.report.fixedPages}, fichiers écrits: ${result.files.size}`);
 console.log(`O2 champs de marque rendus: ${result.report.brandFieldsRendered}`);
 console.log(`S1.2 affirmations de marque rendues: ${result.report.brandProofsRendered}`);
+console.log(
+  `S3.3 déployer: document vérifié (${deploySnapshot.examined}), révisions citées: ${Object.keys(extras.deploy?.facts ?? {}).length}`,
+);
 console.log(
   `S3.2 licences: ${licenceSnapshot.examined} fichiers vérifiés, ${result.report.licencesRendered} dépôts rendus`,
 );
