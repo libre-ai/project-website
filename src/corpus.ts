@@ -24,6 +24,7 @@ const FIXED_PATHS = [
   "/mission",
   "/methode",
   "/produits",
+  "/fabrique",
   "/preuves",
   "/gouvernance",
   "/corrections",

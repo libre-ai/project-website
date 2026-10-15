@@ -4,12 +4,13 @@ import { expect, test } from "@playwright/test";
 // One block per requirement of the V1 PRD (§5). The server serves the built dist/ over HTTP,
 // never file:, so relative and canonical URLs behave as they will in production.
 const SAMPLE_PRODUCT = "/produits/execution-sandbox";
-// The nine route templates of PRD §6, with one product page as the template for /produits/:id.
+// The route templates of PRD §6 and V2 (S3.4), with one product page as the template for /produits/:id.
 const ROUTES = [
   "/",
   "/mission",
   "/methode",
   "/produits",
+  "/fabrique",
   "/preuves",
   "/gouvernance",
   "/corrections",

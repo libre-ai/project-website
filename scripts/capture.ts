@@ -13,6 +13,7 @@ const ROUTES = [
   "/mission",
   "/methode",
   "/produits",
+  "/fabrique",
   "/preuves",
   "/gouvernance",
   "/corrections",

@@ -6,6 +6,7 @@ import { constellationOf } from "../constellation";
 import type { PublicBrandCopy, PublicProof } from "../domain";
 import type { Presentation } from "../presentation";
 import type { ProjectCard } from "../project-card";
+import { fabriqueBody } from "./fabrique";
 import { homeBody } from "./home";
 import { FORGE_URL } from "./layout";
 import { methodBody } from "./method";
@@ -38,6 +39,8 @@ export function fixedBody(
         title: "Produits",
         body: `<h1>Produits</h1>${productList(cards, presentations)}`,
       };
+    case "/fabrique":
+      return { title: "Fabrique", body: fabriqueBody(cards) };
     case "/preuves":
       return {
         title: "Preuves",
