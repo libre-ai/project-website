@@ -342,6 +342,20 @@ a {
   }
 }
 
+/* Appearance of the frames (O5): a 0.25 s shift of 0.25 rem, played once, only when the visitor
+   has not asked for reduced motion. It moves position, never opacity, so contrast stays constant. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes frame-appear {
+    from {
+      transform: translateY(0.25rem);
+    }
+  }
+
+  .frame {
+    animation: frame-appear 0.25s ease-out;
+  }
+}
+
 /* Narrow screens: each proof row becomes a block that names its own columns, so no header breaks mid-word. */
 @media (max-width: 40rem) {
   thead {

@@ -21,10 +21,10 @@ describe("brand grammar in the site CSS (ADR 0002)", () => {
     expect(css).toMatch(/\.label\s*\{[^}]*border:/);
   });
 
-  test("motion is limited to transitions that reduced-motion turns off", () => {
+  // Keyframes are allowed only under no-preference: that rule is asserted in motion.test.ts.
+  test("transitions are turned off by reduced-motion", () => {
     const css = renderSiteCss();
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{[^}]*transition:\s*none/);
-    expect(css).not.toMatch(/@keyframes/);
   });
 });
 
