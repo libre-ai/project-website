@@ -177,9 +177,7 @@ test.describe("FR-12 : URL canonique et citation exportable", () => {
 
 test.describe("G6 : aucun défilement horizontal à 360, 390 et 1440 px", () => {
   for (const width of [360, 390, 1440]) {
-    test(`no horizontal scroll at ${width} px on the home, list and a product page`, async ({
-      page,
-    }) => {
+    test(`no horizontal scroll at ${width} px on every route`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
       // Every route, not a sample: a wide table on one page is exactly what a sample misses.
       for (const path of [...ROUTES]) {

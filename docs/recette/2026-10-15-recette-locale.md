@@ -13,7 +13,7 @@ commande se rejoue ; aucune valeur n'est une appréciation. Les captures ne sont
 | G3 gates bloquants | atteint avec écart (ADR 0003) | `bun run build` | limites : 15 fiches examinées, 0 violation ; ressources : 15 examinées, 0 violation ; le gate FR-02 est retiré par ADR 0003 |
 | G4 découvrabilité | atteint | `bun test src/corpus.test.ts` | 28 URL de sitemap = 28 pages du corpus (égalité testée) |
 | G5 e2e FR-01 à FR-16 | atteint avec écarts | `bunx playwright test` | 103 passés, 17 ignorés sur 4 projets (voir §4) |
-| G6 accessibilité et en-têtes | atteint avec écart | `bunx playwright test` | axe : 0 `serious`/`critical` sur chaque route de la liste e2e ; CSP `script-src 'none'` testée ; défilement horizontal testé à 360, 390, 1440 px sur l'accueil, la liste et une fiche seulement |
+| G6 accessibilité et en-têtes | atteint avec écart | `bunx playwright test` | axe : 0 `serious`/`critical` sur chaque route de la liste e2e ; CSP `script-src 'none'` testée ; défilement horizontal testé à 360, 390, 1440 px sur chaque route de la liste e2e (le titre du test ne le disait pas) |
 | G7 tokens seuls | atteint | `grep -nE "#[0-9a-fA-F]{3,8}\b" dist/assets/styles.css \| wc -l` ; `bun test src/styles.test.ts` | 0 valeur hexadécimale |
 | G8 diagrammes | atteint | `bun run detect "$(mktemp -d)" dist docs/diagrams` ; `self_check.py` | `self_check` OK ×3 ; détecteur 0 trouvaille ; DIAG-1 : 13/13, 13/13, 12/12 ; DIAG-5 : 6 fichiers, 0 nom d'état |
 | G9 contenu gardé | atteint | `bun run build` | 27 textes examinés, 0 violation ; liste en donnée (`forbidden-claims.json`) |
@@ -53,9 +53,9 @@ la fenêtre sur la capture.
 | `/produits` | 5 groupes de couches, 15 cadres ; 10 résumés en anglais « recovered sources… » | idem ; le nom du produit est répété au début du résumé de 10 cadres |
 | `/fabrique` | tableau 4 colonnes × 15 lignes ; adresses de dépôt sur deux lignes | 15 blocs de 4 lignes, page de 3633 px |
 | `/offres` | 5 cadres, « Voir la preuve » dans chacun | idem ; le lien passe à la ligne dans 3 cadres |
-| `/preuves` | tableau 5 lignes ; la ligne ADR 0003 affiche 0 examinée et 15 en colonne « Violations » | lignes étiquetées, aucun en-tête coupé |
+| `/preuves` | tableau 5 lignes ; relevé avant correctif : la ligne ADR 0003 affichait 0 examinée et 15 en colonne « Violations » (corrigé, voir §4) | lignes étiquetées, aucun en-tête coupé |
 | `/gouvernance` | une phrase et un lien | idem |
-| `/corrections` | « Aucune correction publiée à ce jour. » ; le pied de page contient un lien vers la page elle-même | idem |
+| `/corrections` | « Aucune correction publiée à ce jour. » ; le pied de page contient un lien vers la page elle-même (exigé par FR-05) | idem |
 | `/contribuer` | une phrase et l'adresse de la forge | idem ; l'adresse passe à la ligne |
 | `/deployer` | cible et deux SHA complets sur une ligne chacun | SHA complets sur 3 lignes, aucun débordement |
 | `/licences` | tableau 15 lignes, identifiants sur une ligne chacun | 15 blocs ; aucun identifiant coupé au tiret |
@@ -64,17 +64,20 @@ la fenêtre sur la capture.
 
 ## 4. Écarts et constats non corrigés
 
-1. `/preuves` : 15 présentations non relues sont comptées en « Violations ». Le libellé de la
-   colonne les présente comme des manquements.
-2. Pied de page : chaque page contient un lien vers elle-même (`/corrections` sur `/corrections`,
-   `/signaler` sur `/signaler`, etc.).
+1. **Corrigé** après relevé : `/preuves` comptait 15 présentations non relues en « Violations ».
+   La ligne lit désormais « présentations relues : 0 sur 15 », 15 examinées, 0 violation.
+2. **Corrigé** après relevé : chaque pied de page contenait un lien vers la page elle-même. Il est
+   retiré, sauf le journal des corrections sur `/corrections`, que FR-05 exige sur toutes les
+   pages. Même correctif : « Offres » et « Preuves » n'étaient pas séparés par une espace dans le
+   texte de l'en-tête.
 3. Citations : `SITE_ORIGIN` vaut `http://localhost:8080` ; les citations publiées contiennent
    cette adresse. Dépend de l'ADR d'hébergement (S8.2).
 4. Textes de fiche : 10 résumés sur 15 sont le placeholder anglais ; « Situation actuelle »
    de `execution-sandbox` cite la maturité, l'exposition et des phases `pending`. Corrigé
    seulement par la relecture des présentations (O6).
-5. G6 : le défilement horizontal n'est testé que sur 3 pages ; les 5 pages V2 ne le sont pas
-   en e2e (observé sur captures à 390 px : aucun débordement).
+5. **Retiré** : une première version de ce rapport affirmait que le défilement horizontal n'était
+   testé que sur 3 pages. Le test parcourt toute la liste de routes ; seul son titre était
+   trompeur.
 6. e2e : 17 ignorés = 9 axe sans JavaScript + 2 `test.fixme` × 4 projets.
 7. G5 : la preuve de discrimination de FR-02, FR-07 et FR-08 date d'une session antérieure et n'a
    pas été rejouée ici ; elle l'a été pour FR-15 (signaler), FR-16 (mouvement), O2, O3, DIAG-1,
