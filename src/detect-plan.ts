@@ -17,16 +17,19 @@ export interface Step {
   readonly cwd: string;
 }
 
-export interface DetectorPlan {
-  readonly steps: readonly Step[];
-  readonly run: {
-    readonly command: string;
-    readonly args: readonly string[];
-    readonly env: Readonly<Record<string, string>>;
-  };
+export interface Invocation {
+  readonly command: string;
+  readonly args: readonly string[];
+  readonly env: Readonly<Record<string, string>>;
 }
 
-export function planDetector(workDirectory: string, target: string): DetectorPlan {
+export interface DetectorPlan {
+  readonly steps: readonly Step[];
+  // The invocation for one examined directory: what the script executes, nothing else.
+  readonly runFor: (target: string) => Invocation;
+}
+
+export function planDetector(workDirectory: string): DetectorPlan {
   if (!workDirectory.startsWith("/")) throw new Error("detect.work_dir_not_absolute");
   const source = `${workDirectory}/source`;
   return {
@@ -50,11 +53,14 @@ export function planDetector(workDirectory: string, target: string): DetectorPla
         cwd: source,
       },
     ],
-    run: {
-      command: `${source}/target/release/impeccable`,
-      args: ["detect", "--json", target],
-      // No telemetry from a verification run (project instruction).
-      env: { IMPECCABLE_NO_TELEMETRY: "1" },
+    runFor: (target) => {
+      if (target === "") throw new Error("detect.target_empty");
+      return {
+        command: `${source}/target/release/impeccable`,
+        args: ["detect", "--json", target],
+        // No telemetry from a verification run (project instruction).
+        env: { IMPECCABLE_NO_TELEMETRY: "1" },
+      };
     },
   };
 }

@@ -9,7 +9,7 @@ describe("detector pin", () => {
 });
 
 describe("planDetector", () => {
-  const plan = planDetector("/work", "dist");
+  const plan = planDetector("/work");
 
   test("clones into the given empty directory, checks out the pinned sha, then builds locked", () => {
     expect(plan.steps.map((step) => step.label)).toEqual(["clone", "checkout", "build"]);
@@ -20,14 +20,22 @@ describe("planDetector", () => {
     expect(build?.cwd).toBe("/work/source");
   });
 
-  test("runs the built binary on the target directory with JSON output", () => {
-    expect(plan.run.command).toBe("/work/source/target/release/impeccable");
-    expect(plan.run.args).toEqual(["detect", "--json", "dist"]);
-    expect(plan.run.env.IMPECCABLE_NO_TELEMETRY).toBe("1");
+  // The script executes exactly what this returns: one invocation per examined directory.
+  test("runs the built binary on each target directory with JSON output", () => {
+    const first = plan.runFor("dist");
+    const second = plan.runFor("docs/diagrams");
+    expect(first.command).toBe("/work/source/target/release/impeccable");
+    expect(first.args).toEqual(["detect", "--json", "dist"]);
+    expect(second.args).toEqual(["detect", "--json", "docs/diagrams"]);
+    expect(first.env.IMPECCABLE_NO_TELEMETRY).toBe("1");
+  });
+
+  test("refuses an empty target", () => {
+    expect(() => plan.runFor("")).toThrow("detect.target_empty");
   });
 
   test("refuses a work directory that is not absolute", () => {
-    expect(() => planDetector("relative", "dist")).toThrow("detect.work_dir_not_absolute");
+    expect(() => planDetector("relative")).toThrow("detect.work_dir_not_absolute");
   });
 });
 

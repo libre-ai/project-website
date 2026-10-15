@@ -32,7 +32,7 @@ function run(command: string, args: readonly string[], cwd: string, env?: Record
   };
 }
 
-const plan = planDetector(workDirectory, targets[0] ?? "");
+const plan = planDetector(workDirectory);
 for (const step of plan.steps) {
   const outcome = run(step.command, step.args, step.cwd);
   if (outcome.code !== 0) {
@@ -43,9 +43,8 @@ for (const step of plan.steps) {
 
 let findingsTotal = 0;
 for (const target of targets) {
-  const outcome = run(plan.run.command, ["detect", "--json", resolve(target)], workDirectory, {
-    ...plan.run.env,
-  });
+  const invocation = plan.runFor(resolve(target));
+  const outcome = run(invocation.command, invocation.args, workDirectory, invocation.env);
   const findings = parseFindings(outcome.stdout);
   if (outcome.code !== 0 && findings.length === 0) {
     throw new Error(`detect.exit_${outcome.code}:${target}\n${outcome.stderr}`);

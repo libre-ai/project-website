@@ -83,6 +83,32 @@ describe("checkProjectCardGates (FR-02, FR-03)", () => {
     expect(report).toEqual({ examined: 2, violations: [] });
   });
 
+  // Review finding: the URL is rendered in an href, and escaping does not neutralise a scheme.
+  test("refuses an application URL that is not a plain https address", () => {
+    for (const value of [
+      "javascript:alert(1)",
+      "data:text/html,<p>x</p>",
+      "http://sketch.example.test/",
+      "https://user:pass@sketch.example.test/",
+      "//sketch.example.test/",
+      "not a url",
+    ]) {
+      expect(() => parseProjectCard({ ...idea, application_url: value }), value).toThrow(
+        "project_card.url_invalid:sketch",
+      );
+    }
+  });
+
+  // Review finding: the project name becomes a path, a URL and a feed id without encoding.
+  test("refuses a project name that is not a plain repository-style name", () => {
+    for (const value of ["../x", "a/b", "A B", "x?y", "", " ", "-lead", "tail."]) {
+      expect(() => parseProjectCard({ ...idea, project: value }), JSON.stringify(value)).toThrow(
+        "project_card.project_invalid",
+      );
+    }
+    expect(parseProjectCard({ ...idea, project: "api.v2-core" }).project).toBe("api.v2-core");
+  });
+
   // ADR 0003: an application URL is accepted whatever the exposure; the state is not a gate.
   test("accepts an application URL on an idea or spec-published card (ADR 0003)", () => {
     const report = checkProjectCardGates([

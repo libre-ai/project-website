@@ -4,6 +4,7 @@
  * card states and refuses any card that claims an application it cannot prove.
  */
 import { isoDay } from "./calendar";
+import { requirePublicHttpsUrl } from "./security";
 
 // Exposure follows the I-15 proof scale carried by the card since ADR-0020.
 const EXPOSURES = ["idea", "spec-published", "usable-verifiable", "proven"] as const;
@@ -100,9 +101,27 @@ function dependencies(value: unknown, project: string): readonly Dependency[] {
   });
 }
 
+// The project name becomes a path, a URL and a feed id without further encoding: it is a plain
+// repository-style name or the card is refused. The error carries no value (it may be hostile).
+const PROJECT_NAME = /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/;
+
+// The address is rendered in an href, where escaping does not neutralise a scheme: only a plain
+// https address passes (no credentials, no javascript:, data: or protocol-relative form).
+function applicationAddress(value: unknown, project: string): string {
+  const error = `project_card.url_invalid:${project}`;
+  const address = text(value, error);
+  try {
+    requirePublicHttpsUrl(address);
+  } catch {
+    throw new Error(error);
+  }
+  return address;
+}
+
 export function parseProjectCard(value: unknown): ProjectCard {
   const input = record(value, "project_card.object_invalid");
   const project = text(input.project, "project_card.project_invalid");
+  if (!PROJECT_NAME.test(project)) throw new Error("project_card.project_invalid");
   const applicationUrl = input.application_url;
   return {
     layer: oneOf(input.layer, LAYERS, `project_card.layer_invalid:${project}`),
@@ -123,9 +142,7 @@ export function parseProjectCard(value: unknown): ProjectCard {
       `project_card.last_verified_on_invalid:${project}`,
     ),
     applicationUrl:
-      applicationUrl === undefined
-        ? null
-        : text(applicationUrl, `project_card.url_invalid:${project}`),
+      applicationUrl === undefined ? null : applicationAddress(applicationUrl, project),
   };
 }
 

@@ -18,7 +18,7 @@ commande se rejoue ; aucune valeur n'est une appréciation. Les captures ne sont
 | G8 diagrammes | atteint | `bun run detect "$(mktemp -d)" dist docs/diagrams` ; `self_check.py` | `self_check` OK ×3 ; détecteur 0 trouvaille ; DIAG-1 : 13/13, 13/13, 12/12 ; DIAG-5 : 6 fichiers, 0 nom d'état |
 | G9 contenu gardé | atteint | `bun run build` | 27 textes examinés, 0 violation ; liste en donnée (`forbidden-claims.json`) |
 | G10 vérification visuelle | atteint | `bun scripts/capture.ts <dossier>` | 28 captures (14 gabarits × 2 largeurs), observées une à une (§3) |
-| G11 `bun run check` | atteint | `bun run check` | exit 0 ; 314 tests, 0 échec |
+| G11 `bun run check` | atteint | `bun run check` | exit 0 ; 320 tests, 0 échec (317 au relevé initial, 3 ajoutés par la revue, voir §4) |
 
 ## 2. Objectifs O1 à O11
 
@@ -86,6 +86,17 @@ la fenêtre sur la capture.
 9. `/offres` : le libellé « Voir la preuve » est identique dans les 5 cadres.
 10. Une dépendance de composition reste requise : `node_modules` pointe vers une composition
     locale (`file:../project-governance` dans `package.json`).
+
+Revue solo (`/review`, 2026-10-15), 3 avertissements, **corrigés** :
+
+- L'adresse applicative d'une fiche est refusée si ce n'est pas une adresse `https` simple
+  (`javascript:`, `data:`, `http:`, identifiants et forme relative au protocole).
+- Le nom de projet est refusé s'il n'est pas un nom de dépôt simple (`/`, `..`, espaces, `?`).
+- `planDetector` expose `runFor(cible)` : le script exécute exactement l'invocation testée.
+
+Chaque correctif a un test rouge avant le changement. Détecteur rejoué en entier après la
+refactorisation : 0 trouvaille sur `dist` et `docs/diagrams`. Trois suggestions restent (code
+dupliqué entre les trois récupérateurs, nom `CardSource` réutilisé, 7 paramètres positionnels).
 
 ## 5. Validation du propriétaire
 
