@@ -2,6 +2,7 @@
  * Fixed pages (FR-07): the eight routes whose body does not depend on one card.
  * An unknown path throws instead of rendering an empty page.
  */
+import { constellationOf } from "../constellation";
 import type { PublicBrandCopy, PublicProof } from "../domain";
 import type { Presentation } from "../presentation";
 import type { ProjectCard } from "../project-card";
@@ -21,7 +22,7 @@ export function fixedBody(
 ): { title: string; body: string } {
   switch (path) {
     case "/":
-      return { title: "Accueil", body: homeBody(brand) };
+      return { title: "Accueil", body: homeBody(brand, constellationOf(cards)) };
     case "/mission":
       return {
         title: "Mission",
