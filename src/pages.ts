@@ -3,6 +3,7 @@
  * Assembler only: the families live under `pages/` so parallel work does not collide.
  */
 import type { Corpus } from "./corpus";
+import type { PublicBrandCopy } from "./domain";
 import { fixedBody } from "./pages/fixed";
 import { layout } from "./pages/layout";
 import { productPage, productTitle } from "./pages/product";
@@ -17,11 +18,12 @@ export function renderPages(
   cards: readonly ProjectCard[],
   proofs: readonly Proof[] = [],
   presentations: ReadonlyMap<string, Presentation> = new Map(),
+  brand?: PublicBrandCopy,
 ): ReadonlyMap<string, string> {
   const pages = new Map<string, string>();
   for (const page of corpus.pages) {
     if (page.kind === "fixed") {
-      const { title, body } = fixedBody(page.path, cards, proofs, presentations);
+      const { title, body } = fixedBody(page.path, cards, proofs, presentations, brand);
       pages.set(page.path, layout(title, page.path, body));
       continue;
     }

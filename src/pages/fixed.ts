@@ -2,8 +2,10 @@
  * Fixed pages (FR-07): the eight routes whose body does not depend on one card.
  * An unknown path throws instead of rendering an empty page.
  */
+import type { PublicBrandCopy } from "../domain";
 import type { Presentation } from "../presentation";
 import type { ProjectCard } from "../project-card";
+import { homeBody } from "./home";
 import { FORGE_URL } from "./layout";
 import { productItem } from "./product";
 import { type Proof, proofsBody } from "./proofs";
@@ -13,13 +15,11 @@ export function fixedBody(
   cards: readonly ProjectCard[],
   proofs: readonly Proof[],
   presentations: ReadonlyMap<string, Presentation>,
+  brand?: PublicBrandCopy,
 ): { title: string; body: string } {
   switch (path) {
     case "/":
-      return {
-        title: "Accueil",
-        body: '<h1>Possédez la fabrique.</h1><p>Libre AI aide chacun à comprendre, choisir et utiliser l\'IA sans subir les discours marketing ni les dépendances irréversibles.</p><p class="actions"><a href="/produits">Prenez les clés.</a> <a href="/preuves">Voir les preuves.</a></p>',
-      };
+      return { title: "Accueil", body: homeBody(brand) };
     case "/mission":
       return {
         title: "Mission",

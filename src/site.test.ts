@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { AUTHOR_PLACEHOLDER, parsePresentation } from "./presentation";
 import { buildSite } from "./site";
+import { validProjection } from "./test-fixtures";
 
 const assets = { tokens: ":root { --lai-color-ink: #110f0c; }\n", styles: "body { margin: 0; }\n" };
 
@@ -72,8 +73,21 @@ describe("buildSite (G1, G2, G3, G4, G9 : gates bloquants, compteurs imprimés)"
       presentationsReviewed: 0,
       textsExamined: result.report.textsExamined,
       claimViolations: 0,
+      brandFieldsRendered: 0,
     });
     expect(result.report.textsExamined).toBeGreaterThan(0);
+  });
+
+  test("reports the seven brand fields when a projection copy is supplied", () => {
+    const result = buildSite(
+      [{ name: "sketch.project.v1.yaml", text: cardText("sketch", "idea") }],
+      assets,
+      [],
+      [],
+      validProjection.copy.fr,
+    );
+    expect(result.report.brandFieldsRendered).toBe(7);
+    expect(result.files.get("index.html")).toContain("Possédez la fabrique.");
   });
 
   test("a reviewed presentation replaces the card text and counts as a resource (ADR 0003)", () => {

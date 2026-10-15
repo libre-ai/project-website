@@ -7,6 +7,7 @@ import { join } from "node:path";
 
 import { writeStaticSite } from "./build";
 import { verifyCardSnapshot } from "./cards-snapshot";
+import { parseBrandProjection } from "./domain";
 import { parseCardSources } from "./fetch-cards";
 import { FONT_FILE, FONT_LICENSE_FILE, renderFontFace } from "./font";
 import { loadPresentations } from "./presentation";
@@ -62,7 +63,14 @@ const snapshotProof = {
   violations: snapshot.violations.length,
   command: "bun run build",
 };
-const result = buildSite(sources, assets, presentations, [snapshotProof]);
+// The brand copy of the home page comes from the governance projection, validated by the same
+// parser as the legacy generator: a malformed or missing projection refuses the build.
+const brandProjection = parseBrandProjection(
+  await Bun.file(
+    join(process.cwd(), "node_modules/@libre-ai/governance/brand/projections/public-brand.v1.json"),
+  ).json(),
+);
+const result = buildSite(sources, assets, presentations, [snapshotProof], brandProjection.copy.fr);
 
 // The portfolio is the authority for which repositories are products; the exclusions are data.
 const portfolio = (await Bun.file(
@@ -100,6 +108,7 @@ console.log(
   `G2 fiches lues: ${result.report.cardsRead}, pages produit: ${result.report.productPages}`,
 );
 console.log(`G1 pages fixes: ${result.report.fixedPages}, fichiers écrits: ${result.files.size}`);
+console.log(`O2 champs de marque rendus: ${result.report.brandFieldsRendered}`);
 console.log(`G3 ressources examinées: ${result.report.resourcesExamined}`);
 console.log(
   `ADR 0003 présentations: ${result.report.presentationsDrafted} rédigées, ${result.report.presentationsReviewed} relues et publiées`,

@@ -5,6 +5,7 @@
  */
 import { checkForbiddenClaims } from "./claims";
 import { buildCorpus, renderRobots, renderSitemap } from "./corpus";
+import type { PublicBrandCopy } from "./domain";
 import { citationFor, renderAtom } from "./feed";
 import { type Proof, renderPages } from "./pages";
 import type { Presentation } from "./presentation";
@@ -25,6 +26,7 @@ export interface SiteReport {
   readonly presentationsReviewed: number;
   readonly textsExamined: number;
   readonly claimViolations: number;
+  readonly brandFieldsRendered: number;
 }
 
 export interface SiteResult {
@@ -54,6 +56,8 @@ export function buildSite(
   presentations: readonly Presentation[] = [],
   // Gates the caller ran before this assembly (the snapshot check), listed first on /preuves.
   priorProofs: readonly Proof[] = [],
+  // The home page's brand copy, read from the governance projection by the entry point.
+  brand?: PublicBrandCopy,
 ): SiteResult {
   const cardSources = sources.filter((source) => source.name.endsWith(CARD_SUFFIX));
   if (cardSources.length === 0) throw new Error("cards.source_empty");
@@ -76,7 +80,7 @@ export function buildSite(
   const corpus = buildCorpus(cards);
   // The proofs page is generated from the gates' own counters, so the claim gate scans the
   // other pages only: it holds machine output, never authored copy, and scanning it would be circular.
-  const draftPages = renderPages(corpus, cards, [], presentationByProject);
+  const draftPages = renderPages(corpus, cards, [], presentationByProject, brand);
   const texts = [...draftPages]
     .filter(([path]) => path !== "/preuves")
     .map(([path, html]) => ({ id: path, text: html }));
@@ -109,7 +113,7 @@ export function buildSite(
       command,
     },
   ];
-  const pages = renderPages(corpus, cards, proofs, presentationByProject);
+  const pages = renderPages(corpus, cards, proofs, presentationByProject, brand);
 
   const files = new Map<string, string>();
   for (const [route, html] of pages) files.set(outputPath(route), html);
@@ -135,6 +139,7 @@ export function buildSite(
       presentationsReviewed,
       textsExamined: claimGates.examined,
       claimViolations: claimGates.violations.length,
+      brandFieldsRendered: brand === undefined ? 0 : Object.keys(brand).length,
     },
   };
 }

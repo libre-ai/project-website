@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { buildCorpus, SITE_ORIGIN } from "./corpus";
 import { renderPages } from "./pages";
 import { type ProjectCard, parseProjectCard } from "./project-card";
+import { validProjection } from "./test-fixtures";
 
 const card = (project: string, exposure: string, extra: Record<string, unknown> = {}) =>
   parseProjectCard({
@@ -129,7 +130,7 @@ describe("renderPages (G1, FR-07, FR-09, FR-12)", () => {
   });
 
   test("the home page carries the two calls to action validated by the brand platform", () => {
-    const html = pages.get("/") ?? "";
+    const html = renderPages(corpus, cards, [], new Map(), validProjection.copy.fr).get("/") ?? "";
     expect(html).toContain('<a href="/produits">Prenez les clés.</a>');
     expect(html).toContain('<a href="/preuves">Voir les preuves.</a>');
     expect(html).not.toContain("Voir les produits");

@@ -43,6 +43,9 @@ Chaque contrôle imprime ses compteurs, y compris les contrôles réussis :
 - `G2 univers` : dépôts du portefeuille, dont couverts par une fiche.
 - `G2 fiches lues` : fiches lues et pages produit générées.
 - `G1 pages fixes` : routes fixes et fichiers écrits.
+- `O2 champs de marque rendus` : champs de `public-brand.v1.json` rendus sur l'accueil (7 attendus).
+  La projection est lue de `node_modules/@libre-ai/governance/brand/projections/` ; absente ou
+  invalide, la construction est refusée.
 - `G3 ressources examinées` : présentations examinées (brouillons compris).
 - `ADR 0003 présentations` : rédigées, relues et publiées.
 - `G9 textes examinés` : textes passés au contrôle des mots interdits, et violations.
