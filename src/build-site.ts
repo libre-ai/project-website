@@ -5,8 +5,10 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import { checkBudget, PAGE_BUDGET_BYTES } from "./budget";
 import { writeStaticSite } from "./build";
 import { verifyCardSnapshot } from "./cards-snapshot";
+import { diffOutputs } from "./determinism";
 import { parseBrandProjection } from "./domain";
 import { parseCardSources } from "./fetch-cards";
 import { FONT_FILE, FONT_LICENSE_FILE, renderFontFace } from "./font";
@@ -96,10 +98,19 @@ const binaries = new Map<string, Uint8Array>([
   ],
   [FONT_LICENSE_FILE, new Uint8Array(await Bun.file(join(fontRoot, "LICENSE")).arrayBuffer())],
 ]);
-await writeStaticSite(
-  join(process.cwd(), "dist"),
-  new Map<string, string | Uint8Array>([...result.files, ...binaries]),
-);
+const output = new Map<string, string | Uint8Array>([...result.files, ...binaries]);
+
+// S6.4: a second assembly of the same input must write the same bytes; a difference refuses the build.
+const second = buildSite(sources, assets, presentations, [snapshotProof], brandProjection.copy.fr);
+const differing = diffOutputs(result.files, second.files);
+if (differing.length > 0) throw new Error(`site.nondeterministic:${differing.join(",")}`);
+
+// S6.5: what a visitor downloads for one page stays under the budget, measured on the output.
+const budget = checkBudget(output);
+if (budget.violations.length > 0)
+  throw new Error(`site.budget_refused:${budget.violations.join(",")}`);
+
+await writeStaticSite(join(process.cwd(), "dist"), output);
 console.log(
   `G2 instantané: ${snapshot.examined} fiches vérifiées contre leurs empreintes (source: ${cardsDirectory === snapshotDirectory ? "instantané versionné" : cardsDirectory})`,
 );
@@ -109,6 +120,10 @@ console.log(
 );
 console.log(`G1 pages fixes: ${result.report.fixedPages}, fichiers écrits: ${result.files.size}`);
 console.log(`O2 champs de marque rendus: ${result.report.brandFieldsRendered}`);
+console.log(`NFR déterminisme: deux assemblages, ${result.files.size} fichiers, 0 différence`);
+console.log(
+  `NFR poids: ${budget.examined} pages, la plus lourde ${budget.heaviest.page} (${budget.heaviest.bytes} octets sur ${PAGE_BUDGET_BYTES})`,
+);
 console.log(`G3 ressources examinées: ${result.report.resourcesExamined}`);
 console.log(
   `ADR 0003 présentations: ${result.report.presentationsDrafted} rédigées, ${result.report.presentationsReviewed} relues et publiées`,
