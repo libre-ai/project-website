@@ -53,19 +53,24 @@ export interface SiteAssets {
   readonly styles: string;
 }
 
+export interface SiteOptions {
+  readonly presentations?: readonly Presentation[];
+  // Gates the caller ran before this assembly (the snapshot check), listed first on /preuves.
+  readonly priorProofs?: readonly Proof[];
+  // The home page's brand copy, read from the governance projection by the entry point.
+  readonly brand?: PublicBrandCopy;
+  // The affirmations of the method page (S1.2), from the same projection.
+  readonly brandProofs?: readonly PublicProof[];
+  // Verified data of the V2 pages (licences, deploy), supplied by the entry point.
+  readonly extras?: PageExtras;
+}
+
 export function buildSite(
   sources: readonly SourceFile[],
   assets: SiteAssets,
-  presentations: readonly Presentation[] = [],
-  // Gates the caller ran before this assembly (the snapshot check), listed first on /preuves.
-  priorProofs: readonly Proof[] = [],
-  // The home page's brand copy, read from the governance projection by the entry point.
-  brand?: PublicBrandCopy,
-  // The affirmations of the method page (S1.2), from the same projection.
-  brandProofs?: readonly PublicProof[],
-  // Verified data of the V2 pages (licences), supplied by the entry point.
-  extras?: PageExtras,
+  options: SiteOptions = {},
 ): SiteResult {
+  const { presentations = [], priorProofs = [], brand, brandProofs, extras } = options;
   const cardSources = sources.filter((source) => source.name.endsWith(CARD_SUFFIX));
   if (cardSources.length === 0) throw new Error("cards.source_empty");
 
@@ -87,15 +92,12 @@ export function buildSite(
   const corpus = buildCorpus(cards);
   // The proofs page is generated from the gates' own counters, so the claim gate scans the
   // other pages only: it holds machine output, never authored copy, and scanning it would be circular.
-  const draftPages = renderPages(
-    corpus,
-    cards,
-    [],
-    presentationByProject,
+  const draftPages = renderPages(corpus, cards, {
+    presentations: presentationByProject,
     brand,
     brandProofs,
     extras,
-  );
+  });
   const texts = [...draftPages]
     .filter(([path]) => path !== "/preuves")
     .map(([path, html]) => ({ id: path, text: html }));
@@ -130,15 +132,13 @@ export function buildSite(
       command,
     },
   ];
-  const pages = renderPages(
-    corpus,
-    cards,
+  const pages = renderPages(corpus, cards, {
     proofs,
-    presentationByProject,
+    presentations: presentationByProject,
     brand,
     brandProofs,
     extras,
-  );
+  });
 
   const files = new Map<string, string>();
   for (const [route, html] of pages) files.set(outputPath(route), html);

@@ -11,7 +11,7 @@ import { verifyCardSnapshot } from "./cards-snapshot";
 import { DEPLOY_REPOSITORY, parseDeployFacts } from "./deploy";
 import { diffOutputs } from "./determinism";
 import { parseBrandProjection } from "./domain";
-import { parseCardSources } from "./fetch-cards";
+import { parsePinnedSources } from "./fetch-cards";
 import { FONT_FILE, FONT_LICENSE_FILE, renderFontFace } from "./font";
 import { parseLicences } from "./licences";
 import type { PageExtras } from "./pages/extras";
@@ -26,7 +26,7 @@ const CARD_SUFFIX = ".project.v1.yaml";
 // it needs no network and no variable. The snapshot is checked against the digests recorded at
 // fetch time before anything else runs. LIBRE_AI_CARDS_DIR overrides the directory for local work.
 const snapshotDirectory = join(import.meta.dir, "data/cards");
-const pins = parseCardSources(
+const pins = parsePinnedSources(
   await Bun.file(join(import.meta.dir, "data/card-sources.json")).json(),
 );
 const snapshotNames = (await readdir(snapshotDirectory)).filter((name) =>
@@ -48,7 +48,7 @@ if (snapshot.violations.length > 0) {
 // S3.2: licences are read from the versioned REUSE.toml copies, verified against their pinned
 // digests exactly like the cards; one unreadable or unpinned file refuses the build.
 const licenceDirectory = join(import.meta.dir, "data/licences");
-const licencePins = parseCardSources(
+const licencePins = parsePinnedSources(
   await Bun.file(join(import.meta.dir, "data/licence-sources.json")).json(),
 );
 const LICENCE_SUFFIX = ".REUSE.toml";
@@ -67,7 +67,7 @@ if (licenceSnapshot.violations.length > 0) {
 }
 // S3.3: the deploy document, a versioned copy verified like the cards; its revisions are read
 // from the text itself and a missing or non-commit revision refuses the build.
-const deployPins = parseCardSources(
+const deployPins = parsePinnedSources(
   await Bun.file(join(import.meta.dir, "data/deploy-source.json")).json(),
 );
 const deployFile = {
@@ -120,15 +120,13 @@ const brandProjection = parseBrandProjection(
   ).json(),
 );
 const assemble = () =>
-  buildSite(
-    sources,
-    assets,
+  buildSite(sources, assets, {
     presentations,
-    [snapshotProof],
-    brandProjection.copy.fr,
-    brandProjection.proofs,
+    priorProofs: [snapshotProof],
+    brand: brandProjection.copy.fr,
+    brandProofs: brandProjection.proofs,
     extras,
-  );
+  });
 const result = assemble();
 
 // The portfolio is the authority for which repositories are products; the exclusions are data.

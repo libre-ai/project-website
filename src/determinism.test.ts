@@ -56,13 +56,9 @@ describe("buildSite is deterministic", () => {
 
   test("two assemblies of the same input produce the same bytes", () => {
     const run = () =>
-      buildSite(
-        [{ name: "sketch.project.v1.yaml", text: cardText }],
-        assets,
-        [],
-        [],
-        validProjection.copy.fr,
-      );
+      buildSite([{ name: "sketch.project.v1.yaml", text: cardText }], assets, {
+        brand: validProjection.copy.fr,
+      });
     expect(diffOutputs(run().files, run().files)).toEqual([]);
   });
 });

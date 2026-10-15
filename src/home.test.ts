@@ -34,7 +34,7 @@ const brand: PublicBrandCopy = {
 };
 
 const home = (value?: PublicBrandCopy) =>
-  renderPages(corpus, cards, [], new Map(), value).get("/") ?? "";
+  renderPages(corpus, cards, { brand: value }).get("/") ?? "";
 
 describe("home page copy (O2, S1.1)", () => {
   test("renders the seven projection fields, none typed on the page", () => {

@@ -5,7 +5,7 @@
  * recomputes it on the copy, so a copy edited by hand, missing, or left over fails the build
  * without any network access. The authority stays the repository; the copy is a controlled one.
  */
-import type { CardSource } from "./fetch-cards";
+import type { PinnedSource } from "./fetch-cards";
 
 export interface SnapshotFile {
   readonly repository: string;
@@ -22,7 +22,7 @@ export function sha256Hex(text: string): string {
 }
 
 export function verifyCardSnapshot(
-  sources: readonly CardSource[],
+  sources: readonly PinnedSource[],
   files: readonly SnapshotFile[],
 ): SnapshotReport {
   const violations: string[] = [];

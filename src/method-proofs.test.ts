@@ -40,7 +40,7 @@ const proofs: PublicProof[] = [
 ];
 
 const method = (value?: readonly PublicProof[]) =>
-  renderPages(corpus, cards, [], new Map(), undefined, value).get("/methode") ?? "";
+  renderPages(corpus, cards, { brandProofs: value }).get("/methode") ?? "";
 
 describe("method page affirmations (S1.2)", () => {
   test("each proof shows its claim, mechanism, limit, date and a link to its source", () => {

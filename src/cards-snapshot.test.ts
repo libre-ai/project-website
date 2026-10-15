@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import { sha256Hex, verifyCardSnapshot } from "./cards-snapshot";
 import cardSources from "./data/card-sources.json";
-import { parseCardSources } from "./fetch-cards";
+import { parsePinnedSources } from "./fetch-cards";
 
 const sha = "a".repeat(40);
 const text = "project: sketch\nexposure: idea\n";
@@ -49,7 +49,7 @@ describe("the committed snapshot", () => {
         text: await readFile(join(directory, name), "utf8"),
       })),
     );
-    const report = verifyCardSnapshot(parseCardSources(cardSources), files);
+    const report = verifyCardSnapshot(parsePinnedSources(cardSources), files);
     expect(report.violations).toEqual([]);
     expect(report.examined).toBe(15);
     expect(files).toHaveLength(15);

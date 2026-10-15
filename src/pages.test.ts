@@ -109,7 +109,7 @@ describe("renderPages (G1, FR-07, FR-09, FR-12)", () => {
       { gate: "G2 fiches lues", examined: 2, violations: 0, command: "bun src/build-site.ts" },
       { gate: "G9 textes examinés", examined: 10, violations: 0, command: "bun src/build-site.ts" },
     ];
-    const html = renderPages(corpus, cards, proofs).get("/preuves") ?? "";
+    const html = renderPages(corpus, cards, { proofs }).get("/preuves") ?? "";
     expect(html).toContain(
       '<td data-label="Contrôle">G2 fiches lues</td><td data-label="Examinés">2</td><td data-label="Violations">0</td><td data-label="Commande"><code>bun src/build-site.ts</code></td>',
     );
@@ -133,7 +133,7 @@ describe("renderPages (G1, FR-07, FR-09, FR-12)", () => {
   });
 
   test("the home page carries the two calls to action validated by the brand platform", () => {
-    const html = renderPages(corpus, cards, [], new Map(), validProjection.copy.fr).get("/") ?? "";
+    const html = renderPages(corpus, cards, { brand: validProjection.copy.fr }).get("/") ?? "";
     expect(html).toContain('<a href="/produits">Prenez les clés.</a>');
     expect(html).toContain('<a href="/preuves">Voir les preuves.</a>');
     expect(html).not.toContain("Voir les produits");

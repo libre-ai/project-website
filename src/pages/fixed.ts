@@ -4,29 +4,26 @@
  */
 import { constellationOf } from "../constellation";
 import { deployBody } from "../deploy";
-import type { PublicBrandCopy, PublicProof } from "../domain";
 import { licencesBody } from "../licences";
 import type { Presentation } from "../presentation";
 import type { ProjectCard } from "../project-card";
-import type { PageExtras } from "./extras";
+import type { PageOptions } from "./extras";
 import { fabriqueBody } from "./fabrique";
 import { homeBody } from "./home";
 import { FORGE_URL } from "./layout";
 import { methodBody } from "./method";
 import { offresBody } from "./offres";
 import { productList } from "./product";
-import { type Proof, proofsBody } from "./proofs";
+import { proofsBody } from "./proofs";
 import { signalerBody } from "./signaler";
 
 export function fixedBody(
   path: string,
   cards: readonly ProjectCard[],
-  proofs: readonly Proof[],
-  presentations: ReadonlyMap<string, Presentation>,
-  brand?: PublicBrandCopy,
-  brandProofs?: readonly PublicProof[],
-  extras: PageExtras = {},
+  options: PageOptions = {},
 ): { title: string; body: string } {
+  const { proofs = [], brand, brandProofs, extras = {} } = options;
+  const presentations = options.presentations ?? new Map<string, Presentation>();
   switch (path) {
     case "/":
       return { title: "Accueil", body: homeBody(brand, constellationOf(cards)) };

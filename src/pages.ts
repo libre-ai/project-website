@@ -3,12 +3,10 @@
  * Assembler only: the families live under `pages/` so parallel work does not collide.
  */
 import type { Corpus } from "./corpus";
-import type { PublicBrandCopy, PublicProof } from "./domain";
-import type { PageExtras } from "./pages/extras";
+import type { PageOptions } from "./pages/extras";
 import { fixedBody } from "./pages/fixed";
 import { layout } from "./pages/layout";
 import { productPage, productTitle } from "./pages/product";
-import type { Proof } from "./pages/proofs";
 import type { Presentation } from "./presentation";
 import type { ProjectCard } from "./project-card";
 
@@ -17,24 +15,13 @@ export type { Proof } from "./pages/proofs";
 export function renderPages(
   corpus: Corpus,
   cards: readonly ProjectCard[],
-  proofs: readonly Proof[] = [],
-  presentations: ReadonlyMap<string, Presentation> = new Map(),
-  brand?: PublicBrandCopy,
-  brandProofs?: readonly PublicProof[],
-  extras?: PageExtras,
+  options: PageOptions = {},
 ): ReadonlyMap<string, string> {
+  const presentations = options.presentations ?? new Map<string, Presentation>();
   const pages = new Map<string, string>();
   for (const page of corpus.pages) {
     if (page.kind === "fixed") {
-      const { title, body } = fixedBody(
-        page.path,
-        cards,
-        proofs,
-        presentations,
-        brand,
-        brandProofs,
-        extras,
-      );
+      const { title, body } = fixedBody(page.path, cards, options);
       pages.set(page.path, layout(title, page.path, body));
       continue;
     }

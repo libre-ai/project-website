@@ -87,9 +87,7 @@ describe("buildSite (G1, G2, G3, G4, G9 : gates bloquants, compteurs imprimés)"
     const result = buildSite(
       [{ name: "sketch.project.v1.yaml", text: cardText("sketch", "idea") }],
       assets,
-      [],
-      [],
-      validProjection.copy.fr,
+      { brand: validProjection.copy.fr },
     );
     expect(result.report.brandFieldsRendered).toBe(7);
     expect(result.files.get("index.html")).toContain("Possédez la fabrique.");
@@ -111,7 +109,7 @@ describe("buildSite (G1, G2, G3, G4, G9 : gates bloquants, compteurs imprimés)"
     const result = buildSite(
       [{ name: "sketch.project.v1.yaml", text: cardText("sketch", "idea") }],
       assets,
-      [presentation],
+      { presentations: [presentation] },
     );
     const html = result.files.get("produits/sketch/index.html") ?? "";
     expect(html).toContain("<h1>Sketch</h1>");
@@ -137,7 +135,7 @@ describe("buildSite (G1, G2, G3, G4, G9 : gates bloquants, compteurs imprimés)"
     const result = buildSite(
       [{ name: "sketch.project.v1.yaml", text: cardText("sketch", "idea") }],
       assets,
-      [draft],
+      { presentations: [draft] },
     );
     const html = result.files.get("preuves/index.html") ?? "";
     const row = html.match(/<tr><td data-label="Contrôle">ADR 0003[\s\S]*?<\/tr>/)?.[0] ?? "";
@@ -162,7 +160,7 @@ describe("buildSite (G1, G2, G3, G4, G9 : gates bloquants, compteurs imprimés)"
     const result = buildSite(
       [{ name: "sketch.project.v1.yaml", text: cardText("sketch", "idea") }],
       assets,
-      [draft],
+      { presentations: [draft] },
     );
     const html = result.files.get("produits/sketch/index.html") ?? "";
     expect(html).toContain("Situation actuelle");
@@ -184,9 +182,9 @@ describe("buildSite (G1, G2, G3, G4, G9 : gates bloquants, compteurs imprimés)"
       audience: "Personne.",
     });
     expect(() =>
-      buildSite([{ name: "sketch.project.v1.yaml", text: cardText("sketch", "idea") }], assets, [
-        orphan,
-      ]),
+      buildSite([{ name: "sketch.project.v1.yaml", text: cardText("sketch", "idea") }], assets, {
+        presentations: [orphan],
+      }),
     ).toThrow("presentation.unknown_project:ghost");
   });
 

@@ -18,7 +18,7 @@ commande se rejoue ; aucune valeur n'est une appréciation. Les captures ne sont
 | G8 diagrammes | atteint | `bun run detect "$(mktemp -d)" dist docs/diagrams` ; `self_check.py` | `self_check` OK ×3 ; détecteur 0 trouvaille ; DIAG-1 : 13/13, 13/13, 12/12 ; DIAG-5 : 6 fichiers, 0 nom d'état |
 | G9 contenu gardé | atteint | `bun run build` | 27 textes examinés, 0 violation ; liste en donnée (`forbidden-claims.json`) |
 | G10 vérification visuelle | atteint | `bun scripts/capture.ts <dossier>` | 28 captures (14 gabarits × 2 largeurs), observées une à une (§3) |
-| G11 `bun run check` | atteint | `bun run check` | exit 0 ; 320 tests, 0 échec (317 au relevé initial, 3 ajoutés par la revue, voir §4) |
+| G11 `bun run check` | atteint | `bun run check` | exit 0 ; 322 tests, 0 échec (317 au relevé initial, 5 ajoutés après la revue, voir §4) |
 
 ## 2. Objectifs O1 à O11
 
@@ -95,8 +95,11 @@ Revue solo (`/review`, 2026-10-15), 3 avertissements, **corrigés** :
 - `planDetector` expose `runFor(cible)` : le script exécute exactement l'invocation testée.
 
 Chaque correctif a un test rouge avant le changement. Détecteur rejoué en entier après la
-refactorisation : 0 trouvaille sur `dist` et `docs/diagrams`. Trois suggestions restent (code
-dupliqué entre les trois récupérateurs, nom `CardSource` réutilisé, 7 paramètres positionnels).
+refactorisation : 0 trouvaille sur `dist` et `docs/diagrams`. Les trois suggestions sont
+également traitées : un seul récupérateur épinglé (`src/fetch-pinned.ts`,
+`src/fetch-pinned-io.ts`), `PinnedSource` au lieu de `CardSource`, objets d'options à la place
+de 7 paramètres positionnels. Les trois récupérations rejouées sur le réseau : 0 empreinte
+modifiée, `src/data` inchangé.
 
 ## 5. Validation du propriétaire
 
