@@ -29,6 +29,7 @@ const FIXED_PATHS = [
   "/gouvernance",
   "/corrections",
   "/contribuer",
+  "/signaler",
 ] as const;
 
 export function buildCorpus(cards: readonly ProjectCard[]): Corpus {

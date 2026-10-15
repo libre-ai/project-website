@@ -70,7 +70,7 @@ describe("buildSite (G1, G2, G3, G4, G9 : gates bloquants, compteurs imprimés)"
     expect(result.report).toEqual({
       cardsRead: 2,
       productPages: 2,
-      fixedPages: 9,
+      fixedPages: 10,
       resourcesExamined: 0,
       presentationsDrafted: 0,
       presentationsReviewed: 0,

@@ -15,6 +15,7 @@ const ROUTES = [
   "/gouvernance",
   "/corrections",
   "/contribuer",
+  "/signaler",
   SAMPLE_PRODUCT,
 ];
 // Same origin as SITE_ORIGIN in src/corpus.ts: the canonical URLs must match what is served.
@@ -220,4 +221,14 @@ test.describe("G6 : zéro violation serious ou critical (axe, WCAG 2.2 AA)", () 
       ).toEqual([]);
     });
   }
+});
+
+test.describe("FR-15 : /signaler ne collecte rien", () => {
+  test("the page has no form control and links to the public forge", async ({ page }) => {
+    await page.goto("/signaler");
+    await expect(page.locator("form, input, textarea, select, button")).toHaveCount(0);
+    await expect(
+      page.locator('a[href="https://github.com/libre-ai/project-website/issues"]'),
+    ).toHaveCount(1);
+  });
 });

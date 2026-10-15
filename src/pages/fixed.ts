@@ -12,6 +12,7 @@ import { FORGE_URL } from "./layout";
 import { methodBody } from "./method";
 import { productList } from "./product";
 import { type Proof, proofsBody } from "./proofs";
+import { signalerBody } from "./signaler";
 
 export function fixedBody(
   path: string,
@@ -39,6 +40,8 @@ export function fixedBody(
         title: "Produits",
         body: `<h1>Produits</h1>${productList(cards, presentations)}`,
       };
+    case "/signaler":
+      return { title: "Signaler", body: signalerBody() };
     case "/fabrique":
       return { title: "Fabrique", body: fabriqueBody(cards) };
     case "/preuves":

@@ -18,6 +18,7 @@ const ROUTES = [
   "/gouvernance",
   "/corrections",
   "/contribuer",
+  "/signaler",
   "/produits/execution-sandbox",
 ];
 const WIDTHS = [390, 1440];
