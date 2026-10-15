@@ -18,6 +18,25 @@ export function productItem(card: ProjectCard, presentation: Presentation | unde
   return `<li class="frame"><a href="/produits/${escapeHtml(card.project)}">${escapeHtml(card.project)}</a> <span class="summary">${escapeHtml(lead)}</span></li>`;
 }
 
+// FR-14: the list is grouped by layer in constellation order (the order of LAYER_LABELS); a layer
+// without product has no heading. Cards keep the corpus order inside a group, and no state filter exists.
+export function productList(
+  cards: readonly ProjectCard[],
+  presentations: ReadonlyMap<string, Presentation>,
+): string {
+  const layers = Object.keys(LAYER_LABELS) as (keyof typeof LAYER_LABELS)[];
+  return layers
+    .map((layer) => {
+      const members = cards.filter((card) => card.layer === layer);
+      if (members.length === 0) return "";
+      const items = members
+        .map((card) => productItem(card, presentations.get(card.project)))
+        .join("");
+      return `<h2>${LAYER_LABELS[layer]}</h2><ul>${items}</ul>`;
+    })
+    .join("");
+}
+
 // The opening of a product page: the reviewed presentation when there is one, else the card.
 function productLead(card: ProjectCard, presentation: Presentation | undefined): string {
   const ready = published(presentation);

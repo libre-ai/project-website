@@ -7,7 +7,7 @@ import type { Presentation } from "../presentation";
 import type { ProjectCard } from "../project-card";
 import { homeBody } from "./home";
 import { FORGE_URL } from "./layout";
-import { productItem } from "./product";
+import { productList } from "./product";
 import { type Proof, proofsBody } from "./proofs";
 
 export function fixedBody(
@@ -33,7 +33,7 @@ export function fixedBody(
     case "/produits":
       return {
         title: "Produits",
-        body: `<h1>Produits</h1><ul>${cards.map((card) => productItem(card, presentations.get(card.project))).join("")}</ul>`,
+        body: `<h1>Produits</h1>${productList(cards, presentations)}`,
       };
     case "/preuves":
       return {
