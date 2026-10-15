@@ -10,6 +10,9 @@ const usable = {
   summary: "Espace de connaissances local.",
   current_situation: "Parcours local vérifié sur la branche servie.",
   non_goals: ["Pas de synchronisation cloud."],
+  kind: "product",
+  layer: "couche-1",
+  dependencies: [],
   application_url: "https://notebook.example.test/",
   freshness: { last_verified_on: "2026-10-08" },
 };
@@ -22,6 +25,9 @@ const idea = {
   summary: "Idée non spécifiée.",
   current_situation: "Aucun code n'existe encore à ce stade.",
   non_goals: ["Pas d'engagement de date."],
+  kind: "satellite",
+  layer: "couche-2",
+  dependencies: [],
   freshness: { last_verified_on: "2026-10-08" },
 };
 

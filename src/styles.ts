@@ -297,6 +297,22 @@ code {
   list-style: none;
 }
 
+/* Layer and type of a product (FR-14): label and value on one line, no state. */
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1rem;
+  margin-block: 1rem;
+}
+
+.facts dt {
+  color: var(--lai-color-muted);
+}
+
+.facts dd {
+  margin: 0;
+}
+
 /* A list made of frames starts on the text column, not indented like a bullet list. */
 ul:has(> .frame) {
   padding-inline-start: 0;

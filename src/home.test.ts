@@ -14,6 +14,9 @@ const cards = [
     summary: "Résumé court.",
     current_situation: "Aucun code n'existe encore à ce stade.",
     non_goals: ["Pas d'engagement de date."],
+    kind: "satellite",
+    layer: "couche-2",
+    dependencies: [],
     freshness: { last_verified_on: "2026-10-08" },
   }),
 ];

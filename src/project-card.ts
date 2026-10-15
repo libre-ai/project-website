@@ -14,7 +14,35 @@ const MATURITIES = ["idea", "specified", "usable", "proven"] as const;
 export type Exposure = (typeof EXPOSURES)[number];
 export type Maturity = (typeof MATURITIES)[number];
 
+// FR-14: layer and type are read from the card and shown with these labels; the values are the
+// schema's own, an unknown one refuses the card.
+export const LAYER_LABELS = {
+  "couche-1": "Couche 1",
+  "couche-2": "Couche 2",
+  "couche-3": "Couche 3",
+  "couche-4": "Couche 4",
+  transverse: "Transverse",
+} as const;
+export const KIND_LABELS = {
+  application: "Application",
+  product: "Produit",
+  authority: "Autorité",
+  satellite: "Satellite",
+  tool: "Outil",
+} as const;
+const LAYERS = Object.keys(LAYER_LABELS) as (keyof typeof LAYER_LABELS)[];
+const KINDS = Object.keys(KIND_LABELS) as (keyof typeof KIND_LABELS)[];
+
+export interface Dependency {
+  readonly on: string;
+  readonly why: string;
+}
+
 export interface ProjectCard {
+  readonly layer: keyof typeof LAYER_LABELS;
+  readonly kind: keyof typeof KIND_LABELS;
+  // What the project relies on, as the card declares it (no pin, no state).
+  readonly dependencies: readonly Dependency[];
   readonly project: string;
   readonly repository: string;
   readonly exposure: Exposure;
@@ -63,11 +91,23 @@ function limits(value: unknown, project: string): readonly string[] {
   });
 }
 
+function dependencies(value: unknown, project: string): readonly Dependency[] {
+  const error = `project_card.dependencies_invalid:${project}`;
+  if (!Array.isArray(value)) throw new Error(error);
+  return value.map((entry) => {
+    const item = record(entry, error);
+    return { on: text(item.on, error), why: text(item.why, error) };
+  });
+}
+
 export function parseProjectCard(value: unknown): ProjectCard {
   const input = record(value, "project_card.object_invalid");
   const project = text(input.project, "project_card.project_invalid");
   const applicationUrl = input.application_url;
   return {
+    layer: oneOf(input.layer, LAYERS, `project_card.layer_invalid:${project}`),
+    kind: oneOf(input.kind, KINDS, `project_card.kind_invalid:${project}`),
+    dependencies: dependencies(input.dependencies, project),
     project,
     repository: text(input.repository, `project_card.repository_invalid:${project}`),
     exposure: oneOf(input.exposure, EXPOSURES, `project_card.exposure_invalid:${project}`),

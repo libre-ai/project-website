@@ -4,7 +4,7 @@
  */
 import { citationFor } from "../feed";
 import type { Presentation } from "../presentation";
-import type { ProjectCard } from "../project-card";
+import { KIND_LABELS, LAYER_LABELS, type ProjectCard } from "../project-card";
 import { escapeHtml } from "../security";
 
 // ADR 0003: a reviewed presentation replaces the card's summary; a draft is never published.
@@ -41,6 +41,17 @@ export function productTitle(card: ProjectCard, presentation: Presentation | und
   return published(presentation)?.title ?? card.project;
 }
 
+// FR-14: place in the constellation. Layer and type only, never a state; a card without
+// dependency has no section rather than a claim of none.
+function productFacts(card: ProjectCard): string {
+  const facts = `<dl class="facts"><dt>Couche</dt><dd>${LAYER_LABELS[card.layer]}</dd><dt>Type</dt><dd>${KIND_LABELS[card.kind]}</dd></dl>`;
+  if (card.dependencies.length === 0) return facts;
+  const items = card.dependencies
+    .map((entry) => `<li>${escapeHtml(entry.on)} : ${escapeHtml(entry.why)}</li>`)
+    .join("");
+  return `${facts}<h2>Dépendances</h2><ul>${items}</ul>`;
+}
+
 export function productPage(card: ProjectCard, presentation: Presentation | undefined): string {
   const limits = card.limits.map((entry) => `<li>${escapeHtml(entry)}</li>`).join("");
   // A link is rendered only when there is a real URL: an empty href would be a dead control.
@@ -51,6 +62,7 @@ export function productPage(card: ProjectCard, presentation: Presentation | unde
   const sourceUrl = `https://github.com/${escapeHtml(card.repository)}`;
   return [
     productLead(card, presentation),
+    productFacts(card),
     `<h2>Limites</h2><ul>${limits}</ul>`,
     action,
     `<p><a href="${sourceUrl}" rel="noopener noreferrer">Code source</a> (dépôt public : l'état détaillé du projet s'y lit)</p>`,
