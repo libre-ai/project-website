@@ -1,0 +1,13 @@
+project: ai-model-policy
+title: ai-model-policy
+author: "À renseigner par le relecteur"
+ai_assistance: "Brouillon rédigé par un modèle de langage le 2026-10-14 à partir des champs scope et statement de la fiche project.v1 du dépôt, traduits en français ; relecture et signature humaines requises avant publication."
+nature: analyse
+review_date: "2026-10-14"
+reviewed: false
+pitch: "ai-model-policy confronte un usage prévu d'un modèle d'IA à un ensemble de règles explicitement approuvées, et dit ce qui manque avant de l'accepter."
+capabilities:
+  - "Comparer un usage prévu avec un ensemble de règles explicitement approuvé."
+  - "Identifier les conditions à remplir avant que cet usage puisse être accepté."
+  - "Voir quels faits sur le modèle manquent, au lieu de traiter l'incertitude comme une approbation."
+audience: "Équipes qui doivent décider si un modèle peut être employé pour un usage donné."

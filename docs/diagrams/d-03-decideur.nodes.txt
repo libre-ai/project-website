@@ -1,0 +1,14 @@
+# Source de texte de D-03 (PRD §3.2, J2, révisé par l'ADR 0003). Une ligne par nœud rendu ; DIAG-1 compare au SVG.
+OUI
+NON
+Liste des produits
+Ouvrir la fiche
+couche, type
+Lire limites et date
+dépôt, citation
+Adresse
+déclarée ?
+Ouvrir le produit
+adresse de la fiche, externe
+Lire le code source
+lien vers la forge
