@@ -9,6 +9,33 @@ import { escapeHtml } from "../security";
 // The state of a project is read in its repository, which every product page links to.
 export const FORGE_URL = "https://github.com/libre-ai";
 
+interface Entry {
+  readonly href: string;
+  readonly label: string;
+}
+
+const NAVIGATION: readonly Entry[] = [
+  { href: "/produits", label: "Produits" },
+  { href: "/fabrique", label: "Fabrique" },
+  { href: "/offres", label: "Offres" },
+  { href: "/preuves", label: "Preuves" },
+  { href: "/methode", label: "Méthode" },
+];
+
+const CORRECTIONS = "/corrections";
+
+const FOOTER: readonly Entry[] = [
+  { href: CORRECTIONS, label: "Journal des corrections" },
+  { href: "/deployer", label: "Déployer" },
+  { href: "/licences", label: "Licences" },
+  { href: "/signaler", label: "Signaler" },
+];
+
+// Entries are joined by a space so the text reads as separate words without styles.
+function links(entries: readonly Entry[]): string {
+  return entries.map((entry) => `<a href="${entry.href}">${entry.label}</a>`).join(" ");
+}
+
 export function layout(title: string, path: string, body: string): string {
   const canonical = `${SITE_ORIGIN}${path}`;
   return [
@@ -24,9 +51,11 @@ export function layout(title: string, path: string, body: string): string {
     '<link rel="stylesheet" href="/assets/styles.css">',
     "</head>",
     "<body>",
-    '<header class="site-header"><a class="wordmark" href="/">Libre AI</a><nav><a href="/produits">Produits</a> <a href="/fabrique">Fabrique</a> <a href="/offres">Offres</a><a href="/preuves">Preuves</a> <a href="/methode">Méthode</a></nav></header>',
+    `<header class="site-header"><a class="wordmark" href="/">Libre AI</a><nav>${links(NAVIGATION)}</nav></header>`,
     `<main>${body}</main>`,
-    '<footer><a href="/corrections">Journal des corrections</a> <a href="/deployer">Déployer</a> <a href="/licences">Licences</a> <a href="/signaler">Signaler</a></footer>',
+    // A page does not link to itself: the footer omits the entry of the current page, except the
+    // corrections journal, which FR-05 requires in the footer of every page, its own included.
+    `<footer>${links(FOOTER.filter((entry) => entry.href !== path || entry.href === CORRECTIONS))}</footer>`,
     "</body>",
     "</html>",
     "",

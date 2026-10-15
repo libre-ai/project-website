@@ -116,9 +116,11 @@ export function buildSite(
     { gate: "G2 fiches lues", examined: cards.length, violations: 0, command },
     { gate: "G3 ressources examinées", examined: resourceGates.examined, violations: 0, command },
     {
-      gate: "ADR 0003 présentations publiées (relues sur rédigées)",
-      examined: presentationsReviewed,
-      violations: presentations.length - presentationsReviewed,
+      // A draft awaiting review is not a violation: the label carries the review count and the
+      // gate examines every written presentation.
+      gate: `ADR 0003 présentations relues : ${presentationsReviewed} sur ${presentations.length}`,
+      examined: presentations.length,
+      violations: 0,
       command,
     },
     {

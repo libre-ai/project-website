@@ -121,6 +121,31 @@ describe("buildSite (G1, G2, G3, G4, G9 : gates bloquants, compteurs imprimés)"
     expect(result.report.presentationsReviewed).toBe(1);
   });
 
+  test("the proofs page counts drafts as drafts, never as violations (ADR 0003)", () => {
+    const draft = parsePresentation({
+      project: "sketch",
+      title: "Sketch",
+      author: AUTHOR_PLACEHOLDER,
+      ai_assistance: "Brouillon assisté, non relu.",
+      nature: "analyse",
+      review_date: "2026-10-14",
+      reviewed: false,
+      pitch: "Sketch prépare votre voyage.",
+      capabilities: ["Décrire des contraintes."],
+      audience: "Voyageurs.",
+    });
+    const result = buildSite(
+      [{ name: "sketch.project.v1.yaml", text: cardText("sketch", "idea") }],
+      assets,
+      [draft],
+    );
+    const html = result.files.get("preuves/index.html") ?? "";
+    const row = html.match(/<tr><td data-label="Contrôle">ADR 0003[\s\S]*?<\/tr>/)?.[0] ?? "";
+    expect(row).toContain("relues : 0 sur 1");
+    expect(row).toContain('<td data-label="Examinés">1</td>');
+    expect(row).toContain('<td data-label="Violations">0</td>');
+  });
+
   test("a draft presentation is examined but not published: the card text stays (ADR 0003)", () => {
     const draft = parsePresentation({
       project: "sketch",

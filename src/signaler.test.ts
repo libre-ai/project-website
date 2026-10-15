@@ -43,10 +43,26 @@ describe("/signaler (S3.5, FR-15)", () => {
     }
   });
 
-  test("is reachable from every page by the footer", () => {
+  test("is reachable from every other page by the footer", () => {
     for (const [path, page] of pages) {
+      if (path === "/signaler") continue;
       expect(page, path).toContain('<a href="/signaler">');
     }
+  });
+
+  test("the navigation words are separated by a space", () => {
+    const nav = html.match(/<nav>[\s\S]*?<\/nav>/)?.[0] ?? "";
+    expect(nav).not.toContain("</a><a");
+  });
+
+  test("no page's footer links to the page itself, except the journal required by FR-05", () => {
+    for (const [path, page] of pages) {
+      const footer = page.match(/<footer>[\s\S]*?<\/footer>/)?.[0] ?? "";
+      if (path !== "/corrections") expect(footer, path).not.toContain(`<a href="${path}">`);
+      expect(footer, path).toContain("<a ");
+    }
+    const own = pages.get("/corrections") ?? "";
+    expect(own).toContain('<a href="/corrections">Journal des corrections</a>');
   });
 
   test("names the correction journal as where a handled report is recorded", () => {
