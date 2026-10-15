@@ -12,6 +12,8 @@ import { diffOutputs } from "./determinism";
 import { parseBrandProjection } from "./domain";
 import { parseCardSources } from "./fetch-cards";
 import { FONT_FILE, FONT_LICENSE_FILE, renderFontFace } from "./font";
+import { parseLicences } from "./licences";
+import type { PageExtras } from "./pages/extras";
 import { loadPresentations } from "./presentation";
 import { buildSite, type SourceFile } from "./site";
 import { renderSiteCss } from "./styles";
@@ -41,6 +43,33 @@ const snapshot = verifyCardSnapshot(
 if (snapshot.violations.length > 0) {
   throw new Error(`site.snapshot_refused:${snapshot.violations.join(",")}`);
 }
+
+// S3.2: licences are read from the versioned REUSE.toml copies, verified against their pinned
+// digests exactly like the cards; one unreadable or unpinned file refuses the build.
+const licenceDirectory = join(import.meta.dir, "data/licences");
+const licencePins = parseCardSources(
+  await Bun.file(join(import.meta.dir, "data/licence-sources.json")).json(),
+);
+const LICENCE_SUFFIX = ".REUSE.toml";
+const licenceFiles = await Promise.all(
+  (await readdir(licenceDirectory))
+    .filter((name) => name.endsWith(LICENCE_SUFFIX))
+    .sort()
+    .map(async (name) => ({
+      repository: name.replace(LICENCE_SUFFIX, ""),
+      text: await readFile(join(licenceDirectory, name), "utf8"),
+    })),
+);
+const licenceSnapshot = verifyCardSnapshot(licencePins, licenceFiles);
+if (licenceSnapshot.violations.length > 0) {
+  throw new Error(`site.licences_refused:${licenceSnapshot.violations.join(",")}`);
+}
+const extras: PageExtras = {
+  licences: {
+    rows: licenceFiles.map((file) => parseLicences(file.repository, file.text)),
+    commits: new Map(licencePins.map((pin) => [pin.repository, pin.sha])),
+  },
+};
 
 const cardsDirectory = process.env.LIBRE_AI_CARDS_DIR || snapshotDirectory;
 const names = (await readdir(cardsDirectory)).filter((name) => name.endsWith(CARD_SUFFIX));
@@ -80,6 +109,7 @@ const assemble = () =>
     [snapshotProof],
     brandProjection.copy.fr,
     brandProjection.proofs,
+    extras,
   );
 const result = assemble();
 
@@ -130,6 +160,9 @@ console.log(
 console.log(`G1 pages fixes: ${result.report.fixedPages}, fichiers écrits: ${result.files.size}`);
 console.log(`O2 champs de marque rendus: ${result.report.brandFieldsRendered}`);
 console.log(`S1.2 affirmations de marque rendues: ${result.report.brandProofsRendered}`);
+console.log(
+  `S3.2 licences: ${licenceSnapshot.examined} fichiers vérifiés, ${result.report.licencesRendered} dépôts rendus`,
+);
 console.log(`NFR déterminisme: deux assemblages, ${result.files.size} fichiers, 0 différence`);
 console.log(
   `NFR poids: ${budget.examined} pages, la plus lourde ${budget.heaviest.page} (${budget.heaviest.bytes} octets sur ${PAGE_BUDGET_BYTES})`,

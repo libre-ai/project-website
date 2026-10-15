@@ -4,8 +4,10 @@
  */
 import { constellationOf } from "../constellation";
 import type { PublicBrandCopy, PublicProof } from "../domain";
+import { licencesBody } from "../licences";
 import type { Presentation } from "../presentation";
 import type { ProjectCard } from "../project-card";
+import type { PageExtras } from "./extras";
 import { fabriqueBody } from "./fabrique";
 import { homeBody } from "./home";
 import { FORGE_URL } from "./layout";
@@ -21,6 +23,7 @@ export function fixedBody(
   presentations: ReadonlyMap<string, Presentation>,
   brand?: PublicBrandCopy,
   brandProofs?: readonly PublicProof[],
+  extras: PageExtras = {},
 ): { title: string; body: string } {
   switch (path) {
     case "/":
@@ -39,6 +42,14 @@ export function fixedBody(
       return {
         title: "Produits",
         body: `<h1>Produits</h1>${productList(cards, presentations)}`,
+      };
+    case "/licences":
+      return {
+        title: "Licences",
+        body:
+          extras.licences === undefined
+            ? "<h1>Licences</h1><p>Aucune donnée de licence n'est fournie à cette construction.</p>"
+            : licencesBody(extras.licences.rows, extras.licences.commits),
       };
     case "/signaler":
       return { title: "Signaler", body: signalerBody() };

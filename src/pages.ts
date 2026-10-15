@@ -4,6 +4,7 @@
  */
 import type { Corpus } from "./corpus";
 import type { PublicBrandCopy, PublicProof } from "./domain";
+import type { PageExtras } from "./pages/extras";
 import { fixedBody } from "./pages/fixed";
 import { layout } from "./pages/layout";
 import { productPage, productTitle } from "./pages/product";
@@ -20,6 +21,7 @@ export function renderPages(
   presentations: ReadonlyMap<string, Presentation> = new Map(),
   brand?: PublicBrandCopy,
   brandProofs?: readonly PublicProof[],
+  extras?: PageExtras,
 ): ReadonlyMap<string, string> {
   const pages = new Map<string, string>();
   for (const page of corpus.pages) {
@@ -31,6 +33,7 @@ export function renderPages(
         presentations,
         brand,
         brandProofs,
+        extras,
       );
       pages.set(page.path, layout(title, page.path, body));
       continue;

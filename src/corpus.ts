@@ -29,6 +29,7 @@ const FIXED_PATHS = [
   "/gouvernance",
   "/corrections",
   "/contribuer",
+  "/licences",
   "/signaler",
 ] as const;
 

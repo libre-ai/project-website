@@ -15,6 +15,7 @@ const ROUTES = [
   "/gouvernance",
   "/corrections",
   "/contribuer",
+  "/licences",
   "/signaler",
   SAMPLE_PRODUCT,
 ];

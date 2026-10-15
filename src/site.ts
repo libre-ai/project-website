@@ -8,6 +8,7 @@ import { buildCorpus, renderRobots, renderSitemap } from "./corpus";
 import type { PublicBrandCopy, PublicProof } from "./domain";
 import { citationFor, renderAtom } from "./feed";
 import { type Proof, renderPages } from "./pages";
+import type { PageExtras } from "./pages/extras";
 import type { Presentation } from "./presentation";
 import { checkProjectCardGates, type ProjectCard, parseProjectCard } from "./project-card";
 import { checkResourceGates, type Resource } from "./resource";
@@ -28,6 +29,7 @@ export interface SiteReport {
   readonly claimViolations: number;
   readonly brandFieldsRendered: number;
   readonly brandProofsRendered: number;
+  readonly licencesRendered: number;
 }
 
 export interface SiteResult {
@@ -61,6 +63,8 @@ export function buildSite(
   brand?: PublicBrandCopy,
   // The affirmations of the method page (S1.2), from the same projection.
   brandProofs?: readonly PublicProof[],
+  // Verified data of the V2 pages (licences), supplied by the entry point.
+  extras?: PageExtras,
 ): SiteResult {
   const cardSources = sources.filter((source) => source.name.endsWith(CARD_SUFFIX));
   if (cardSources.length === 0) throw new Error("cards.source_empty");
@@ -83,7 +87,15 @@ export function buildSite(
   const corpus = buildCorpus(cards);
   // The proofs page is generated from the gates' own counters, so the claim gate scans the
   // other pages only: it holds machine output, never authored copy, and scanning it would be circular.
-  const draftPages = renderPages(corpus, cards, [], presentationByProject, brand, brandProofs);
+  const draftPages = renderPages(
+    corpus,
+    cards,
+    [],
+    presentationByProject,
+    brand,
+    brandProofs,
+    extras,
+  );
   const texts = [...draftPages]
     .filter(([path]) => path !== "/preuves")
     .map(([path, html]) => ({ id: path, text: html }));
@@ -116,7 +128,15 @@ export function buildSite(
       command,
     },
   ];
-  const pages = renderPages(corpus, cards, proofs, presentationByProject, brand, brandProofs);
+  const pages = renderPages(
+    corpus,
+    cards,
+    proofs,
+    presentationByProject,
+    brand,
+    brandProofs,
+    extras,
+  );
 
   const files = new Map<string, string>();
   for (const [route, html] of pages) files.set(outputPath(route), html);
@@ -144,6 +164,7 @@ export function buildSite(
       claimViolations: claimGates.violations.length,
       brandFieldsRendered: brand === undefined ? 0 : Object.keys(brand).length,
       brandProofsRendered: brandProofs?.length ?? 0,
+      licencesRendered: extras?.licences?.rows.length ?? 0,
     },
   };
 }

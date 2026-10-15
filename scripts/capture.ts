@@ -18,6 +18,7 @@ const ROUTES = [
   "/gouvernance",
   "/corrections",
   "/contribuer",
+  "/licences",
   "/signaler",
   "/produits/execution-sandbox",
 ];

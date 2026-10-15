@@ -46,6 +46,10 @@ Chaque contrôle imprime ses compteurs, y compris les contrôles réussis :
 - `O2 champs de marque rendus` : champs de `public-brand.v1.json` rendus sur l'accueil (7 attendus).
   La projection est lue de `node_modules/@libre-ai/governance/brand/projections/` ; absente ou
   invalide, la construction est refusée.
+- `S3.2 licences` : fichiers `REUSE.toml` vérifiés contre leurs empreintes (copies sous
+  `src/data/licences`, épinglées dans `src/data/licence-sources.json`) et dépôts rendus sur
+  `/licences`. Mise à jour : `bun src/fetch-licences-cli.ts` (réseau, relire le diff). Un dépôt
+  sans identifiant SPDX lisible refuse la construction.
 - `NFR déterminisme` : deux assemblages du même contenu, fichiers comparés octet pour octet ;
   toute différence refuse la construction.
 - `NFR poids` : pages mesurées (document, feuilles liées, polices chargées) et la plus lourde,

@@ -26,7 +26,7 @@ export function layout(title: string, path: string, body: string): string {
     "<body>",
     '<header class="site-header"><a class="wordmark" href="/">Libre AI</a><nav><a href="/produits">Produits</a> <a href="/fabrique">Fabrique</a> <a href="/preuves">Preuves</a> <a href="/methode">Méthode</a></nav></header>',
     `<main>${body}</main>`,
-    '<footer><a href="/corrections">Journal des corrections</a> <a href="/signaler">Signaler</a></footer>',
+    '<footer><a href="/corrections">Journal des corrections</a> <a href="/licences">Licences</a> <a href="/signaler">Signaler</a></footer>',
     "</body>",
     "</html>",
     "",
