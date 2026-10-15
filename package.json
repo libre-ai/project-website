@@ -41,6 +41,7 @@
     "check:bun": "bun run check:bun:runtime && bun node_modules/@libre-ai/governance/tools/quality/check-bun-manifests.ts",
     "check:toolchain": "bun run check:bun && bun node_modules/@libre-ai/governance/tools/quality/check-toolchain.ts",
     "build": "bun run check:bun && bun src/build-site.ts",
+    "detect": "bun run check:bun:runtime && bun scripts/detect.ts",
     "build:brand": "bun run check:bun:runtime && bun src/build.ts",
     "sync:deployment-artifact": "bun run check:bun:runtime && bun tools/clever/sync-site.ts",
     "preview:brand": "bun run check:bun:runtime && bun src/preview.ts",

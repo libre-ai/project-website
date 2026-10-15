@@ -49,6 +49,21 @@ Chaque contrôle imprime ses compteurs, y compris les contrôles réussis :
 
 La page `/preuves` reprend les mêmes compteurs, avec la commande de reproduction.
 
+## Détecteur de qualité visuelle (O8)
+
+Rejouable depuis un clone neuf, sans binaire téléchargé : le détecteur est cloné à un commit
+complet épinglé (`src/detect-plan.ts`), compilé avec `cargo build --locked`, puis lancé sur chaque
+dossier donné. Prérequis : `git` et une toolchain Rust `stable`.
+
+```sh
+bun run build
+bun run detect "$(mktemp -d)" dist docs/diagrams
+```
+
+Le dossier de travail doit être neuf et vide (refus sinon). Sortie : un compteur par dossier et
+`detect total findings: 0`. Toute trouvaille, ou toute sortie qui n'est pas un tableau JSON,
+fait sortir le script en code 1. La télémétrie du détecteur est désactivée.
+
 ## Sortie
 
 `dist/` est écrit de façon atomique : une construction en échec ne remplace jamais un dist valide.
