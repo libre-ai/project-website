@@ -20,9 +20,15 @@ python3 <dossier du skill>/scripts/self_check.py docs/diagrams/d-05-carte.html
 
 Résultat attendu : `OK <fichier>` pour chacun. Résultat vérifié le 2026-10-14 : les trois sont `OK`.
 
+## DIAG-1 : texte du rendu = texte de la source
+
+Chaque diagramme a une source de texte versionnée, `<nom>.nodes.txt` (une ligne par nœud).
+`src/diagram-nodes.test.ts` échoue si un nœud du SVG n'est pas dans la source, si une ligne de la
+source n'est pas rendue, ou si un diagramme n'a aucun nœud texte. Le test imprime ses compteurs.
+Tout nouveau `.html` de ce dossier exige son `.nodes.txt`.
+
 ## Non fait
 
-- Le détecteur Impeccable (DIAG-3, sortie `[]`, exit 0) n'a pas été lancé : il faut compiler ou
-  télécharger son binaire, ce qui n'est pas encore autorisé.
-- DIAG-1 (chaque nœud du rendu existe dans la source) n'est pas automatisé : vérifié à la main.
+- DIAG-3 (détecteur, sortie `[]`) : rejouable par `bun run detect "$(mktemp -d)" dist docs/diagrams`
+  (voir `docs/build.md`) ; 0 trouvaille relevée le 2026-10-15.
 - D-06 (blueprint des preuves) est différé, comme dans le PRD.

@@ -1,0 +1,14 @@
+# Source de texte de D-04 (PRD §3.2, J3). Une ligne par nœud rendu ; DIAG-1 compare au SVG.
+Lire la méthode
+/methode
+Suivre les règles
+/contribuer
+Forge publique
+issues, pull requests
+Cadre de contribution
+CONTRIBUTING, DCO
+Gouvernance
+/gouvernance
+Journal des corrections
+/corrections, daté
+Aucune modification anonyme : le site n'accepte aucun contenu. Toute proposition passe par la forge.

@@ -1,0 +1,14 @@
+# Source de texte de D-03 (PRD §3.2, J2). Une ligne par nœud rendu ; DIAG-1 compare au SVG.
+OUI
+NON
+Liste des produits
+Ouvrir la fiche
+exposition, maturité
+Lire preuves et limites
+date, commande
+Utilisable
+maintenant ?
+Ouvrir le produit
+exposition vérifiable ou éprouvée
+Suivre la fiche
+lien vers la forge, sans URL
