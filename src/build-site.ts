@@ -72,7 +72,16 @@ const brandProjection = parseBrandProjection(
     join(process.cwd(), "node_modules/@libre-ai/governance/brand/projections/public-brand.v1.json"),
   ).json(),
 );
-const result = buildSite(sources, assets, presentations, [snapshotProof], brandProjection.copy.fr);
+const assemble = () =>
+  buildSite(
+    sources,
+    assets,
+    presentations,
+    [snapshotProof],
+    brandProjection.copy.fr,
+    brandProjection.proofs,
+  );
+const result = assemble();
 
 // The portfolio is the authority for which repositories are products; the exclusions are data.
 const portfolio = (await Bun.file(
@@ -101,7 +110,7 @@ const binaries = new Map<string, Uint8Array>([
 const output = new Map<string, string | Uint8Array>([...result.files, ...binaries]);
 
 // S6.4: a second assembly of the same input must write the same bytes; a difference refuses the build.
-const second = buildSite(sources, assets, presentations, [snapshotProof], brandProjection.copy.fr);
+const second = assemble();
 const differing = diffOutputs(result.files, second.files);
 if (differing.length > 0) throw new Error(`site.nondeterministic:${differing.join(",")}`);
 
@@ -120,6 +129,7 @@ console.log(
 );
 console.log(`G1 pages fixes: ${result.report.fixedPages}, fichiers écrits: ${result.files.size}`);
 console.log(`O2 champs de marque rendus: ${result.report.brandFieldsRendered}`);
+console.log(`S1.2 affirmations de marque rendues: ${result.report.brandProofsRendered}`);
 console.log(`NFR déterminisme: deux assemblages, ${result.files.size} fichiers, 0 différence`);
 console.log(
   `NFR poids: ${budget.examined} pages, la plus lourde ${budget.heaviest.page} (${budget.heaviest.bytes} octets sur ${PAGE_BUDGET_BYTES})`,

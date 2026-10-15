@@ -2,11 +2,12 @@
  * Fixed pages (FR-07): the eight routes whose body does not depend on one card.
  * An unknown path throws instead of rendering an empty page.
  */
-import type { PublicBrandCopy } from "../domain";
+import type { PublicBrandCopy, PublicProof } from "../domain";
 import type { Presentation } from "../presentation";
 import type { ProjectCard } from "../project-card";
 import { homeBody } from "./home";
 import { FORGE_URL } from "./layout";
+import { methodBody } from "./method";
 import { productList } from "./product";
 import { type Proof, proofsBody } from "./proofs";
 
@@ -16,6 +17,7 @@ export function fixedBody(
   proofs: readonly Proof[],
   presentations: ReadonlyMap<string, Presentation>,
   brand?: PublicBrandCopy,
+  brandProofs?: readonly PublicProof[],
 ): { title: string; body: string } {
   switch (path) {
     case "/":
@@ -28,7 +30,7 @@ export function fixedBody(
     case "/methode":
       return {
         title: "Méthode",
-        body: "<h1>Méthode</h1><p>Chaque produit est décrit avec ses limites, la date de sa vérification et son code source. L'état détaillé de chaque projet se lit dans son dépôt. Les contrôles du dépôt échouent sur une source illisible au lieu de passer.</p>",
+        body: methodBody(brandProofs),
       };
     case "/produits":
       return {

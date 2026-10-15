@@ -77,6 +77,7 @@ describe("buildSite (G1, G2, G3, G4, G9 : gates bloquants, compteurs imprimés)"
       textsExamined: result.report.textsExamined,
       claimViolations: 0,
       brandFieldsRendered: 0,
+      brandProofsRendered: 0,
     });
     expect(result.report.textsExamined).toBeGreaterThan(0);
   });
