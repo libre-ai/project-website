@@ -87,7 +87,15 @@ la fenêtre sur la capture.
 10. Une dépendance de composition reste requise : `node_modules` pointe vers une composition
     locale (`file:../project-governance` dans `package.json`).
 
-## 5. Non fait
+## 5. Validation du propriétaire
+
+Recette locale validée par le propriétaire dans le chat de la session, le 2026-10-15 (message
+« validé », après lecture du rapport et de l'état de la CI sur `95cae5e`). Cette validation
+ferme O11. Elle ne couvre pas : la sortie de la PR du brouillon, la fusion, la relecture des
+présentations (O6), les amendements de gouvernance (O10), l'ADR d'hébergement, ni aucune mise en
+ligne.
+
+## 6. Non fait
 
 Relecture des 15 présentations, amendements de gouvernance, ADR d'hébergement, staging, anglais,
 trame d'atelier (S4.3, D-open-3).
