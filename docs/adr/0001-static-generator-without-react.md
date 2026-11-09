@@ -1,6 +1,8 @@
 # ADR 0001 — Générateur statique sans React
 
-- **Statut** : accepté par le propriétaire le 2026-10-14 (recommandation validée, « go »).
+- **Statut** : accepté par le propriétaire le 2026-10-14 (recommandation validée, « go ») ;
+  amendé par l'ADR 0005 (JavaScript en amélioration progressive) et l'ADR 0006 (serveur de la
+  liste d'attente) le 2026-11-09. Le générateur sans React est conservé.
 - **Portée** : refonte V1 du site public, branche `work/website-refonte-v1`.
 
 ## Contexte

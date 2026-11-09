@@ -1,6 +1,7 @@
 # ADR 0003 — Les produits sont présentés comme existants ; l'état réel vit dans le dépôt
 
-- **Statut** : accepté par le propriétaire le 2026-10-14, en réponse à une question structurée
+- **Statut** : **remplacé** par l'ADR 0007 le 2026-11-09 (aucun produit présenté comme
+  disponible). Historique : accepté par le propriétaire le 2026-10-14, en réponse à une question structurée
   (option « Produits présentés comme existants »), contre la recommandation de l'agent.
 - **Portée** : site public, branche `work/website-refonte-v1`. Remplace FR-02 et amende le PRD §1, §9.
 
