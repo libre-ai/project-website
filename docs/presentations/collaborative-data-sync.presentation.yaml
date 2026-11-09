@@ -1,0 +1,13 @@
+project: collaborative-data-sync
+title: collaborative-data-sync
+author: "À renseigner par le relecteur"
+ai_assistance: "Brouillon rédigé par un modèle de langage le 2026-10-14 à partir des champs scope et statement de la fiche project.v1 du dépôt, traduits en français ; relecture et signature humaines requises avant publication."
+nature: analyse
+review_date: "2026-10-14"
+reviewed: false
+pitch: "collaborative-data-sync échange les modifications entre deux clients qui travaillent sur le même document, rattrape les changements manqués après une déconnexion sans en appliquer deux fois, et suit les changements d'accès en gardant documents et organisations séparés."
+capabilities:
+  - "Échanger les modifications entre deux clients qui travaillent sur le même document partagé."
+  - "Récupérer les changements manqués après une déconnexion, sans appliquer de doublon."
+  - "Suivre les changements d'accès en gardant documents et organisations séparés."
+audience: "Applications qui partagent des documents entre plusieurs personnes."

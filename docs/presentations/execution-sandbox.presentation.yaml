@@ -1,0 +1,13 @@
+project: execution-sandbox
+title: execution-sandbox
+author: "À renseigner par le relecteur"
+ai_assistance: "Brouillon rédigé par un modèle de langage le 2026-10-14 à partir des champs scope et statement de la fiche project.v1 du dépôt ; relecture et signature humaines requises avant publication."
+nature: analyse
+review_date: "2026-10-14"
+reviewed: false
+pitch: "execution-sandbox prouve, par une attestation signée vérifiable indépendamment, qu'un profil de confinement demandé a été réellement appliqué à un worker, plutôt que de l'affirmer."
+capabilities:
+  - "Demander un profil de confinement et en obtenir une attestation signée."
+  - "Vérifier l'attestation indépendamment de l'exécution qui l'a produite."
+  - "Borner l'exécution d'un worker confié à un tiers."
+audience: "Orchestrateurs et opérateurs qui confient l'exécution d'un worker à un tiers."

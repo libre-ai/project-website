@@ -13,3 +13,23 @@ describe("website-owned brand CSS", () => {
     expect(renderSiteCss()).toBe(css);
   });
 });
+
+describe("brand grammar in the site CSS (ADR 0002)", () => {
+  test("frames and labels are square-cornered: the joint is orthogonal", () => {
+    const css = renderSiteCss();
+    expect(css).toMatch(/\.frame\s*\{[^}]*border-radius:\s*0/);
+    expect(css).toMatch(/\.label\s*\{[^}]*border:/);
+  });
+
+  // Keyframes are allowed only under no-preference: that rule is asserted in motion.test.ts.
+  test("transitions are turned off by reduced-motion", () => {
+    const css = renderSiteCss();
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{[^}]*transition:\s*none/);
+  });
+});
+
+describe("frame lists align with the text column", () => {
+  test("a list made of frames drops the default indent so the frames sit on the column", () => {
+    expect(renderSiteCss()).toMatch(/ul:has\(> \.frame\)\s*\{[^}]*padding-inline-start:\s*0/);
+  });
+});

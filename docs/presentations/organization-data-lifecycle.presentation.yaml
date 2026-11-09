@@ -1,0 +1,13 @@
+project: organization-data-lifecycle
+title: organization-data-lifecycle
+author: "À renseigner par le relecteur"
+ai_assistance: "Brouillon rédigé par un modèle de langage le 2026-10-14 à partir des champs scope et statement de la fiche project.v1 du dépôt, traduits en français ; relecture et signature humaines requises avant publication."
+nature: analyse
+review_date: "2026-10-14"
+reviewed: false
+pitch: "organization-data-lifecycle applique une règle de rétention explicite à une catégorie de données, suit une demande de suppression ciblée à travers les stockages concernés, et restaure une sauvegarde en tenant compte des données qui doivent rester supprimées."
+capabilities:
+  - "Appliquer une règle de rétention explicite à une catégorie de données de l'organisation."
+  - "Suivre une demande de suppression ciblée à travers les stockages qui détiennent ces données."
+  - "Restaurer une sauvegarde en tenant compte des données qui doivent rester supprimées."
+audience: "Organisations qui doivent tenir leurs obligations de conservation et d'effacement."

@@ -1,0 +1,13 @@
+project: personal-knowledge-workspace
+title: personal-knowledge-workspace
+author: "À renseigner par le relecteur"
+ai_assistance: "Brouillon rédigé par un modèle de langage le 2026-10-14 à partir des champs scope et statement de la fiche project.v1 du dépôt, traduits en français ; relecture et signature humaines requises avant publication."
+nature: analyse
+review_date: "2026-10-14"
+reviewed: false
+pitch: "personal-knowledge-workspace vous laisse écrire et réviser vos notes à mesure que votre compréhension avance, retrouver une information sans vous souvenir où vous l'avez rangée, et exporter une sélection en sachant ce qu'une sauvegarde permet de récupérer."
+capabilities:
+  - "Écrire et réviser des notes à mesure que votre compréhension avance."
+  - "Retrouver une information dans votre collection sans vous souvenir où vous l'avez rangée."
+  - "Exporter une sélection et comprendre ce qu'une sauvegarde vous permet de récupérer."
+audience: "Toute personne qui construit et entretient ses propres connaissances."

@@ -1,0 +1,13 @@
+project: schemas-and-contracts
+title: schemas-and-contracts
+author: "À renseigner par le relecteur"
+ai_assistance: "Brouillon rédigé par un modèle de langage le 2026-10-14 à partir des champs scope et statement de la fiche project.v1 du dépôt ; relecture et signature humaines requises avant publication."
+nature: analyse
+review_date: "2026-10-14"
+reviewed: false
+pitch: "schemas-and-contracts est l'autorité canonique des contrats de la constellation : catalogue, vecteurs de référence et politiques de compatibilité, que chaque consommateur vérifie à l'octet près."
+capabilities:
+  - "Consommer des contrats canoniques versionnés au lieu de copies divergentes."
+  - "Vérifier des vecteurs de référence à l'octet près chez chaque consommateur."
+  - "Appliquer des politiques de compatibilité explicites entre versions."
+audience: "Projets qui consomment les contrats de la constellation."

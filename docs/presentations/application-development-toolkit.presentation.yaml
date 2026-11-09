@@ -1,0 +1,13 @@
+project: application-development-toolkit
+title: application-development-toolkit
+author: "À renseigner par le relecteur"
+ai_assistance: "Brouillon rédigé par un modèle de langage le 2026-10-14 à partir des champs scope et statement de la fiche project.v1 du dépôt, traduits en français ; relecture et signature humaines requises avant publication."
+nature: analyse
+review_date: "2026-10-14"
+reviewed: false
+pitch: "Le toolkit donne aux applications Libre AI des états de chargement, de succès et d'erreur cohérents, une façon commune de traiter requêtes et réponses, et des composants testables là où ils sont employés."
+capabilities:
+  - "Présenter des états de chargement, de succès et d'erreur cohérents d'un écran à l'autre."
+  - "Donner aux adaptateurs web une approche commune des requêtes et des réponses."
+  - "Tester un composant partagé dans l'application qui l'emploie."
+audience: "Équipes qui construisent une application de la constellation."

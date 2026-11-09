@@ -1,0 +1,13 @@
+project: database-policy-inspector
+title: database-policy-inspector
+author: "À renseigner par le relecteur"
+ai_assistance: "Brouillon rédigé par un modèle de langage le 2026-10-14 à partir des champs scope et statement de la fiche project.v1 du dépôt, traduits en français ; relecture et signature humaines requises avant publication."
+nature: analyse
+review_date: "2026-10-14"
+reviewed: false
+pitch: "database-policy-inspector inspecte une politique d'accès SQL avant d'appliquer un changement de base, passe les migrations au crible d'un jeu de règles défini, et signale la syntaxe non prise en charge et les cas à instruire."
+capabilities:
+  - "Inspecter une politique d'accès SQL avant d'appliquer un changement de base de données."
+  - "Passer les fichiers de migration au crible des motifs couverts par un jeu de règles défini."
+  - "Signaler la syntaxe non prise en charge et les cas qui demandent une instruction ou des tests à l'exécution."
+audience: "Équipes qui font évoluer un schéma de base de données sous politique d'accès."

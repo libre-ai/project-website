@@ -1,0 +1,10 @@
+[
+  {
+    "repository": ".github",
+    "reason": "Dépôt d'organisation (groupe project) : pas un produit, donc pas de fiche produit."
+  },
+  {
+    "repository": "project-website",
+    "reason": "Ce site (groupe project) : il ne se décrit pas comme un produit de son propre catalogue."
+  }
+]

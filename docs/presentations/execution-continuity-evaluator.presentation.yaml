@@ -1,0 +1,13 @@
+project: execution-continuity-evaluator
+title: execution-continuity-evaluator
+author: "À renseigner par le relecteur"
+ai_assistance: "Brouillon rédigé par un modèle de langage le 2026-10-14 à partir des champs scope et statement de la fiche project.v1 du dépôt ; relecture et signature humaines requises avant publication."
+nature: analyse
+review_date: "2026-10-14"
+reviewed: false
+pitch: "execution-continuity-evaluator sépare décider d'agir : chaque décision de démarrage, de pause, d'annulation ou de dépassement de budget d'un agent est une fonction pure, rejouable et testable, dont l'effet reste chez l'appelant."
+capabilities:
+  - "Justifier après coup chaque décision de contrôle prise sur un agent."
+  - "Rejouer une décision sans effet de bord, sur des identifiants opaques."
+  - "Tester une décision sans lancer une mission."
+audience: "Surfaces qui pilotent des agents et doivent rendre compte de leurs décisions."

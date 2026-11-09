@@ -1,0 +1,77 @@
+[
+  {
+    "repository": "ai-work-supervision",
+    "sha": "a03a68aa03c34c4361f561761618a21039a8f225",
+    "sha256": "767f886c45cfd2917104262c394b102c2e4646bd0958c97167be40f25671353d"
+  },
+  {
+    "repository": "ai-model-policy",
+    "sha": "ffceefef4bba19c0badbff671a3eb66b3a978032",
+    "sha256": "6ce86dea9fa28b9b3debe36d0d54df5d48f3cd0dd1233f3717b88a0c208b05f4"
+  },
+  {
+    "repository": "learning-session-facilitation",
+    "sha": "96cf3227ec922d7fe1b5496163c4db45f2bdc6d5",
+    "sha256": "c5fc75236bfffe6581036cb8213325f3139f3d5a4ab7ed1175d7f6c7b760f136"
+  },
+  {
+    "repository": "personal-knowledge-workspace",
+    "sha": "765ae46b225f2a59ca8be8af1d2a15838ee17fef",
+    "sha256": "f549b8329bec30c3a60ff26b43409a7fdbe7bb48616984b4ae90ba6e49bbaf22"
+  },
+  {
+    "repository": "travel-itinerary-planner",
+    "sha": "cce55b6edafcd4655f014a4d39eae6ab96b741d6",
+    "sha256": "dba15aeadf7074814780c6fca6fdabe37e13380b4af7f13afb7eca477b5ed786"
+  },
+  {
+    "repository": "application-development-toolkit",
+    "sha": "57b5ea592c28270101880b44883d17e4a77f56a5",
+    "sha256": "3fa9e24d916b3bc322e4568b8e883ad4b715942c7c817732c174dbeb52ed87e7"
+  },
+  {
+    "repository": "schemas-and-contracts",
+    "sha": "216ffb9207f1afc831d50c6c97b7020da9bb7ae1",
+    "sha256": "79668e506a8a6e17d577f9a8b35024f1a33fda0d4181b071ef47d97496dd9d29"
+  },
+  {
+    "repository": "collaborative-data-sync",
+    "sha": "843f50c55764254f902017765346100a6d6305d8",
+    "sha256": "4faa25fc06c61921bf3249ae7edbc275b0d9546a613c944190fe80531daeec0c"
+  },
+  {
+    "repository": "execution-continuity-evaluator",
+    "sha": "5d3275ec6bf5d48cf3cf4fba5ebf81945e11ab90",
+    "sha256": "4faa25fc06c61921bf3249ae7edbc275b0d9546a613c944190fe80531daeec0c"
+  },
+  {
+    "repository": "execution-sandbox",
+    "sha": "d1ffdd2bb2f2c8398861c041cf622dfb78a42e64",
+    "sha256": "2d118884fe94bef71e3d29421ff2f890055874593664b85ace3991e9d7a77bff"
+  },
+  {
+    "repository": "capability-authorization",
+    "sha": "2642abf5c00e525aeac5d26ffed1a359eb26fe81",
+    "sha256": "4fa66af858053c1c4f70c80996401184d25ae6d52b3bdd553613952da30cbb5a"
+  },
+  {
+    "repository": "organization-data-lifecycle",
+    "sha": "05375bd58ebbdb6620dea654ca28eea3792b4212",
+    "sha256": "4faa25fc06c61921bf3249ae7edbc275b0d9546a613c944190fe80531daeec0c"
+  },
+  {
+    "repository": "database-policy-inspector",
+    "sha": "e23b7c4392f8bc03cd1cf2f2d08f65fc4b2ba5e2",
+    "sha256": "c1c820fa2f4c6b0cc3044aa0e88d9b22056f75b72427c8d5cfeec3a4dc1b749d"
+  },
+  {
+    "repository": "artifact-verification",
+    "sha": "a88f252b540211463c15e6c8149dceb05c30d9a6",
+    "sha256": "f75a894aeccab83f61b8d56f4ebf189c4e6cd3646477a38e784ec0f067a8a2cd"
+  },
+  {
+    "repository": "project-governance",
+    "sha": "49b7d45346263857ab503bad81d20ab289ca064c",
+    "sha256": "31dfe544ed4f9aa2d5575134b75ea470e11dd034984ccb1944ec5e66ce319715"
+  }
+]

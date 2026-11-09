@@ -1,0 +1,13 @@
+project: travel-itinerary-planner
+title: travel-itinerary-planner
+author: "À renseigner par le relecteur"
+ai_assistance: "Brouillon rédigé par un modèle de langage le 2026-10-14 à partir des champs scope et statement de la fiche project.v1 du dépôt, traduits en français ; relecture et signature humaines requises avant publication."
+nature: analyse
+review_date: "2026-10-14"
+reviewed: false
+pitch: "travel-itinerary-planner décrit vos contraintes de voyage et les activités envisagées, compare un itinéraire proposé aux faits sur la destination qui l'appuient, et repère les informations manquantes ou périmées avant le départ."
+capabilities:
+  - "Décrire vos contraintes de voyage et les activités que vous envisagez."
+  - "Comparer un itinéraire proposé avec les faits sur la destination qui l'appuient."
+  - "Repérer les informations manquantes ou périmées et ajuster le plan avant le départ."
+audience: "Voyageurs qui préparent un déplacement."

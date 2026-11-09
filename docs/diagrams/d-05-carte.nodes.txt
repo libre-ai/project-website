@@ -1,0 +1,13 @@
+# Source de texte de D-05 (PRD §6). Une ligne par nœud rendu ; DIAG-1 compare au SVG.
+/ Accueil
+/mission · Mission
+/methode · Méthode
+/produits · Liste
+/preuves · Gates
+/produits/:id · Fiche
+/gouvernance · Décisions
+/corrections · Journal
+/contribuer · Forge
+une page par fiche, générée
+citation et flux depuis le même corpus
+Pages : 8 fixes + N fiches. Le gabarit /produits/:id reçoit une page par fiche.

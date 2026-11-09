@@ -1,0 +1,13 @@
+project: capability-authorization
+title: capability-authorization
+author: "À renseigner par le relecteur"
+ai_assistance: "Brouillon rédigé par un modèle de langage le 2026-10-14 à partir des champs scope et statement de la fiche project.v1 du dépôt ; relecture et signature humaines requises avant publication."
+nature: analyse
+review_date: "2026-10-14"
+reviewed: false
+pitch: "capability-authorization fait trancher chaque action par une politique versionnée, exécutée dans un ordre fixe, révocation comprise : une action est refusée par défaut et n'est autorisée que sur preuve présentée."
+capabilities:
+  - "Refuser une action par défaut et ne l'autoriser que sur preuve présentée."
+  - "Émettre, atténuer, vérifier et révoquer des jetons Biscuit, avec rotation à deux clés."
+  - "Ne jamais renvoyer un jeton dans une trace ou une erreur."
+audience: "Services internes qui doivent autoriser des actions sans disperser les règles dans le code appelant."

@@ -1,0 +1,13 @@
+project: ai-work-supervision
+title: ai-work-supervision
+author: "À renseigner par le relecteur"
+ai_assistance: "Brouillon rédigé par un modèle de langage le 2026-10-14 à partir des champs scope et statement de la fiche project.v1 du dépôt, traduits en français ; relecture et signature humaines requises avant publication."
+nature: analyse
+review_date: "2026-10-14"
+reviewed: false
+pitch: "ai-work-supervision vous laisse décrire une mission et le résultat attendu, suivre les tâches qui avancent, et confronter chaque résultat rapporté à ses preuves avant de l'accepter."
+capabilities:
+  - "Décrire une mission et le résultat attendu avant que le travail commence."
+  - "Voir quelles tâches avancent et lesquelles attendent votre décision."
+  - "Comparer un résultat rapporté avec ses preuves avant de l'accepter."
+audience: "Personnes qui confient du travail à des agents et veulent en garder la supervision."

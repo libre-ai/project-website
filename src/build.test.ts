@@ -148,8 +148,9 @@ describe("buildStaticBrandSite", () => {
 describe("production input", () => {
   test("loads the current portfolio without historical brand or fleet projections", async () => {
     const root = await temporaryRoot();
+    // Read from the pinned install, like the build: no sibling checkout is assumed (S6.3).
     const portfolio = await Bun.file(
-      new URL("../../project-governance/ecosystem/portfolio.v1.json", import.meta.url),
+      join(process.cwd(), "node_modules/@libre-ai/governance/ecosystem/portfolio.v1.json"),
     ).json();
     await writeFixture(
       root,

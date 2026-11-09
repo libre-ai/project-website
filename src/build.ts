@@ -156,7 +156,7 @@ async function recoverInterruptedReplacement(
 
 export async function writeStaticSite(
   outputRoot: string,
-  files: ReadonlyMap<string, string>,
+  files: ReadonlyMap<string, string | Uint8Array>,
 ): Promise<void> {
   const outputName = basename(outputRoot);
   if (outputName.length === 0 || outputName === "." || outputName === ".." || files.size === 0) {
@@ -176,7 +176,8 @@ export async function writeStaticSite(
     for (const [path, value] of files) {
       const destination = join(stagingRoot, path);
       await mkdir(dirname(destination), { recursive: true });
-      await writeFile(destination, value, "utf8");
+      // Text is written as UTF-8; binary assets such as fonts are written byte for byte.
+      await writeFile(destination, value, typeof value === "string" ? "utf8" : undefined);
     }
   } catch (error) {
     await rm(stagingRoot, { recursive: true, force: true });
