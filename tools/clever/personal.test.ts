@@ -63,10 +63,22 @@ async function createTemporaryHome(): Promise<string> {
   return home;
 }
 
+// A fake that answers an unplanned call with success lets a test pass on a path it never
+// modelled. Every fake records such a call here and throws; the throw alone is not enough,
+// because the guard turns a throwing subprocess into an ordinary failure, which a test
+// expecting failure would accept.
+const unplannedCalls: string[] = [];
+
+function refuseUnplannedCall(description: string): never {
+  unplannedCalls.push(description);
+  throw new Error(`unplanned fake call: ${description}`);
+}
+
 afterEach(async () => {
   await Promise.all(
     temporaryDirectories.splice(0).map(async (directory) => rm(directory, { recursive: true })),
   );
+  expect(unplannedCalls.splice(0)).toEqual([]);
 });
 
 function commandResult(stdout = "", exitCode = 0, stderr = ""): CommandResult {
@@ -305,9 +317,13 @@ function createDependencies(
       if (!state.deleteKeepsApplication) state.applications = [];
       return commandResult();
     }
-    if (command === "clever" && arguments_.includes("deploy") && state.failDeploy) {
-      return commandResult("", 1, `${personalEmail} ${personalUserId}`);
+    if (command === "clever" && arguments_.includes("deploy")) {
+      return state.failDeploy
+        ? commandResult("", 1, `${personalEmail} ${personalUserId}`)
+        : commandResult();
     }
+    if (command === "clever" && arguments_.includes("restart")) return commandResult();
+    if (command === "clever" && arguments_.includes("stop")) return commandResult();
     if (command === "clever" && arguments_.includes("create")) {
       const candidate = options.environment?.APP_CONFIGURATION_FILE;
       if (candidate === undefined) return commandResult("", 1, "candidate missing");
@@ -325,9 +341,10 @@ function createDependencies(
       return commandResult(`${JSON.stringify(state.createReceipt)}\n`);
     }
     if (command === "git") {
-      if (arguments_[0] === "clone" && state.failClone) return commandResult("", 1);
+      if (arguments_[0] === "clone") return commandResult("", state.failClone ? 1 : 0);
       const gitOperation = arguments_.join(" ");
       if (gitOperation === "rev-parse --show-toplevel") return commandResult(`${state.gitRoot}\n`);
+      if (gitOperation === "fetch --quiet origin main") return commandResult();
       if (gitOperation === "remote get-url origin") {
         return commandResult(`${state.gitOrigin}\n`);
       }
@@ -346,7 +363,7 @@ function createDependencies(
         return commandResult("", state.rollbackCommitAllowed ? 0 : 1);
       }
     }
-    return commandResult();
+    return refuseUnplannedCall(`captured ${command} ${arguments_.join(" ")}`);
   }
 
   const dependencies: PersonalCleverDependencies = {
@@ -360,8 +377,11 @@ function createDependencies(
     runCaptured: runCapturedFake,
     runInteractive: async (command, arguments_, options = {}) => {
       calls.push({ kind: "interactive", command, arguments: arguments_, options });
-      if (`${command} ${arguments_.join(" ")}` === state.failingInteractive) return 1;
-      return 0;
+      const invocation = `${command} ${arguments_.join(" ")}`;
+      if (invocation !== "bun run check" && invocation !== "bun run test:e2e") {
+        return refuseUnplannedCall(`interactive ${invocation}`);
+      }
+      return invocation === state.failingInteractive ? 1 : 0;
     },
     fetchUrl: async (url, init) => {
       if (url === "https://api.clever-cloud.com/v2/self/applications") {
@@ -415,8 +435,15 @@ function createDependencies(
           { status: 200, headers: { "content-type": "application/json" } },
         );
       }
+      const smokeUrl = new URL(url);
+      const path = smokeUrl.pathname;
+      if (
+        smokeUrl.origin !== "https://app-staging-fixture.cleverapps.io" ||
+        !["/", "/comparaisons.html", "/marque.html"].includes(path)
+      ) {
+        return refuseUnplannedCall(`fetch ${url}`);
+      }
       fetchedUrls.push(url);
-      const path = new URL(url).pathname;
       if (path === state.smokeFailurePath) {
         return new Response("unavailable", {
           status: 503,
