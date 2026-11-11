@@ -376,6 +376,11 @@
   background: var(--surface);
 }
 
+/* The module hides every step but one; a display rule would otherwise override `hidden`. */
+.visite-etape[hidden] {
+  display: none;
+}
+
 .visite-etape .numero {
   font-weight: 700;
   color: var(--lien);
@@ -463,6 +468,22 @@
   border-radius: 999px;
   background: var(--surface-2);
   font-size: 0.85rem;
+}
+
+/* Forge pages quote tables from the pinned records (proofs, licences): a table wider than the
+   screen scrolls inside its own box, never the page. */
+#forge table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+#forge th,
+#forge td {
+  padding: 0.4rem 0.6rem;
+  border-block-end: 1px solid var(--bordure);
+  text-align: start;
 }
 
 /* Commons, join */

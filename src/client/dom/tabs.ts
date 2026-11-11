@@ -15,6 +15,9 @@ export function setupTabs(root: Document): void {
     if (links.length === 0 || panels.some((panel) => panel === null)) continue;
 
     list.setAttribute("role", "tablist");
+    // The list items no longer belong to a list once it is a tablist: they become neutral, so
+    // each tab is a direct child of the tablist in the accessibility tree (axe, ARIA tabs).
+    for (const item of list.children) item.setAttribute("role", "none");
     container.dataset.ongletsActifs = "";
     const select = (index: number, focus: boolean): void => {
       links.forEach((link, i) => {
