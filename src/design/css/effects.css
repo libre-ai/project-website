@@ -459,4 +459,35 @@
   .d-tunnel .tube i {
     animation: d-flux-tube 1s linear infinite;
   }
+
+  /* « Seul / Ensemble »: each silo and its Libre counterpart share a view-transition name, so
+     the module's transition morphs one into the other (only one side is rendered at a time). */
+  .vol-1 {
+    view-transition-name: vol-1;
+  }
+
+  .vol-2 {
+    view-transition-name: vol-2;
+  }
+
+  .vol-3 {
+    view-transition-name: vol-3;
+  }
+
+  .vol-4 {
+    view-transition-name: vol-4;
+  }
+
+  .vol-5 {
+    view-transition-name: vol-5;
+  }
+
+  .vol-6 {
+    view-transition-name: vol-6;
+  }
+
+  ::view-transition-group(*) {
+    animation-duration: 0.6s;
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
 }
