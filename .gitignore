@@ -4,6 +4,8 @@ dist/
 playwright-report/
 test-results/
 coverage/
+# Local demo outbox (server/demo.ts): confirmation messages written as .eml files.
+.demo/
 
 # Local code-recovery verification outputs.
 node_modules/

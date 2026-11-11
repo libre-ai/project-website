@@ -33,7 +33,18 @@ bun run build                       # construit dist/, sans réseau ni variable
 bun run check                       # toolchain, build, secrets, données personnelles, licences, lint, typecheck, tests
 bunx playwright test                # e2e sur dist/, serveur local http://localhost:8080 (navigateurs : bunx playwright install firefox webkit)
 bun run build:brand                 # ancien générateur, fondé sur le portefeuille seul
+bun run demo                        # construit dist/, puis sert le site et la liste d'attente sur http://localhost:8080
+bun src/brand/planche.ts <sortie>   # planche de recette des 40 emblèmes, couleurs résolues (hors site)
 ```
+
+## Démo locale de la liste d'attente
+
+`bun run demo` démarre le serveur de production (`server/http.ts`) sur `http://localhost:8080`,
+avec un PostgreSQL en mémoire (PGlite exposé en protocole PostgreSQL) et une boîte d'envoi locale :
+chaque message de confirmation est écrit en fichier `.eml` dans `.demo/outbox/`, ignoré par git.
+Pour suivre le parcours : s'inscrire depuis une page, ouvrir le dernier `.eml`, ouvrir son lien de
+confirmation, puis son lien de désinscription. Rien ne quitte la machine ; tout disparaît à l'arrêt.
+Options : `--port`, `--site` (dossier servi, `dist` par défaut), `--outbox`.
 
 ## Ce que le build imprime
 
