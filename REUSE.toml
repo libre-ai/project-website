@@ -50,3 +50,20 @@ SPDX-License-Identifier = "CC-BY-4.0"
 path = ["docs/DEVELOPMENT.md", "docs/verification-status.json"]
 SPDX-FileCopyrightText = "2026 Libre AI contributors"
 SPDX-License-Identifier = "CC-BY-4.0"
+
+# Figurative brand works: the martinet, the application birds and the origami
+# objects (ADR 0004). All rights reserved under the identifier prescribed by
+# TRADEMARKS.md of project-governance; the text is a candidate until the owner
+# accepts it, and src/brand/controls.ts keeps any publication closed until then.
+[[annotations]]
+path = ["src/brand/*.ts"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Libre AI contributors"
+SPDX-License-Identifier = "LicenseRef-Libre-AI-Brand-1.0"
+
+# Tests and the publication controls of the brand are ordinary code.
+[[annotations]]
+path = ["src/brand/*.test.ts", "src/brand/controls.ts"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Libre AI contributors"
+SPDX-License-Identifier = "EUPL-1.2"

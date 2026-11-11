@@ -271,9 +271,13 @@ test("UNIVERSE_HUES keys equal universe ids", () => {});
   `emblemUse(ref: string): string` ; `renderSprite(): string` (un `<symbol id="martinet">`, un
   `<symbol id="embleme-<ref>">` par application, `ref` en minuscules) ;
   `SPRITE_PATH = "assets/volee.svg"`.
-- Licence : `src/brand/**` sous `LicenseRef-LibreIA-Marques` (« tous droits réservés », texte dans
-  `LICENSES/LicenseRef-LibreIA-Marques.txt`, annotation dans `REUSE.toml`) — décision du
-  propriétaire du 2026-11-11.
+- Licence : `src/brand/**` sous `LicenseRef-Libre-AI-Brand-1.0`, l'identifiant prescrit par
+  `TRADEMARKS.md` de `project-governance` (« tous droits réservés », décision du propriétaire du
+  2026-11-11) ; texte candidat dans `LICENSES/LicenseRef-Libre-AI-Brand-1.0.txt`, annotation dans
+  `REUSE.toml`. Tant que le texte n'est pas accepté par le propriétaire et que la revue de
+  similarité datée (EUIPO, INPI, WIPO) n'est pas archivée, les dessins sont un candidat non
+  publié : `BRAND_CONTROLS` (`src/brand/controls.ts`) les déclare en attente, et
+  `assertBrandPublishable()` fait échouer toute publication (Tâche 9, `sync:deployment-artifact`).
 
 - [ ] **Step 1: tests**
 

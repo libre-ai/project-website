@@ -38,9 +38,13 @@ aussi tranché la palette, le mode d'affichage par défaut et les logos d'applic
 - Recherche d'antériorité du martinet et des noms « Libre X » (INPI, EUIPO). Le droit d'auteur du
   propriétaire sur le dessin ne vaut pas disponibilité de marque.
 - Licence du martinet, des oiseaux et des objets dans ce dépôt public : **tous droits réservés**
-  (décision du propriétaire du 2026-11-11), sous une licence `LicenseRef-` propre au dépôt
-  déclarée dans `REUSE.toml` pour `src/brand/**`. Le reste du code reste sous EUPL-1.2, les
-  textes sous CC-BY-4.0.
+  (décision du propriétaire du 2026-11-11), sous `LicenseRef-Libre-AI-Brand-1.0`, l'identifiant
+  prescrit par `TRADEMARKS.md` de `project-governance`, déclaré dans `REUSE.toml` pour
+  `src/brand/**`. Le reste du code reste sous EUPL-1.2, les textes sous CC-BY-4.0.
+- `TRADEMARKS.md` exige deux contrôles indépendants avant toute publication d'un élément
+  figuratif : le texte exact de la licence accepté par le propriétaire, et une revue de
+  similarité visuelle datée et archivée (EUIPO, INPI, WIPO, références nommées). D'ici là, les
+  dessins sont un candidat non publié, et toute publication (site, paquet, profil) échoue fermée.
 
 ## Conséquences
 
