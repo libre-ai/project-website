@@ -119,6 +119,27 @@ Réutilisés tels quels : `src/security.ts`, `src/determinism.ts`, `src/cards-sn
 - Sous le sandbox macOS : `reuse` exige `--no-multiprocessing` (shim local hors dépôt) ;
   `bun --no-env-file` ; Playwright exige `NODE_USE_ENV_PROXY=1` pour télécharger, et les
   navigateurs **ne démarrent pas** (Mach port refusé) : l'e2e se vérifie en CI.
+- Sous le sandbox, un clone sous `~/Documents` échoue (écriture de `.git/config` et
+  `.git/hooks` refusée) : la composition vit sous le répertoire temporaire, `GIT_TEMPLATE_DIR`
+  pointé sur un dossier vide. Le Bun épinglé (1.4.0-canary.1) ne lie un tableau qu'avec
+  `sql.array(valeurs, "text")` ; un essai fait sur un autre Bun ne vaut pas preuve.
+
+## État d'exécution et écarts (relevé du 2026-11-11)
+
+| Tâche | État | Commit | Écart au plan |
+|---|---|---|---|
+| 1 | faite | `dd19eee`, `af15805` | — |
+| 2 | faite | `34569d1` | teintes d'univers fixées à ~45° d'écart ; couleurs de texte dérivées par `readableOn` |
+| 3 | faite | `d906022` | seul le fichier `wght` latin de chaque police est livré |
+| 4 | **partielle** | `6287557` | seuls `universes.ts` (répartition validée) et `consent.ts` existent ; les 34 noms attendent la liste du propriétaire ; les micro-démos du prototype portent 33 `style=` : décider entre un modèle de données par démo et un hissage des styles en classes générées au build (recommandé : le hissage, le contenu reste du HTML d'auteur de confiance) |
+| 5 / 5b | faites | `6287557` | identifiant de licence `LicenseRef-Libre-AI-Brand-1.0` (prescrit par `TRADEMARKS.md`), texte candidat ; `src/brand/controls.ts` ferme toute publication ; planche à soumettre au propriétaire |
+| 6–9 | à faire | — | la planche doit être recettée avant la Tâche 7 |
+| 10 | faite | `c357700` | `suivre` porte la **référence** (`P07`), pas le slug |
+| 11 | faite | `3570924` | schéma en constante TypeScript (le gate de données personnelles refuse les `.sql`) ; 7 extensions PGlite tirées comme pairs obligatoires de `pglite-socket` |
+| 12 | faite | `877a2c0` | `shortcut` : pas de transport SMTP (jalon de déploiement) |
+| 13 | faite | `a410ff6` | `server/main.ts` (production) reporté au jalon de déploiement ; `clientKey` injectable pour le limiteur |
+| 14 | faite | `e4d135e` | point d'entrée séparé `server/demo-main.ts` |
+| 15–16 | à faire | — | — |
 
 ---
 
