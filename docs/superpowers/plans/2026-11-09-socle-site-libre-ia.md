@@ -132,7 +132,7 @@ Réutilisés tels quels : `src/security.ts`, `src/determinism.ts`, `src/cards-sn
 | 2 | faite | `34569d1` | teintes d'univers fixées à ~45° d'écart ; couleurs de texte dérivées par `readableOn` |
 | 3 | faite | `d906022` | seul le fichier `wght` latin de chaque police est livré |
 | 4 | **partielle** | `6287557` | seuls `universes.ts` (répartition validée) et `consent.ts` existent ; les 34 noms attendent la liste du propriétaire ; les micro-démos du prototype portent 33 `style=` : décider entre un modèle de données par démo et un hissage des styles en classes générées au build (recommandé : le hissage, le contenu reste du HTML d'auteur de confiance) |
-| 5 / 5b | faites | `6287557` | identifiant de licence `LicenseRef-Libre-AI-Brand-1.0` (prescrit par `TRADEMARKS.md`), texte candidat ; `src/brand/controls.ts` ferme toute publication ; planche à soumettre au propriétaire |
+| 5 / 5b | faites | `6287557` | identifiant de licence `LicenseRef-Libre-AI-Brand-1.0` (prescrit par `TRADEMARKS.md`), texte accepté le 2026-11-11 ; revue de similarité à faire, `src/brand/controls.ts` ferme toute publication ; planche : 3 faiblesses à corriger (décision du 2026-11-11), puis nouvelle recette |
 | 6–9 | à faire | — | la planche doit être recettée avant la Tâche 7 |
 | 10 | faite | `c357700` | `suivre` porte la **référence** (`P07`), pas le slug |
 | 11 | faite | `3570924` | schéma en constante TypeScript (le gate de données personnelles refuse les `.sql`) ; 7 extensions PGlite tirées comme pairs obligatoires de `pglite-socket` |
@@ -294,10 +294,9 @@ test("UNIVERSE_HUES keys equal universe ids", () => {});
   `SPRITE_PATH = "assets/volee.svg"`.
 - Licence : `src/brand/**` sous `LicenseRef-Libre-AI-Brand-1.0`, l'identifiant prescrit par
   `TRADEMARKS.md` de `project-governance` (« tous droits réservés », décision du propriétaire du
-  2026-11-11) ; texte candidat dans `LICENSES/LicenseRef-Libre-AI-Brand-1.0.txt`, annotation dans
-  `REUSE.toml`. Tant que le texte n'est pas accepté par le propriétaire et que la revue de
-  similarité datée (EUIPO, INPI, WIPO) n'est pas archivée, les dessins sont un candidat non
-  publié : `BRAND_CONTROLS` (`src/brand/controls.ts`) les déclare en attente, et
+  2026-11-11) ; texte dans `LICENSES/LicenseRef-Libre-AI-Brand-1.0.txt`, **accepté tel quel** par
+  le propriétaire le 2026-11-11, annotation dans `REUSE.toml`. Tant que la revue de similarité
+  datée (EUIPO, INPI, WIPO) n'est pas archivée, les dessins sont un candidat non publié : `BRAND_CONTROLS` (`src/brand/controls.ts`) les déclare en attente, et
   `assertBrandPublishable()` fait échouer toute publication (Tâche 9, `sync:deployment-artifact`).
 
 - [ ] **Step 1: tests**

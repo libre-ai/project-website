@@ -20,8 +20,10 @@ export interface BrandControls {
   readonly similarityReview: SimilarityReview | null;
 }
 
+// The owner accepted the exact text of LICENSES/LicenseRef-Libre-AI-Brand-1.0.txt on 2026-11-11;
+// the similarity review is still pending, so publication stays closed.
 export const BRAND_CONTROLS: BrandControls = {
-  licenceTextAcceptedOn: null,
+  licenceTextAcceptedOn: "2026-11-11",
   similarityReview: null,
 };
 

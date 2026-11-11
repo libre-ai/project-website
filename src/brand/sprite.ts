@@ -7,9 +7,10 @@
  * unpublished candidate until the brand controls of TRADEMARKS.md are complete.
  */
 import { escapeHtml } from "../security";
-import { birdFacets, type Facet, type Point } from "./birds";
+import { birdFacets, type Facet, type Point, speciesOf } from "./birds";
 import { MARTINET_PATHS, MARTINET_TRANSFORM, MARTINET_VIEWBOX } from "./martinet-paths";
 import { objectFacets, objectOf, PERCH_SEGMENT, type Tone } from "./objects";
+import type { Species } from "./species";
 
 export const SPRITE_PATH = "assets/volee.svg";
 export const SPRITE_BUDGET_BYTES = 80 * 1024;
@@ -27,24 +28,28 @@ const BOX = 100 * SCALE;
 // stands on the object rather than floating above it.
 const BIRD_WIDTH = 70;
 const BIRD_HEIGHT = 62;
-const BIRD_FOOT = PERCH_SEGMENT.y + 2;
+// A bird with legs stands on the perch line; a bird without legs sits on the object, its body
+// overlapping the top edge, so it never appears to float above it (owner review, 2026-11-11).
+const STANDING_FOOT = PERCH_SEGMENT.y + 2;
+const SITTING_FOOT = PERCH_SEGMENT.y + 8;
 
 const toneFill = (tone: Tone): string =>
   tone === "encre" ? "var(--encre-marque)" : `var(--facette-${tone})`;
 
-function fitBird(facets: readonly Facet[]): Facet[] {
+function fitBird(facets: readonly Facet[], species: Species): Facet[] {
   const xs = facets.flatMap((facet) => facet.points.map(([x]) => x));
   const ys = facets.flatMap((facet) => facet.points.map(([, y]) => y));
   const minX = Math.min(...xs);
   const maxY = Math.max(...ys);
   const width = Math.max(...xs) - minX;
   const height = maxY - Math.min(...ys);
-  const scale = Math.min(BIRD_WIDTH / width, BIRD_HEIGHT / height);
+  const scale = Math.min(BIRD_WIDTH / width, BIRD_HEIGHT / height) * (species.emblemScale ?? 1);
   const offsetX = 50 - (width * scale) / 2;
+  const foot = species.legs > 0 ? STANDING_FOOT : SITTING_FOOT;
   return facets.map((facet) => ({
     fill: facet.fill,
     points: facet.points.map(
-      ([x, y]): Point => [(x - minX) * scale + offsetX, (y - maxY) * scale + BIRD_FOOT],
+      ([x, y]): Point => [(x - minX) * scale + offsetX, (y - maxY) * scale + foot],
     ),
   }));
 }
@@ -69,7 +74,7 @@ export function emblemFacets(ref: string): readonly Facet[] {
   const object = objectFacets(objectOf(upper)).map(
     (facet): Facet => ({ fill: toneFill(facet.tone), points: facet.points }),
   );
-  return [...object, ...fitBird(birdFacets(upper))];
+  return [...object, ...fitBird(birdFacets(upper), speciesOf(upper))];
 }
 
 export const EMBLEM_BOX = BOX;

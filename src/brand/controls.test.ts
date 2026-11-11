@@ -3,16 +3,18 @@ import { describe, expect, test } from "bun:test";
 import { assertBrandPublishable, BRAND_CONTROLS, brandPublicationBlockers } from "./controls";
 
 describe("brand publication controls (TRADEMARKS.md, Brand assets)", () => {
-  test("both controls are pending today: the drawings are an unpublished candidate", () => {
-    expect(BRAND_CONTROLS).toEqual({ licenceTextAcceptedOn: null, similarityReview: null });
-    expect(brandPublicationBlockers(BRAND_CONTROLS)).toEqual([
-      "brand.licence_text_not_accepted",
-      "brand.similarity_review_missing",
-    ]);
+  test("today the licence text is accepted (2026-11-11) and the similarity review is pending", () => {
+    expect(BRAND_CONTROLS).toEqual({ licenceTextAcceptedOn: "2026-11-11", similarityReview: null });
+    expect(brandPublicationBlockers(BRAND_CONTROLS)).toEqual(["brand.similarity_review_missing"]);
+    expect(() => assertBrandPublishable(BRAND_CONTROLS)).toThrow(
+      "brand.publication_refused:brand.similarity_review_missing",
+    );
   });
 
   test("publication fails closed while either control is pending", () => {
-    expect(() => assertBrandPublishable(BRAND_CONTROLS)).toThrow(
+    expect(() =>
+      assertBrandPublishable({ licenceTextAcceptedOn: null, similarityReview: null }),
+    ).toThrow(
       "brand.publication_refused:brand.licence_text_not_accepted,brand.similarity_review_missing",
     );
     expect(() =>

@@ -43,8 +43,10 @@ aussi tranché la palette, le mode d'affichage par défaut et les logos d'applic
   `src/brand/**`. Le reste du code reste sous EUPL-1.2, les textes sous CC-BY-4.0.
 - `TRADEMARKS.md` exige deux contrôles indépendants avant toute publication d'un élément
   figuratif : le texte exact de la licence accepté par le propriétaire, et une revue de
-  similarité visuelle datée et archivée (EUIPO, INPI, WIPO, références nommées). D'ici là, les
-  dessins sont un candidat non publié, et toute publication (site, paquet, profil) échoue fermée.
+  similarité visuelle datée et archivée (EUIPO, INPI, WIPO, références nommées). Le texte de
+  `LICENSES/LicenseRef-Libre-AI-Brand-1.0.txt` a été **accepté tel quel** par le propriétaire le
+  2026-11-11 ; la revue de similarité reste à faire. D'ici là, les dessins sont un candidat non
+  publié, et toute publication (site, paquet, profil) échoue fermée.
 
 ## Conséquences
 

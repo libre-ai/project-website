@@ -30,6 +30,8 @@ export interface Species {
   readonly bigEye?: boolean;
   readonly accent?: number;
   readonly pied?: boolean;
+  /** Size of the bird in its emblem relative to the others, 1 by default (owner review). */
+  readonly emblemScale?: number;
 }
 
 export const SPECIES: Readonly<Record<string, Species>> = {
@@ -65,6 +67,8 @@ export const SPECIES: Readonly<Record<string, Species>> = {
     legs: 0,
     tilt: -18,
     bigEye: true,
+    // Review of 2026-11-11: the owl dwarfed its spyglass.
+    emblemScale: 0.75,
   },
   P03: {
     name: "Pic",
@@ -147,7 +151,8 @@ export const SPECIES: Readonly<Record<string, Species>> = {
     tailLen: 30,
     crest: "none",
     legs: 0,
-    tilt: -62,
+    // Review of 2026-11-11: at -62 degrees the parrot stood so tall it shrank to fit.
+    tilt: -32,
     accent: 25,
   },
   P08: {

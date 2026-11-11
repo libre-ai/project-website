@@ -53,8 +53,8 @@ SPDX-License-Identifier = "CC-BY-4.0"
 
 # Figurative brand works: the martinet, the application birds and the origami
 # objects (ADR 0004). All rights reserved under the identifier prescribed by
-# TRADEMARKS.md of project-governance; the text is a candidate until the owner
-# accepts it, and src/brand/controls.ts keeps any publication closed until then.
+# TRADEMARKS.md of project-governance, text accepted by the owner on 2026-11-11;
+# src/brand/controls.ts keeps any publication closed until the similarity review.
 [[annotations]]
 path = ["src/brand/*.ts"]
 precedence = "closest"
