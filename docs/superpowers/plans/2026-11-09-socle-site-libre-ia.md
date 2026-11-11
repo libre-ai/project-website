@@ -227,8 +227,11 @@ test("renderTokens is deterministic and declares one class per universe hue", ()
   S'informer P01 P02 P03 P06 · Écrire et calculer P04 P08 P09 P10 P12 P13 · Travailler ensemble
   P05 P11 P14 P15 P16 P17 P18 P19 P20 P21 · Créer et publier P22–P27 · Apprendre P07 P39 ·
   Se divertir P28–P32 · Se protéger P36 P37 P38 · Piloter l'IA P33 P34 P35 P40.
-  Noms tranchés : P01 Sources, P03 Corpus, P14 Canevas, P28 Tempo, P29 Antenne, P39 Cours ; les
-  autres repris du prototype (`data.ts`), `nameStatus: "provisoire"`.
+  Répartition **validée** par le propriétaire le 2026-11-11.
+  Noms tranchés : P01 Sources, P03 Corpus, P14 Canevas, P28 Tempo, P29 Antenne, P39 Cours. Les
+  34 autres : **le propriétaire les renomme** (décision du 2026-11-11) ; la donnée attend sa
+  liste, et les slugs en dérivent. Rien dans le code ne dépend d'un slug : symboles, ancres et
+  classes sont indexés par la référence (`p01`).
 
 - [ ] **Step 1: tests**
 
@@ -265,13 +268,17 @@ test("UNIVERSE_HUES keys equal universe ids", () => {});
   repère 1254 × 1254, transformation `translate(0,1254) scale(0.1,-0.1)`) ;
   `martinetUse(label: string | null): string` (`<svg><use href="/assets/volee.svg#martinet"/></svg>`,
   `role="img"` + `aria-label` si `label`, sinon `aria-hidden="true"`) ; `logotype(): string` ;
-  `birdUse(slug: string): string` ; `renderSprite(): string` (un `<symbol id="martinet">`, un
-  `<symbol id="oiseau-<slug>">` par application) ; `SPRITE_PATH = "assets/volee.svg"`.
+  `emblemUse(ref: string): string` ; `renderSprite(): string` (un `<symbol id="martinet">`, un
+  `<symbol id="embleme-<ref>">` par application, `ref` en minuscules) ;
+  `SPRITE_PATH = "assets/volee.svg"`.
+- Licence : `src/brand/**` sous `LicenseRef-LibreIA-Marques` (« tous droits réservés », texte dans
+  `LICENSES/LicenseRef-LibreIA-Marques.txt`, annotation dans `REUSE.toml`) — décision du
+  propriétaire du 2026-11-11.
 
 - [ ] **Step 1: tests**
 
 ```ts
-test("sprite holds the martinet and one symbol per application", () => { /* 41 <symbol> ; ids = martinet + oiseau-<slug> */ });
+test("sprite holds the martinet and one symbol per application", () => { /* 41 <symbol> ; ids = martinet + embleme-p01..p40 */ });
 test("sprite is deterministic", () => { expect(renderSprite()).toBe(renderSprite()); });
 test("sprite carries no style attribute and no script", () => {});
 test("martinet paths appear only in the sprite", () => { /* martinetUse() ne contient pas MARTINET_PATHS.body */ });
@@ -285,6 +292,28 @@ test("sprite stays under 80 KiB", () => { expect(new TextEncoder().encode(render
   arrondir les coordonnées à 1 décimale. Le corps du martinet prend `fill="url(#aube-degrade)"`,
   dégradé déclaré dans le sprite.
 - [ ] **Step 4:** PASS ; commit `feat(brand): martinet and origami birds in one external sprite`.
+
+### Task 5b: Objets origami — « l'objet porte l'oiseau »
+
+**Files:**
+- Create: `src/brand/objects.ts`, `src/brand/objects.test.ts`, `src/brand/planche.ts` (planche de
+  recette : les 40 emblèmes sur une page locale, hors site publié)
+- Modify: `src/brand/sprite.ts`, `src/content/applications.ts` (`object` par application)
+
+**Interfaces:**
+- Produces: `type ObjectKind` (union fermée : `"document" | "calendrier" | "ecran" | "bouclier" | ...`,
+  une valeur par fonction) ; `objectFacets(kind: ObjectKind): readonly Facet[]` où
+  `Facet = { points: readonly (readonly [number, number])[]; tone: 1 | 2 | 3 | 4 | 5 }` dans un
+  repère 100 × 100, objet dans la moitié basse ; `perch(kind): readonly [number, number]` (point où
+  l'oiseau se pose) ; le symbole d'emblème compose l'objet puis l'oiseau mis à l'échelle sur `perch`.
+
+- [ ] **Step 1: tests** — `every application declares an object kind`, `every object kind has
+  between 3 and 12 facets inside the 100 box`, `the bird perch lies on the object outline`,
+  `emblems stay under the sprite budget`, `facets use tone variables only, no literal colour`.
+- [ ] **Step 2:** FAIL. **Step 3:** dessiner les objets (pliages à facettes, même lumière que les
+  oiseaux : facette éclairée en haut à gauche). **Step 4:** PASS ; générer la planche, la
+  soumettre au propriétaire pour recette visuelle avant la Tâche 7 ; commit
+  `feat(brand): origami objects carrying each application's bird`.
 
 ### Task 6: HTML — construction échappée, gabarit, composants
 

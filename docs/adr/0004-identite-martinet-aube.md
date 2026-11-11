@@ -26,9 +26,9 @@ aussi tranché la palette, le mode d'affichage par défaut et les logos d'applic
 4. **Polices auto-hébergées** : Bricolage Grotesque (titres) et Source Sans 3 (texte), toutes
    deux sous OFL-1.1, servies depuis le site avec leur licence. Aucune police distante.
 5. **Logos d'applications** : un oiseau origami à facettes par application, une espèce par
-   application. Cible arbitrée : « l'objet porte l'oiseau » (document, calendrier, écran,
-   bouclier en origami, l'oiseau posé dessus). Tant que les 40 dessins ne sont pas faits,
-   l'oiseau paramétrique seul est publié ; le remplacer ne change que les symboles du sprite.
+   application, posé sur l'objet origami de sa fonction (« l'objet porte l'oiseau » : document,
+   calendrier, écran, bouclier…). Les 40 objets sont dessinés dans le jalon du socle (décision du
+   2026-11-11).
 6. **Un seul exemplaire par page** : les oiseaux et le martinet vivent dans un sprite SVG
    externe (`<symbol>` référencés par `<use>`), mis en cache une fois, jamais recopiés dans le
    HTML.
@@ -37,9 +37,10 @@ aussi tranché la palette, le mode d'affichage par défaut et les logos d'applic
 
 - Recherche d'antériorité du martinet et des noms « Libre X » (INPI, EUIPO). Le droit d'auteur du
   propriétaire sur le dessin ne vaut pas disponibilité de marque.
-- Licence du martinet et des oiseaux dans ce dépôt public : à décider par le propriétaire (le
-  code reste sous EUPL-1.2, les textes sous CC-BY-4.0 ; une marque ne se place pas sous une
-  licence qui en autorise la réutilisation sans le décider).
+- Licence du martinet, des oiseaux et des objets dans ce dépôt public : **tous droits réservés**
+  (décision du propriétaire du 2026-11-11), sous une licence `LicenseRef-` propre au dépôt
+  déclarée dans `REUSE.toml` pour `src/brand/**`. Le reste du code reste sous EUPL-1.2, les
+  textes sous CC-BY-4.0.
 
 ## Conséquences
 
