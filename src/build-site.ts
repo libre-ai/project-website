@@ -17,6 +17,7 @@ import { FONTS } from "./font";
 import { parseLicences } from "./licences";
 import type { PageExtras } from "./pages/extras";
 import type { Proof } from "./pages/proofs";
+import { parsePortfolio } from "./portfolio";
 import { loadPresentations } from "./presentation";
 import { parseProjectCard } from "./project-card";
 import { checkCardUniverse, type Exclusion } from "./universe";
@@ -102,10 +103,13 @@ const cards = await Promise.all(
   ),
 );
 
-// The portfolio is the authority for which repositories are products; the exclusions are data.
-const portfolio = (await Bun.file(
-  join(process.cwd(), "node_modules/@libre-ai/governance/ecosystem/portfolio.v1.json"),
-).json()) as { items: { repository: string }[] };
+// The portfolio is the authority for which repositories are products, validated at its fixed
+// count before use (AGENTS.md, Boundaries); the exclusions are data.
+const portfolio = parsePortfolio(
+  await Bun.file(
+    join(process.cwd(), "node_modules/@libre-ai/governance/ecosystem/portfolio.v1.json"),
+  ).json(),
+);
 const exclusions = (await Bun.file(
   join(import.meta.dir, "data/card-exclusions.json"),
 ).json()) as Exclusion[];

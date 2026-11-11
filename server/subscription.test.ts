@@ -141,6 +141,19 @@ describe("parseSubscription", () => {
     ).toEqual({ ok: false, reason: "field" });
   });
 
+  test("an inherited property name is not an application reference", () => {
+    for (const name of ["constructor", "__proto__", "toString", "hasOwnProperty", "valueOf"]) {
+      expect(
+        parseSubscription(
+          form([
+            ["courriel", "a@example.org"],
+            ["suivre", name],
+          ]),
+        ),
+      ).toEqual({ ok: false, reason: "field" });
+    }
+  });
+
   test("an unexpected field is refused as field", () => {
     expect(
       parseSubscription(

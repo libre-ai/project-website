@@ -7,7 +7,7 @@ import { SECURITY_HEADERS } from "../src/headers";
 import { createServer } from "./http";
 import { createLimiter } from "./limiter";
 import { createLogger } from "./log";
-import { createOutboxMailer } from "./mailer";
+import { createOutboxMailer, type Mailer } from "./mailer";
 import { createPgStore, migrate } from "./store";
 import { startTestDatabase, type TestDatabase } from "./test-database";
 
@@ -21,6 +21,15 @@ const SITE: Readonly<Record<string, string>> = {
 
 let workspace: string;
 let outbox: string;
+// Sends started by the server. The answer never waits for a send (ADR 0006 §4), so a test that
+// claims nothing was sent counts the calls, which happen before the answer, not the files.
+let sends = 0;
+const countingMailer = (inner: Mailer): Mailer => ({
+  send(message) {
+    sends += 1;
+    return inner.send(message);
+  },
+});
 let database: TestDatabase;
 let sql: Bun.SQL;
 let server: ReturnType<typeof Bun.serve>;
@@ -42,7 +51,7 @@ beforeAll(async () => {
     origin: "http://127.0.0.1",
     redirectHosts: ["libreia.fr", "www.libre-ia.fr"],
     store: createPgStore(sql),
-    mailer: createOutboxMailer(outbox),
+    mailer: countingMailer(createOutboxMailer(outbox)),
     from: "Libre IA <liste@libre-ia.example>",
     limiter: createLimiter({ limit: 5, windowMs: 10 * 60 * 1000 }),
     logger: createLogger((line) => logs.push(line)),
@@ -83,9 +92,17 @@ function post(path: string, body: string, headers: Record<string, string> = {}) 
   });
 }
 
-const messages = async (): Promise<string[]> => {
-  const files = await readdir(outbox).catch(() => []);
-  return Promise.all(files.sort().map((name) => readFile(join(outbox, name), "utf8")));
+// The messages in the outbox once at least `expected` are written: delivery runs after the
+// answer, so a reader waits for it, within a bound.
+const messages = async (expected = 1): Promise<string[]> => {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const files = await readdir(outbox).catch(() => []);
+    if (files.length >= expected) {
+      return Promise.all(files.sort().map((name) => readFile(join(outbox, name), "utf8")));
+    }
+    await Bun.sleep(20);
+  }
+  throw new Error(`outbox.timeout:${expected}`);
 };
 
 const linkIn = (raw: string, path: string): string => {
@@ -104,15 +121,72 @@ describe("static site", () => {
     }
   });
 
-  test("serves directory indexes, typed and cached by kind", async () => {
+  test("serves directory indexes, typed", async () => {
     const home = await fetch(`${base}/`);
     expect(home.status).toBe(200);
     expect(home.headers.get("content-type")).toBe("text/html; charset=utf-8");
-    expect(home.headers.get("cache-control")).toBe("no-cache");
     expect(await (await fetch(`${base}/applications/`)).text()).toContain("Applications");
     const css = await fetch(`${base}/assets/site.css`);
     expect(css.headers.get("content-type")).toBe("text/css; charset=utf-8");
-    expect(css.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
+  });
+
+  // Asset names carry no content hash: a long-lived cache would keep last release's stylesheet
+  // and script against this release's pages. Every file is revalidated against its digest.
+  test("every file is revalidated, never cached as immutable", async () => {
+    for (const path of ["/", "/assets/site.css", "/nope"]) {
+      const response = await fetch(`${base}${path}`);
+      expect(response.headers.get("cache-control")).toBe("no-cache");
+    }
+  });
+
+  test("a file answers 304 to its own digest, and 200 with the body to any other", async () => {
+    const identity = { "Accept-Encoding": "identity" };
+    const digest = new Bun.CryptoHasher("sha256").update("body{}").digest("hex");
+    const first = await fetch(`${base}/assets/site.css`, { headers: identity });
+    const etag = first.headers.get("etag") ?? "";
+    expect(etag).toBe(`"${digest}"`);
+    for (const header of [etag, `W/${etag}`, `"0000", ${etag}`, "*"]) {
+      const same = await fetch(`${base}/assets/site.css`, {
+        headers: { ...identity, "If-None-Match": header },
+      });
+      expect(same.status).toBe(304);
+      expect(await same.text()).toBe("");
+      expect(same.headers.get("etag")).toBe(etag);
+    }
+    const other = await fetch(`${base}/assets/site.css`, {
+      headers: { ...identity, "If-None-Match": '"0000"' },
+    });
+    expect(other.status).toBe(200);
+    expect(await other.text()).toBe("body{}");
+    const home = await fetch(`${base}/`, { headers: identity });
+    expect(home.headers.get("etag")).not.toBe(etag);
+  });
+
+  test("the gzip representation has its own digest", async () => {
+    const gzip = { "Accept-Encoding": "gzip" };
+    const identityTag =
+      (
+        await fetch(`${base}/assets/site.css`, { headers: { "Accept-Encoding": "identity" } })
+      ).headers.get("etag") ?? "";
+    const compressed = await fetch(`${base}/assets/site.css`, { headers: gzip, decompress: false });
+    const gzipTag = compressed.headers.get("etag") ?? "";
+    expect(gzipTag).toBe(`${identityTag.slice(0, -1)}-gzip"`);
+    const crossed = await fetch(`${base}/assets/site.css`, {
+      headers: { ...gzip, "If-None-Match": identityTag },
+      decompress: false,
+    });
+    expect(crossed.status).toBe(200);
+    const same = await fetch(`${base}/assets/site.css`, {
+      headers: { ...gzip, "If-None-Match": gzipTag },
+      decompress: false,
+    });
+    expect(same.status).toBe(304);
+  });
+
+  test("a missing file carries no digest, so its 404 is never revalidated into a 304", async () => {
+    const response = await fetch(`${base}/assets/absent.css`);
+    expect(response.status).toBe(404);
+    expect(response.headers.get("etag")).toBeNull();
   });
 
   test("compresses when the client accepts gzip", async () => {
@@ -190,18 +264,19 @@ describe("waitlist (ADR 0006 §3-6)", () => {
     await post("/inscription", "courriel=a%40example.org");
     const [raw = ""] = await messages();
     await fetch(linkIn(raw, "/confirmer"), { redirect: "manual" });
-    await rm(outbox, { recursive: true, force: true });
+    const before = sends;
     const response = await post("/inscription", "courriel=a%40example.org");
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("/inscription/merci/");
-    expect(await messages()).toEqual([]);
+    expect(sends).toBe(before);
   });
 
   test("a filled honeypot answers 303 merci and stores nothing", async () => {
+    const before = sends;
     const response = await post("/inscription", "courriel=a%40example.org&site=x");
     expect(response.headers.get("location")).toBe("/inscription/merci/");
     expect(await sql`select * from subscribers`).toHaveLength(0);
-    expect(await messages()).toEqual([]);
+    expect(sends).toBe(before);
   });
 
   test("an invalid request answers 303 erreur and stores nothing", async () => {
@@ -282,20 +357,29 @@ describe("limiter and logger", () => {
 });
 
 describe("failures", () => {
-  test("a malformed percent-encoding is a 404, not a crash", async () => {
-    expect((await fetch(`${base}/%E0%A4%A`)).status).toBe(404);
+  test("a malformed percent-encoding is a 404 with the generated page, not a crash", async () => {
+    const response = await fetch(`${base}/%E0%A4%A`);
+    expect(response.status).toBe(404);
+    expect(await response.text()).toContain("Introuvable");
   });
 
-  test("a failed send answers erreur and keeps the request pending, so a retry works", async () => {
+  // ADR 0006 §4: the answer is the same whatever the address. Waiting for a send that only a new
+  // or pending address triggers would let the response time tell a confirmed address apart.
+  test("the answer never waits for the send; a failed send is logged and the request stays pending, so a retry works", async () => {
     const failures: string[] = [];
+    const releases: (() => void)[] = [];
+    let attempts = 0;
     const broken = await createServer({
       siteDirectory: join(workspace, "site"),
       origin: "http://127.0.0.1",
       redirectHosts: [],
       store: createPgStore(sql),
       mailer: {
-        send: async () => {
-          throw new Error("smtp down");
+        send: () => {
+          attempts += 1;
+          return new Promise<void>((_resolve, reject) => {
+            releases.push(() => reject(new Error("smtp down")));
+          });
         },
       },
       from: "Libre IA <liste@libre-ia.example>",
@@ -304,17 +388,34 @@ describe("failures", () => {
       port: 0,
       hostname: "127.0.0.1",
     });
-    try {
-      const response = await fetch(`http://127.0.0.1:${broken.port}/inscription`, {
+    const subscribe = () =>
+      fetch(`http://127.0.0.1:${broken.port}/inscription`, {
         method: "POST",
         redirect: "manual",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: "courriel=a%40example.org",
       });
-      expect(response.headers.get("location")).toBe("/inscription/erreur/");
+    try {
+      // The send is still pending: the answer came anyway.
+      const response = await subscribe();
+      expect(response.headers.get("location")).toBe("/inscription/merci/");
+      expect(attempts).toBe(1);
+
+      for (const release of releases) release();
+      for (
+        let wait = 0;
+        wait < 100 && !failures.some((line) => line.includes("mail.failed"));
+        wait += 1
+      ) {
+        await Bun.sleep(10);
+      }
+      expect(failures.map((line) => JSON.parse(line).event)).toContain("mail.failed");
       const states = (await sql`select state from subscribers`) as { state: string }[];
       expect(states.map((row) => row.state)).toEqual(["pending"]);
-      expect(failures.map((line) => JSON.parse(line).event)).toContain("mail.failed");
+
+      await subscribe();
+      expect(attempts).toBe(2);
+      for (const release of releases.splice(0)) release();
     } finally {
       broken.stop(true);
     }

@@ -473,7 +473,7 @@ export function privacyMain(): Html {
 const SUBSCRIPTION_PAGES = {
   merci: [
     "Vérifiez votre boîte de réception",
-    "Si l'adresse est valide, un e-mail de confirmation vient de partir. Ouvrez son lien dans les 48 heures pour rejoindre la liste.",
+    "Si l'adresse est valide, un e-mail de confirmation part dans les minutes qui viennent. Ouvrez son lien dans les 48 heures pour rejoindre la liste. Rien reçu, même dans les indésirables ? Refaites la demande depuis la page Rejoindre.",
   ],
   confirmee: ["Inscription confirmée", "Merci : vous serez prévenu des envols de Libre IA."],
   desinscrit: [
@@ -486,7 +486,7 @@ const SUBSCRIPTION_PAGES = {
   ],
   erreur: [
     "La demande n'a pas abouti",
-    "L'adresse semble invalide, ou le message n'a pas pu partir. Vous pouvez réessayer depuis la page Rejoindre.",
+    "L'adresse ou un des choix du formulaire n'a pas été reconnu. Vous pouvez réessayer depuis la page Rejoindre.",
   ],
 } as const;
 

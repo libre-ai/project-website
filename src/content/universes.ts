@@ -34,9 +34,14 @@ const DISTRIBUTION: Readonly<Record<UniverseId, readonly string[]>> = {
   "piloter-ia": ["P33", "P34", "P35", "P40"],
 };
 
-export const UNIVERSE_OF: Readonly<Record<string, UniverseId>> = Object.fromEntries(
-  (Object.entries(DISTRIBUTION) as [UniverseId, readonly string[]][]).flatMap(([id, refs]) =>
-    refs.map((ref) => [ref, id] as const),
+// Without a prototype: the waitlist looks up a reference a visitor sent, and an inherited name
+// such as `constructor` must read as unknown, never as a universe.
+export const UNIVERSE_OF: Readonly<Record<string, UniverseId>> = Object.assign(
+  Object.create(null) as Record<string, UniverseId>,
+  Object.fromEntries(
+    (Object.entries(DISTRIBUTION) as [UniverseId, readonly string[]][]).flatMap(([id, refs]) =>
+      refs.map((ref) => [ref, id] as const),
+    ),
   ),
 );
 

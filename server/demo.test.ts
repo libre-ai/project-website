@@ -52,7 +52,13 @@ describe("local demo (plan, Task 14)", () => {
         body: "courriel=a%40example.org",
       });
       expect(subscribed.headers.get("location")).toBe("/inscription/merci/");
-      const [file = ""] = await readdir(outbox);
+      // The answer does not wait for the send (ADR 0006 §4): wait for the message, within a bound.
+      let files: string[] = [];
+      for (let attempt = 0; attempt < 100 && files.length === 0; attempt += 1) {
+        files = await readdir(outbox).catch(() => []);
+        if (files.length === 0) await Bun.sleep(20);
+      }
+      const [file = ""] = files;
       const raw = await readFile(join(outbox, file), "utf8");
       const link = new RegExp(`http://localhost:${port}/confirmer\\?jeton=[A-Za-z0-9_-]+`).exec(
         raw,

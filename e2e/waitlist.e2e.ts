@@ -9,13 +9,21 @@ import { OUTBOX } from "../playwright.config";
 // the message written to the demo outbox, then leave the list from the link of the same message.
 // One address per project, so the four projects never share a row.
 
-async function latestMessageTo(address: string): Promise<string> {
-  const names = (await readdir(OUTBOX)).sort().reverse();
+async function findMessageTo(address: string): Promise<string | null> {
+  const names = (await readdir(OUTBOX).catch(() => [])).sort().reverse();
   for (const name of names) {
     const raw = await readFile(join(OUTBOX, name), "utf8");
     if (raw.includes(`To: ${address}\r\n`)) return raw;
   }
-  throw new Error(`no message to ${address}`);
+  return null;
+}
+
+// The server answers before the message is written (ADR 0006 §4), so the reader waits for it.
+async function latestMessageTo(address: string): Promise<string> {
+  await expect.poll(() => findMessageTo(address)).not.toBeNull();
+  const raw = await findMessageTo(address);
+  if (raw === null) throw new Error(`no message to ${address}`);
+  return raw;
 }
 
 const link = (raw: string, path: string): string => {

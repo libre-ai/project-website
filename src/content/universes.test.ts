@@ -34,4 +34,11 @@ describe("universes (ADR 0007 §6)", () => {
     expect(universeOf("P07")).toBe("apprendre");
     expect(() => universeOf("P41")).toThrow("content.universe_unknown");
   });
+
+  test("an inherited property name is not a reference", () => {
+    for (const name of ["constructor", "__proto__", "toString"]) {
+      expect(UNIVERSE_OF[name]).toBeUndefined();
+      expect(() => universeOf(name)).toThrow("content.universe_unknown");
+    }
+  });
 });

@@ -56,6 +56,8 @@ interface StaticFile {
   readonly body: Uint8Array;
   readonly gzip: Uint8Array | null;
   readonly type: string;
+  /** Strong validator: the SHA-256 of the body, quoted. */
+  readonly etag: string;
 }
 
 async function loadSite(directory: string): Promise<Map<string, StaticFile>> {
@@ -74,6 +76,7 @@ async function loadSite(directory: string): Promise<Map<string, StaticFile>> {
       body,
       gzip: PRECOMPRESSED.has(extension) ? null : Bun.gzipSync(body, { level: 9 }),
       type: TYPES[extension] ?? "application/octet-stream",
+      etag: `"${new Bun.CryptoHasher("sha256").update(body).digest("hex")}"`,
     });
   }
   if (!files.has("/index.html")) throw new Error("server.site_without_index");
@@ -103,6 +106,13 @@ function resolvePath(pathname: string): string | null {
   if (decoded.includes("\0") || decoded.includes("\\")) return null;
   if (decoded.split("/").some((segment) => segment === "..")) return null;
   return decoded.endsWith("/") ? `${decoded}index.html` : decoded;
+}
+
+// If-None-Match is a list compared weakly, or `*` (RFC 9110 §13.1.2).
+function noneMatchHits(header: string | null, etag: string): boolean {
+  if (header === null) return false;
+  if (header.trim() === "*") return true;
+  return header.split(",").some((entry) => entry.trim().replace(/^W\//, "") === etag);
 }
 
 async function readLimited(request: Request): Promise<string | null> {
@@ -138,20 +148,25 @@ export async function createServer(options: ServerOptions): Promise<ReturnType<t
 
   function serveStatic(request: Request, pathname: string): Response {
     const path = resolvePath(pathname);
-    const direct = path === null ? undefined : site.get(path);
-    const file = direct ?? site.get(`${path ?? ""}/index.html`) ?? site.get("/404.html");
-    const status =
-      direct !== undefined || (path !== null && site.has(`${path}/index.html`)) ? 200 : 404;
+    const found = path === null ? undefined : (site.get(path) ?? site.get(`${path}/index.html`));
+    const file = found ?? site.get("/404.html");
     if (file === undefined) return text(404, "Introuvable");
+    const status = found === undefined ? 404 : 200;
+    // Asset names carry no content hash, so nothing may be cached as immutable: every file is
+    // revalidated against its digest, and an unchanged one costs a 304. A 404 has no validator.
     const gzip =
       file.gzip !== null && (request.headers.get("accept-encoding") ?? "").includes("gzip");
+    // Each encoding is its own representation, so each has its own validator (RFC 9110 §8.8.3).
+    const etag = gzip ? `${file.etag.slice(0, -1)}-gzip"` : file.etag;
     const headers: Record<string, string> = {
       "Content-Type": file.type,
-      "Cache-Control": pathname.startsWith("/assets/")
-        ? "public, max-age=31536000, immutable"
-        : "no-cache",
+      "Cache-Control": "no-cache",
     };
+    if (status === 200) headers.ETag = etag;
     if (file.gzip !== null) headers.Vary = "Accept-Encoding";
+    if (status === 200 && noneMatchHits(request.headers.get("if-none-match"), etag)) {
+      return new Response(null, { status: 304, headers: withSecurity(headers) });
+    }
     if (gzip) headers["Content-Encoding"] = "gzip";
     const body = request.method === "HEAD" ? null : gzip ? file.gzip : file.body;
     return new Response(body, { status, headers: withSecurity(headers) });
@@ -188,20 +203,20 @@ export async function createServer(options: ServerOptions): Promise<ReturnType<t
       clock(),
     );
     log.event("subscription.request", { outcome });
+    // The answer never waits for the send: only a new or pending address triggers one, so waiting
+    // would let the response time reveal a confirmed address (ADR 0006 §4). A failed send is
+    // logged; the request stays pending and a new subscription sends again.
     if (outcome !== "already-confirmed") {
-      try {
-        await options.mailer.send(
+      options.mailer
+        .send(
           confirmationMessage({
             from: options.from,
             to: parsed.value.email,
             confirmUrl: `${canonical.origin}/confirmer?jeton=${confirm.token}`,
             unsubscribeUrl: `${canonical.origin}/desinscrire?jeton=${unsubscribe.token}`,
           }),
-        );
-      } catch {
-        log.event("mail.failed");
-        return seeOther("/inscription/erreur/");
-      }
+        )
+        .catch(() => log.event("mail.failed"));
     }
     return seeOther("/inscription/merci/");
   }
