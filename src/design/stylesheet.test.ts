@@ -17,6 +17,7 @@ describe("site stylesheet (ADR 0004, ADR 0005)", () => {
       "base.css",
       "layout.css",
       "components.css",
+      "demos.css",
       "effects.css",
     ]);
   });

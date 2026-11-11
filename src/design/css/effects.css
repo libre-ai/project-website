@@ -64,4 +64,399 @@
       block-size: auto;
     }
   }
+
+  /* Micro-demos of the applications (demos.css holds their static, readable first state). */
+  .demo {
+    --sortie: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .a-in {
+    animation: d-in var(--cycle) var(--sortie) infinite both;
+    animation-delay: calc(var(--i, 0) * 0.3s);
+  }
+
+  @keyframes d-in {
+    0% {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    10%,
+    90% {
+      opacity: 1;
+      transform: none;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .a-surligne {
+    animation:
+      d-in var(--cycle) var(--sortie) infinite both,
+      d-surligne var(--cycle) infinite;
+    animation-delay: calc(var(--i, 0) * 0.3s), 0s;
+  }
+
+  @keyframes d-surligne {
+    0%,
+    45% {
+      background: var(--surface);
+      box-shadow: none;
+    }
+    55%,
+    92% {
+      background: color-mix(in srgb, var(--emeraude) 16%, var(--surface));
+      box-shadow: inset 3px 0 0 var(--emeraude);
+    }
+  }
+
+  .a-pale {
+    animation:
+      d-in var(--cycle) var(--sortie) infinite both,
+      d-pale var(--cycle) infinite;
+    animation-delay: calc(var(--i, 0) * 0.3s), 0s;
+  }
+
+  @keyframes d-pale {
+    0%,
+    45% {
+      filter: none;
+    }
+    55%,
+    92% {
+      filter: opacity(0.35);
+      text-decoration: line-through;
+    }
+  }
+
+  .a-check {
+    animation: d-check var(--cycle) infinite;
+  }
+
+  @keyframes d-check {
+    0%,
+    35% {
+      transform: scale(0);
+    }
+    45%,
+    95% {
+      transform: scale(1);
+    }
+    100% {
+      transform: scale(0);
+    }
+  }
+
+  .a-tape {
+    animation: d-tape var(--cycle) steps(18) infinite;
+  }
+
+  @keyframes d-tape {
+    0% {
+      max-width: 0;
+    }
+    35%,
+    95% {
+      max-width: 20em;
+    }
+    100% {
+      max-width: 0;
+    }
+  }
+
+  .a-barre {
+    animation: d-barre var(--cycle) var(--sortie) infinite;
+  }
+
+  @keyframes d-barre {
+    0%,
+    10% {
+      transform: scaleX(0);
+    }
+    55%,
+    95% {
+      transform: scaleX(1);
+    }
+    100% {
+      transform: scaleX(0);
+    }
+  }
+
+  .a-bouge {
+    animation: d-bouge var(--cycle) var(--sortie) infinite;
+  }
+
+  @keyframes d-bouge {
+    0%,
+    20% {
+      transform: none;
+    }
+    55%,
+    92% {
+      transform: translate(var(--tx, 0), var(--ty, 0));
+    }
+    100% {
+      transform: none;
+    }
+  }
+
+  .a-trace {
+    stroke-dasharray: 260;
+    animation: d-trace var(--cycle) var(--sortie) infinite;
+  }
+
+  @keyframes d-trace {
+    0% {
+      stroke-dashoffset: 260;
+    }
+    50%,
+    95% {
+      stroke-dashoffset: 0;
+    }
+    100% {
+      stroke-dashoffset: 260;
+    }
+  }
+
+  .a-pulse,
+  .d-vitesse {
+    animation: d-pulse 1.4s ease-in-out infinite alternate;
+  }
+
+  .d-visio .parle,
+  .d-choix .oui {
+    animation: d-pulse 1s ease-in-out infinite alternate;
+  }
+
+  @keyframes d-pulse {
+    to {
+      transform: scale(1.08);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--emeraude) 25%, transparent);
+    }
+  }
+
+  .a-tourne,
+  .d-flashcard .face {
+    animation: d-tourne var(--cycle) var(--sortie) infinite;
+  }
+
+  @keyframes d-tourne {
+    0%,
+    20% {
+      transform: rotateY(0);
+    }
+    45%,
+    100% {
+      transform: rotateY(-180deg);
+    }
+  }
+
+  .d-flashcard .verso {
+    animation-name: d-tourne-verso;
+  }
+
+  @keyframes d-tourne-verso {
+    0%,
+    20% {
+      transform: rotateY(180deg);
+    }
+    45%,
+    100% {
+      transform: rotateY(0);
+    }
+  }
+
+  .d-noeud.a-in {
+    animation-name: d-noeud;
+  }
+
+  @keyframes d-noeud {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, -30%);
+    }
+    10%,
+    90% {
+      opacity: 1;
+      transform: translate(-50%, -50%);
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes d-actif {
+    0%,
+    30% {
+      border-color: var(--emeraude);
+    }
+    34%,
+    100% {
+      border-color: transparent;
+    }
+  }
+
+  .d-barres span {
+    animation: d-barre-v var(--cycle) var(--sortie) infinite;
+    animation-delay: calc(var(--i) * 0.25s);
+  }
+
+  @keyframes d-barre-v {
+    0%,
+    10% {
+      transform: scaleY(0);
+    }
+    45%,
+    95% {
+      transform: scaleY(1);
+    }
+    100% {
+      transform: scaleY(0);
+    }
+  }
+
+  .d-balayage {
+    animation: d-balayage var(--cycle) linear infinite;
+  }
+
+  @keyframes d-balayage {
+    to {
+      inset-block-start: 110%;
+    }
+  }
+
+  .d-case {
+    animation: d-coche var(--cycle) infinite;
+    animation-delay: calc(var(--i) * 0.5s);
+  }
+
+  @keyframes d-coche {
+    0%,
+    30% {
+      background: transparent;
+      border-color: var(--encre-attenuee);
+    }
+    40%,
+    95% {
+      background: var(--emeraude);
+      border-color: var(--emeraude);
+    }
+  }
+
+  .d-agenda .trouve {
+    animation: d-trouve var(--cycle) infinite;
+  }
+
+  @keyframes d-trouve {
+    0%,
+    35% {
+      background: var(--surface);
+    }
+    45%,
+    95% {
+      background: var(--emeraude);
+    }
+  }
+
+  .d-onde span {
+    animation: d-onde 1.2s ease-in-out infinite alternate;
+    animation-delay: calc(var(--k) * -0.09s);
+  }
+
+  @keyframes d-onde {
+    to {
+      transform: scaleY(0.35);
+    }
+  }
+
+  .d-tete {
+    animation: d-tete var(--cycle) linear infinite;
+  }
+
+  @keyframes d-tete {
+    to {
+      inset-inline-start: 97%;
+    }
+  }
+
+  .d-de.a-tourne {
+    animation: d-lancer var(--cycle) var(--sortie) infinite;
+  }
+
+  @keyframes d-lancer {
+    0%,
+    15% {
+      transform: rotate(0) scale(0.8);
+    }
+    45%,
+    100% {
+      transform: rotate(720deg) scale(1);
+    }
+  }
+
+  @keyframes d-flux-tube {
+    to {
+      background-position: 16px 0;
+    }
+  }
+
+  .d-votes i {
+    animation-delay: calc(var(--i) * 0.2s);
+  }
+
+  .d-fenetres span {
+    animation: var(--cycle) var(--sortie) infinite;
+  }
+
+  .d-fenetres .f1 {
+    animation-name: d-f1;
+  }
+
+  .d-fenetres .f2 {
+    animation-name: d-f2;
+  }
+
+  .d-fenetres .f3 {
+    animation-name: d-f3;
+  }
+
+  @keyframes d-f1 {
+    50%,
+    90% {
+      inset-inline-start: 3%;
+      inset-block-start: 4%;
+      width: 46%;
+      height: 92%;
+    }
+  }
+
+  @keyframes d-f2 {
+    50%,
+    90% {
+      inset-inline-start: 51%;
+      inset-block-start: 4%;
+      width: 46%;
+      height: 44%;
+    }
+  }
+
+  @keyframes d-f3 {
+    50%,
+    90% {
+      inset-inline-start: 51%;
+      inset-block-start: 52%;
+      width: 46%;
+      height: 44%;
+    }
+  }
+
+  /* Last, after the less specific bar and wave rules, so the cascade reads in order. */
+  .d-diapos .miniatures span {
+    animation: d-actif var(--cycle) infinite;
+    animation-delay: calc(var(--i) * 1.8s);
+  }
+
+  .d-tunnel .tube i {
+    animation: d-flux-tube 1s linear infinite;
+  }
 }

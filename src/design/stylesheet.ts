@@ -8,7 +8,7 @@ import { readFile } from "node:fs/promises";
 import { renderFontFaces } from "../font";
 import { renderTokens } from "./tokens";
 
-const SHEETS = ["base.css", "layout.css", "components.css", "effects.css"] as const;
+const SHEETS = ["base.css", "layout.css", "components.css", "demos.css", "effects.css"] as const;
 
 export interface StaticSheet {
   readonly name: (typeof SHEETS)[number];
