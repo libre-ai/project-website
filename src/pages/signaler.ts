@@ -2,7 +2,7 @@
  * Report page (S3.5, FR-15): the site collects nothing, so a report goes through the public
  * forge. Links only; no form, no field, no script.
  */
-import { FORGE_URL } from "./layout";
+import { FORGE_URL } from "../origin";
 
 export function signalerBody(): string {
   return [

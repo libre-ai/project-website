@@ -1,8 +1,9 @@
 /**
- * Product pages (FR-04, FR-07): the list item and the page of one product. Every card value
- * passes through escapeHtml. Copy states only what the repository proves (ADR 0003).
+ * Brick pages (FR-04, FR-07): the page of one repository of the forge, rendered on the site under
+ * /fabrique/briques/. Every card value passes through escapeHtml. Copy states only what the
+ * repository proves; its state is read on the forge (ADR 0007 §3).
  */
-import { citationFor } from "../feed";
+import { citationFor } from "../citation";
 import type { Presentation } from "../presentation";
 import { KIND_LABELS, LAYER_LABELS, type ProjectCard } from "../project-card";
 import { escapeHtml } from "../security";
@@ -10,31 +11,6 @@ import { escapeHtml } from "../security";
 // ADR 0003: a reviewed presentation replaces the card's summary; a draft is never published.
 export function published(presentation: Presentation | undefined): Presentation | undefined {
   return presentation?.reviewed ? presentation : undefined;
-}
-
-export function productItem(card: ProjectCard, presentation: Presentation | undefined): string {
-  // Each product sits in a square frame (open frame, orthogonal joint), with its pitch or summary.
-  const lead = published(presentation)?.pitch ?? card.summary;
-  return `<li class="frame"><a href="/produits/${escapeHtml(card.project)}">${escapeHtml(card.project)}</a> <span class="summary">${escapeHtml(lead)}</span></li>`;
-}
-
-// FR-14: the list is grouped by layer in constellation order (the order of LAYER_LABELS); a layer
-// without product has no heading. Cards keep the corpus order inside a group, and no state filter exists.
-export function productList(
-  cards: readonly ProjectCard[],
-  presentations: ReadonlyMap<string, Presentation>,
-): string {
-  const layers = Object.keys(LAYER_LABELS) as (keyof typeof LAYER_LABELS)[];
-  return layers
-    .map((layer) => {
-      const members = cards.filter((card) => card.layer === layer);
-      if (members.length === 0) return "";
-      const items = members
-        .map((card) => productItem(card, presentations.get(card.project)))
-        .join("");
-      return `<h2>${LAYER_LABELS[layer]}</h2><ul>${items}</ul>`;
-    })
-    .join("");
 }
 
 // The opening of a product page: the reviewed presentation when there is one, else the card.

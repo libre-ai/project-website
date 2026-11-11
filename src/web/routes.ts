@@ -4,6 +4,7 @@
  * card or licence type. Subscription and error pages are `noindex` and stay out of the sitemap.
  */
 import { APPLICATIONS } from "../content/applications";
+import { brickPath } from "../origin";
 import { type Html, h } from "./html";
 import { layout } from "./layout";
 import {
@@ -64,8 +65,6 @@ const route = (
   description: string,
   main: () => Html,
 ): Route => ({ path, file: fileOf(path), kind, title, description, main });
-
-export const brickPath = (project: string): string => `/fabrique/briques/${project}/`;
 
 function bricksList(bricks: readonly ForgeBrick[]): Html {
   return h(

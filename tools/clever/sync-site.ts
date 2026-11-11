@@ -8,7 +8,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 
 import { assertBrandPublishable } from "../../src/brand/controls";
-import { writeStaticSite } from "../../src/build";
+import { writeStaticSite } from "../../src/write-site";
 
 assertBrandPublishable();
 

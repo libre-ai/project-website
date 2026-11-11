@@ -9,7 +9,6 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { PAGE_BUDGET_BYTES } from "./budget";
-import { writeStaticSite } from "./build";
 import { verifyCardSnapshot } from "./cards-snapshot";
 import { DEPLOY_REPOSITORY, parseDeployFacts } from "./deploy";
 import { diffOutputs } from "./determinism";
@@ -22,6 +21,7 @@ import { loadPresentations } from "./presentation";
 import { parseProjectCard } from "./project-card";
 import { checkCardUniverse, type Exclusion } from "./universe";
 import { buildLibreSite, type LibreSiteInput } from "./web/site";
+import { writeStaticSite } from "./write-site";
 
 const CARD_SUFFIX = ".project.v1.yaml";
 const LICENCE_SUFFIX = ".REUSE.toml";

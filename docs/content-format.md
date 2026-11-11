@@ -9,14 +9,17 @@ et jamais éditée à la main.
 
 | Champ | Type | Sert à |
 | --- | --- | --- |
-| `project` | texte | nom de la route `/produits/<project>` |
+| `project` | texte | nom de la page de brique `/fabrique/briques/<project>/` (ADR 0007) |
 | `repository` | texte | `libre-ai/<project>`, lien vers la forge |
 | `exposure` | `idea`, `spec-published`, `usable-verifiable`, `proven` | lu et validé, **non affiché** (ADR 0003) |
-| `maturity` | `idea`, `specified`, `usable`, `proven` | maturité affichée |
+| `maturity` | `idea`, `specified`, `usable`, `proven` | lu et validé, **non affiché** : l'état d'un dépôt se lit sur la forge (ADR 0007 §3) |
+| `kind` | `application`, `product`, `authority`, `satellite`, `tool` | type affiché |
+| `layer` | `couche-1` à `couche-4`, `transverse` | couche affichée |
+| `dependencies` | liste de `{ on, why }` | section « Dépendances », absente si la liste est vide |
 | `summary` | texte non vide | résumé de la fiche |
 | `current_situation` | texte, au moins 10 caractères | situation actuelle, état présent uniquement |
 | `non_goals` | liste de textes | section « Limites » (FR-03) : non vide |
-| `freshness.last_verified_on` | date réelle `AAAA-MM-JJ` | date de vérification, citation et flux (FR-12) |
+| `freshness.last_verified_on` | date réelle `AAAA-MM-JJ` | date de vérification et citation (FR-12) |
 | `application_url` | URL, optionnel | lien « Ouvrir le produit », affiché dès qu'il existe (ADR 0003) |
 
 Le champ `application_url` n'existe pas encore dans le schéma `project.v1` de `project-governance` :

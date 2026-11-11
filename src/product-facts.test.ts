@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { buildCorpus } from "./corpus";
-import { renderPages } from "./pages";
+import { productPage, productTitle } from "./pages/product";
+import { parsePresentation } from "./presentation";
 import { parseProjectCard } from "./project-card";
 
 const base = {
@@ -18,10 +18,9 @@ const base = {
   dependencies: [{ on: "libre-ai/project-governance", why: "Doctrine de flotte." }],
 };
 
-const page = (extra: Record<string, unknown> = {}) => {
-  const cards = [parseProjectCard({ ...base, ...extra })];
-  return renderPages(buildCorpus(cards), cards).get("/produits/sketch") ?? "";
-};
+// The body of a brick page, as the forge page of the site renders it.
+const page = (extra: Record<string, unknown> = {}) =>
+  productPage(parseProjectCard({ ...base, ...extra }), undefined);
 
 describe("product facts (O3, S2.1)", () => {
   test("a product page names its layer and its type", () => {
@@ -57,6 +56,36 @@ describe("product facts (O3, S2.1)", () => {
       expect(html).not.toContain(mark);
     }
     expect(html).not.toContain("usable-verifiable");
+  });
+
+  test("a reviewed presentation replaces the card's lead; a draft never reaches the page (ADR 0003)", () => {
+    const presentation = {
+      project: "sketch",
+      title: "Sketch, le plan",
+      author: "Relecteur nommé",
+      ai_assistance: "Brouillon rédigé par un modèle de langage ; relu par un humain.",
+      nature: "analyse",
+      review_date: "2026-10-14",
+      reviewed: true,
+      pitch: "PITCH-MARK",
+      capabilities: ["CAPABILITY-<MARK>"],
+      audience: "AUDIENCE-MARK",
+    };
+    const card = parseProjectCard(base);
+    const reviewed = productPage(card, parsePresentation(presentation));
+    expect(reviewed).toContain("<h1>Sketch, le plan</h1>");
+    expect(reviewed).toContain('<p class="pitch">PITCH-MARK</p>');
+    expect(reviewed).toContain("<li>CAPABILITY-&lt;MARK&gt;</li>");
+    expect(reviewed).toContain("<p>AUDIENCE-MARK</p>");
+    expect(reviewed).not.toContain("Résumé court.");
+    expect(productTitle(card, parsePresentation(presentation))).toBe("Sketch, le plan");
+
+    const draft = parsePresentation({ ...presentation, reviewed: false });
+    const fallback = productPage(card, draft);
+    expect(fallback).toContain("<h1>sketch</h1>");
+    expect(fallback).toContain("Résumé court.");
+    expect(fallback).not.toContain("PITCH-MARK");
+    expect(productTitle(card, draft)).toBe("sketch");
   });
 
   test("an unknown layer or type refuses the card", () => {

@@ -8,13 +8,13 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-
 import { FAVICON_PATH, renderFavicon, renderSprite, SPRITE_PATH } from "../brand/sprite";
 import { checkAssetBudgets, checkBudget } from "../budget";
 import { checkForbiddenClaims } from "../claims";
 import { deployBody } from "../deploy";
 import { renderStylesheet } from "../design/stylesheet";
 import { licencesBody } from "../licences";
+import { SITE_ORIGIN } from "../origin";
 import type { PageExtras } from "../pages/extras";
 import { productPage, productTitle, published } from "../pages/product";
 import { type Proof, proofsBody } from "../pages/proofs";
@@ -26,7 +26,7 @@ import { checkCopy, checkInternalLinks, findInlineStyles } from "./gates";
 import { type ForgeInput, libreRoutes, type Route, renderRoute } from "./routes";
 import { hoistedContentCss } from "./sections";
 
-export const SITE_ORIGIN = "https://libre-ia.fr";
+export { SITE_ORIGIN };
 
 export interface LibreSiteInput {
   readonly cards: readonly ProjectCard[];

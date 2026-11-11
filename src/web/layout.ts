@@ -33,6 +33,9 @@ const UNDERSTAND: readonly (readonly [string, string])[] = [
   ["/preuves/", "Preuves"],
   ["/corrections/", "Corrections"],
   ["/licences/", "Licences"],
+  ["/deployer/", "Déployer"],
+  // FR-15: reporting an error is reachable from every page.
+  ["/signaler/", "Signaler une erreur"],
   ["/confidentialite/", "Confidentialité"],
 ];
 
