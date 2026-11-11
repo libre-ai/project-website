@@ -67,3 +67,10 @@ path = ["src/brand/*.test.ts", "src/brand/controls.ts"]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 Libre AI contributors"
 SPDX-License-Identifier = "EUPL-1.2"
+
+# Visual regression baselines render the martinet and the emblems: brand works.
+[[annotations]]
+path = ["e2e/__screenshots__/**"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Libre AI contributors"
+SPDX-License-Identifier = "LicenseRef-Libre-AI-Brand-1.0"
