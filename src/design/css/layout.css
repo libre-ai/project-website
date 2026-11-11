@@ -1,0 +1,85 @@
+/* Layout: a centred column with a 1rem gutter, so nothing scrolls sideways at phone width. */
+.largeur {
+  width: min(100% - 2rem, 72rem);
+  margin-inline: auto;
+}
+
+.site-entete .largeur {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  padding-block: 1rem;
+}
+
+.marque {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--encre);
+  text-decoration: none;
+}
+
+.site-navigation {
+  flex: 1 1 auto;
+}
+
+.site-navigation ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-navigation a {
+  color: var(--encre);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.site-navigation a[aria-current="page"] {
+  text-decoration: underline;
+  text-decoration-thickness: 0.15em;
+  text-decoration-color: var(--emeraude);
+}
+
+main {
+  display: block;
+  padding-block: 2rem 4rem;
+}
+
+.site-pied {
+  border-block-start: 1px solid var(--bordure);
+  padding-block: 3rem 2rem;
+}
+
+.site-pied .colonnes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: 2rem;
+}
+
+.site-pied h2 {
+  font-size: 1rem;
+  margin-block: 0 0.75rem;
+}
+
+.site-pied ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.pied-bas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 2rem;
+  margin-block-start: 2.5rem;
+  color: var(--encre-attenuee);
+  font-size: 0.9rem;
+}

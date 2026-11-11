@@ -1,0 +1,84 @@
+/* Base: Aube colours from the tokens, relative units throughout, visible focus. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light dark;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--fond);
+  color: var(--encre);
+  font-family: "Source Sans 3", system-ui, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Bricolage Grotesque", "Source Sans 3", system-ui, sans-serif;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 1.4rem + 3.5vw, 4rem);
+}
+
+h2 {
+  font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.4rem);
+}
+
+p {
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--lien);
+  text-underline-offset: 0.18em;
+}
+
+:focus-visible {
+  outline: 0.19rem solid var(--focus);
+  outline-offset: 0.15rem;
+  border-radius: 0.2rem;
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.evitement {
+  position: absolute;
+  inset-inline-start: 1rem;
+  inset-block-start: -10rem;
+  padding: 0.6rem 1rem;
+  background: var(--surface);
+  color: var(--encre);
+  z-index: 10;
+}
+
+.evitement:focus {
+  inset-block-start: 1rem;
+}

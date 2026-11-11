@@ -1,0 +1,190 @@
+/* Components: martinet, logotype, theme toggle, waitlist form, tabs, emblems. */
+.martinet {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+}
+
+.logotype {
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+}
+
+/* The dots of the two i are the martinet's pixels: a dotless i under an emerald square. */
+.logotype .i {
+  position: relative;
+}
+
+.logotype .i::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-start: 0.12em;
+  width: 0.2em;
+  height: 0.2em;
+  translate: -50% 0;
+  background: var(--emeraude);
+}
+
+.logotype .point-median::before {
+  content: "·";
+  color: var(--ciel);
+}
+
+.bascule-theme {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid var(--bordure);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--encre);
+  cursor: pointer;
+}
+
+.bascule-theme svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  grid-area: 1 / 1;
+}
+
+.bascule-theme[hidden] {
+  display: none;
+}
+
+/* The button shows the theme it will switch to: the moon in light, the sun in dark. */
+.bascule-theme .icone-soleil,
+.bascule-theme[aria-pressed="true"] .icone-lune {
+  visibility: hidden;
+}
+
+.bascule-theme[aria-pressed="true"] .icone-soleil {
+  visibility: visible;
+}
+
+.appel-entete {
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  background: var(--encre);
+  color: var(--fond);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.formulaire-attente {
+  display: grid;
+  gap: 0.85rem;
+  max-width: 38rem;
+}
+
+.formulaire-attente .champ {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.formulaire-attente input[type="email"] {
+  flex: 1 1 14rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--bordure);
+  border-radius: 0.6rem;
+  background: var(--surface);
+  color: var(--encre);
+  font: inherit;
+}
+
+.formulaire-attente button {
+  min-height: 2.75rem;
+  padding: 0.5rem 1.25rem;
+  border: 0;
+  border-radius: 0.6rem;
+  background: var(--encre);
+  color: var(--fond);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.formulaire-attente fieldset {
+  border: 1px solid var(--bordure);
+  border-radius: 0.6rem;
+  padding: 0.75rem 1rem;
+}
+
+.formulaire-attente .choix {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+}
+
+.formulaire-attente .mention {
+  color: var(--encre-attenuee);
+  font-size: 0.92rem;
+}
+
+/* Out of sight and out of reach, but present for robots that fill every field. */
+.piege {
+  position: absolute;
+  inset-inline-start: -100vw;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Tabs: without script the links are an in-page menu; with script, a tab list. */
+[data-onglets-liste] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+[data-onglets-liste] a {
+  display: inline-block;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  color: var(--encre);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+[data-onglets-actifs] [data-onglets-liste] {
+  position: relative;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+[data-onglets-actifs] [data-onglets-liste]::after {
+  content: "";
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-start: 0;
+  width: var(--indicateur-largeur, 0);
+  height: 0.2rem;
+  border-radius: 0.1rem;
+  translate: var(--indicateur-x, 0) 0;
+  background: var(--emeraude);
+}
+
+[data-onglets-actifs] a[aria-selected="true"] {
+  color: var(--lien);
+}
+
+.embleme {
+  width: 4.5rem;
+  height: 4.5rem;
+  flex: none;
+}
+
+.visite-commandes {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
