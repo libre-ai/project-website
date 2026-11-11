@@ -1,6 +1,7 @@
 # ADR 0002 — Direction visuelle : doctrine actuelle, références legacy différées
 
-- **Statut** : accepté par le propriétaire le 2026-10-14 (option 3 : hybride).
+- **Statut** : accepté par le propriétaire le 2026-10-14 (option 3 : hybride) ; **remplacé** par
+  l'ADR 0004 le 2026-11-09.
 - **Portée** : site public V1, branche `work/website-refonte-v1`.
 - **Relève de** : ADR 0001 (générateur sans React), plateforme de marque de `project-governance`.
 

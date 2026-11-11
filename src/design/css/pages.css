@@ -1,0 +1,609 @@
+/* Page sections: first screen, blocks, factory steps, journeys, tour, explorer, join, application
+   pages. Static only; movement lives in effects.css. Ported from the accepted prototype. */
+.degrade {
+  background: linear-gradient(120deg, var(--emeraude), var(--lagon) 55%, var(--ciel));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.chapeau {
+  max-width: 40rem;
+  color: var(--encre-attenuee);
+  font-size: 1.15rem;
+}
+
+.bouton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.9rem;
+  padding: 0.75rem 1.4rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.bouton-aube {
+  background: linear-gradient(120deg, var(--emeraude), var(--lagon) 55%, var(--ciel));
+  color: var(--encre-marque);
+}
+
+.bouton-trait {
+  border-color: var(--bordure);
+  background: var(--surface);
+  color: var(--encre);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-block: 1.5rem 0;
+}
+
+.bloc {
+  padding-block: clamp(3rem, 8vw, 6rem);
+}
+
+.bloc-tete {
+  max-width: 48rem;
+  margin-block-end: 2.5rem;
+}
+
+.bloc-tete .surtitre {
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+  color: var(--lien);
+}
+
+.bloc-tete h2 {
+  margin: 0 0 1rem;
+}
+
+.bloc-tete p:last-child {
+  margin: 0;
+  color: var(--encre-attenuee);
+  font-size: 1.1rem;
+}
+
+/* First screen: « Seul, ou ensemble ? » */
+.hero-seul-ensemble {
+  padding-block: clamp(2rem, 6vw, 4rem);
+}
+
+.hero-seul-ensemble .entete {
+  max-width: 46rem;
+}
+
+.hero-seul-ensemble .sous {
+  color: var(--encre-attenuee);
+  font-size: 1.2rem;
+}
+
+.bascule-avancer {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin: 1.25rem 0;
+  padding: 0.3rem;
+  border: 1px solid var(--bordure);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.bascule-avancer legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.bascule-avancer label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bascule-avancer label:has(input:checked) {
+  background: var(--encre);
+  color: var(--fond);
+}
+
+.bascule-avancer label:has(input:focus-visible) {
+  outline: 0.19rem solid var(--focus);
+  outline-offset: 0.15rem;
+}
+
+/* The scene takes the height of its content: a fixed minimum left two thirds of it empty. */
+.scene-avancer {
+  padding: clamp(1rem, 3vw, 1.75rem);
+  border: 1px solid var(--bordure);
+  border-radius: 1.2rem;
+  background: var(--surface-2);
+}
+
+.cote-seul,
+.cote-ensemble {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr));
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.silo {
+  padding: 0.8rem;
+  border: 1px dashed var(--encre-attenuee);
+  border-radius: 0.8rem;
+  background: var(--surface);
+  color: var(--encre-attenuee);
+  filter: grayscale(1);
+}
+
+.silo b {
+  display: block;
+  color: var(--encre);
+}
+
+.envol {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem;
+  border-radius: 0.8rem;
+  background: var(--teinte);
+  color: var(--couleur-texte);
+  font-weight: 700;
+}
+
+.envol .embleme {
+  width: 3rem;
+  height: 3rem;
+}
+
+.cote-ensemble {
+  display: none;
+}
+
+/* Without script the radio drives the scene; with script, data-etat does (view transition). */
+[data-seul-ensemble]:not([data-js]):has(#avancer-ensemble:checked) .cote-seul,
+[data-seul-ensemble][data-etat="ensemble"] .cote-seul {
+  display: none;
+}
+
+[data-seul-ensemble]:not([data-js]):has(#avancer-ensemble:checked) .cote-ensemble,
+[data-seul-ensemble][data-etat="ensemble"] .cote-ensemble {
+  display: grid;
+}
+
+.devise {
+  margin-block: 1.5rem 0;
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-size: clamp(1.3rem, 1rem + 1.2vw, 1.8rem);
+  font-weight: 800;
+}
+
+/* The factory in three steps */
+.trois-temps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.temps {
+  padding: 1.5rem;
+  border: 1px solid var(--bordure);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+
+.temps h3 {
+  margin: 1rem 0 0.5rem;
+  font-size: 1.35rem;
+}
+
+.temps p {
+  margin: 0;
+  color: var(--encre-attenuee);
+}
+
+.temps .visuel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 7rem;
+  border-radius: 0.8rem;
+  background: var(--surface-2);
+}
+
+.temps .visuel .embleme {
+  width: 6rem;
+  height: 6rem;
+}
+
+.temps-commun .visuel {
+  background: var(--teinte);
+}
+
+.bulle {
+  max-width: 15rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.8rem 0.8rem 0.8rem 0.2rem;
+  background: var(--encre);
+  color: var(--fond);
+  font-weight: 600;
+}
+
+/* Journeys */
+.parcours-grille details {
+  border-block-start: 1px solid var(--bordure);
+}
+
+.parcours-grille details:last-of-type {
+  border-block-end: 1px solid var(--bordure);
+}
+
+.parcours-grille summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0.25rem;
+  cursor: pointer;
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-size: clamp(1.1rem, 1rem + 0.6vw, 1.4rem);
+  font-weight: 700;
+  list-style: none;
+}
+
+.parcours-grille summary::-webkit-details-marker {
+  display: none;
+}
+
+.parcours-grille summary::before {
+  content: "";
+  flex: none;
+  width: 0.7rem;
+  height: 0.7rem;
+  border: 2px solid var(--encre-attenuee);
+  border-radius: 2px;
+}
+
+.parcours-grille details[open] summary::before {
+  border-color: var(--emeraude);
+  background: var(--emeraude);
+  rotate: 45deg;
+}
+
+.scene-parcours {
+  display: grid;
+  gap: 1.5rem;
+  margin-block-end: 1.5rem;
+  padding: clamp(1rem, 3vw, 2rem);
+  border: 1px solid var(--bordure);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+
+.trajet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trajet li {
+  display: flex;
+  flex: 1 1 7rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--couleur-texte);
+}
+
+.resultat {
+  position: relative;
+  padding: 1.2rem 1.25rem;
+  border-radius: 0.8rem;
+  background: var(--surface-2);
+}
+
+.resultat .illustration {
+  position: absolute;
+  inset-block-start: -0.7rem;
+  right: 1rem;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid var(--bordure);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--encre-attenuee);
+  font-size: 0.75rem;
+}
+
+.gain p {
+  margin: 0;
+}
+
+.gain .obtenu {
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.gain .confort {
+  color: var(--encre-attenuee);
+}
+
+/* Universe tabs: sections become panels once the module runs */
+.titre-univers {
+  margin-block: 2rem 1rem;
+}
+
+[data-onglets-actifs] .titre-univers {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+/* Guided tour and layer explorer */
+.visite-etapes {
+  display: grid;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.visite-etape {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--bordure);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+
+/* The module hides every step but one; a display rule would otherwise override `hidden`. */
+.visite-etape[hidden] {
+  display: none;
+}
+
+.visite-etape .numero {
+  font-weight: 700;
+  color: var(--lien);
+}
+
+.visite-etape h3 {
+  margin: 0.4rem 0 0.6rem;
+}
+
+.scene-etape {
+  padding: 1rem;
+  border-radius: 0.8rem;
+  background: var(--surface-2);
+}
+
+.constellation-app {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.visite-commandes {
+  justify-content: space-between;
+  margin-block-start: 1rem;
+}
+
+.visite-commandes button {
+  min-height: 2.75rem;
+  padding: 0.5rem 1.1rem;
+  border: 1px solid var(--bordure);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--encre);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.visite-commandes button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.explorateur {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.explorateur details {
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--bordure);
+  border-radius: 0.8rem;
+  background: var(--surface);
+}
+
+.explorateur details.est-reliee {
+  border-color: var(--emeraude);
+  box-shadow: inset 0.25rem 0 0 var(--emeraude);
+}
+
+.explorateur summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.explorateur summary small {
+  display: block;
+  font-weight: 400;
+  color: var(--encre-attenuee);
+}
+
+.explorateur .meca {
+  padding-inline-start: 1.2rem;
+}
+
+.puces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.puces span {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 0.85rem;
+}
+
+/* Forge pages quote tables from the pinned records (proofs, licences): a table wider than the
+   screen scrolls inside its own box, never the page. */
+#forge table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+#forge th,
+#forge td {
+  padding: 0.4rem 0.6rem;
+  border-block-end: 1px solid var(--bordure);
+  text-align: start;
+}
+
+/* Commons, join */
+.engagements {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.engagements li {
+  padding: 1.25rem;
+  border: 1px solid var(--bordure);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+
+.engagements h3 {
+  margin-block-start: 0;
+}
+
+.rejoindre-grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: 2rem;
+}
+
+.reseaux,
+.liens-forge,
+.briques {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.briques span {
+  color: var(--encre-attenuee);
+}
+
+/* Application page */
+.app-hero-grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: 2.5rem;
+  align-items: center;
+  padding-block: clamp(2rem, 6vw, 4rem);
+}
+
+.fil {
+  color: var(--encre-attenuee);
+  font-size: 0.95rem;
+}
+
+.embleme-grand .embleme {
+  width: 7rem;
+  height: 7rem;
+  border-radius: 1.4rem;
+  background: var(--teinte);
+}
+
+.fonction-grande {
+  margin: 1rem 0 0.4rem;
+  font-weight: 700;
+  color: var(--encre-attenuee);
+}
+
+.app-hero h1 .nom-libre {
+  color: var(--couleur-texte);
+}
+
+.promesse {
+  max-width: 34rem;
+  font-size: 1.2rem;
+}
+
+.app-hero .etiquettes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.app-hero .etiquette {
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--bordure);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.obtenus,
+.voisines {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  gap: 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.voisines a {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem;
+  border-radius: 0.8rem;
+  background: var(--teinte);
+  color: var(--couleur-texte);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.voisines .embleme {
+  width: 3rem;
+  height: 3rem;
+}

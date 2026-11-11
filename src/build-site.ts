@@ -1,26 +1,32 @@
 /**
- * Command-line entry for the site build. Kept apart from src/site.ts so the
- * logic stays importable and tested without running a build.
+ * Command-line entry for the Libre IA site build (plan, Task 9). It reads and verifies the
+ * pinned inputs (card snapshot, licences, deploy document, portfolio universe), reads the fonts
+ * from their pinned packages, assembles the site twice and refuses any difference, writes dist/
+ * and prints the counters of every gate. Kept apart from src/web/site.ts so the assembly stays
+ * importable and tested without running a build.
  */
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { checkBudget, PAGE_BUDGET_BYTES } from "./budget";
-import { writeStaticSite } from "./build";
+import { PAGE_BUDGET_BYTES } from "./budget";
 import { verifyCardSnapshot } from "./cards-snapshot";
 import { DEPLOY_REPOSITORY, parseDeployFacts } from "./deploy";
 import { diffOutputs } from "./determinism";
-import { parseBrandProjection } from "./domain";
 import { parsePinnedSources } from "./fetch-cards";
-import { FONT_FILE, FONT_LICENSE_FILE, renderFontFace } from "./font";
+import { FONTS } from "./font";
 import { parseLicences } from "./licences";
 import type { PageExtras } from "./pages/extras";
+import type { Proof } from "./pages/proofs";
+import { parsePortfolio } from "./portfolio";
 import { loadPresentations } from "./presentation";
-import { buildSite, type SourceFile } from "./site";
-import { renderSiteCss } from "./styles";
+import { parseProjectCard } from "./project-card";
 import { checkCardUniverse, type Exclusion } from "./universe";
+import { buildLibreSite, type LibreSiteInput } from "./web/site";
+import { writeStaticSite } from "./write-site";
 
 const CARD_SUFFIX = ".project.v1.yaml";
+const LICENCE_SUFFIX = ".REUSE.toml";
+const COMMAND = "bun run build";
 
 // Owner decision of 2026-10-14 (option 3): the build reads the versioned snapshot by default, so
 // it needs no network and no variable. The snapshot is checked against the digests recorded at
@@ -45,13 +51,11 @@ if (snapshot.violations.length > 0) {
   throw new Error(`site.snapshot_refused:${snapshot.violations.join(",")}`);
 }
 
-// S3.2: licences are read from the versioned REUSE.toml copies, verified against their pinned
-// digests exactly like the cards; one unreadable or unpinned file refuses the build.
+// S3.2: licences, versioned REUSE.toml copies verified against their pinned digests.
 const licenceDirectory = join(import.meta.dir, "data/licences");
 const licencePins = parsePinnedSources(
   await Bun.file(join(import.meta.dir, "data/licence-sources.json")).json(),
 );
-const LICENCE_SUFFIX = ".REUSE.toml";
 const licenceFiles = await Promise.all(
   (await readdir(licenceDirectory))
     .filter((name) => name.endsWith(LICENCE_SUFFIX))
@@ -65,8 +69,8 @@ const licenceSnapshot = verifyCardSnapshot(licencePins, licenceFiles);
 if (licenceSnapshot.violations.length > 0) {
   throw new Error(`site.licences_refused:${licenceSnapshot.violations.join(",")}`);
 }
-// S3.3: the deploy document, a versioned copy verified like the cards; its revisions are read
-// from the text itself and a missing or non-commit revision refuses the build.
+
+// S3.3: the deploy document, verified like the cards; a missing or non-commit revision refuses.
 const deployPins = parsePinnedSources(
   await Bun.file(join(import.meta.dir, "data/deploy-source.json")).json(),
 );
@@ -90,106 +94,110 @@ const extras: PageExtras = {
 };
 
 const cardsDirectory = process.env.LIBRE_AI_CARDS_DIR || snapshotDirectory;
-const names = (await readdir(cardsDirectory)).filter((name) => name.endsWith(CARD_SUFFIX));
-const sources: SourceFile[] = [];
-for (const name of names.sort()) {
-  sources.push({ name, text: await readFile(join(cardsDirectory, name), "utf8") });
-}
+const cardNames = (await readdir(cardsDirectory))
+  .filter((name) => name.endsWith(CARD_SUFFIX))
+  .sort();
+const cards = await Promise.all(
+  cardNames.map(async (name) =>
+    parseProjectCard(Bun.YAML.parse(await readFile(join(cardsDirectory, name), "utf8"))),
+  ),
+);
 
-// The UI package is the authority for tokens and base styles, read from the pinned install.
-const uiRoot = join(process.cwd(), "node_modules/@libre-ai/ui/src");
-const fontRoot = join(process.cwd(), "node_modules/@fontsource-variable/source-sans-3");
-const assets = {
-  tokens: await readFile(join(uiRoot, "tokens.css"), "utf8"),
-  styles: `${renderFontFace()}\n${(await readFile(join(uiRoot, "styles.css"), "utf8")).trimEnd()}\n\n${renderSiteCss()}`,
-};
-
-// Presentations are editorial content of this repository (docs/, CC-BY-4.0), one file per product.
-const presentations = await loadPresentations(join(process.cwd(), "docs/presentations"));
-const snapshotProof = {
-  gate: "G2 instantané des fiches vérifié contre les empreintes épinglées",
-  examined: snapshot.examined,
-  violations: snapshot.violations.length,
-  command: "bun run build",
-};
-// The brand copy of the home page comes from the governance projection, validated by the same
-// parser as the legacy generator: a malformed or missing projection refuses the build.
-const brandProjection = parseBrandProjection(
+// The portfolio is the authority for which repositories are products, validated at its fixed
+// count before use (AGENTS.md, Boundaries); the exclusions are data.
+const portfolio = parsePortfolio(
   await Bun.file(
-    join(process.cwd(), "node_modules/@libre-ai/governance/brand/projections/public-brand.v1.json"),
+    join(process.cwd(), "node_modules/@libre-ai/governance/ecosystem/portfolio.v1.json"),
   ).json(),
 );
-const assemble = () =>
-  buildSite(sources, assets, {
-    presentations,
-    priorProofs: [snapshotProof],
-    brand: brandProjection.copy.fr,
-    brandProofs: brandProjection.proofs,
-    extras,
-  });
-const result = assemble();
-
-// The portfolio is the authority for which repositories are products; the exclusions are data.
-const portfolio = (await Bun.file(
-  join(process.cwd(), "node_modules/@libre-ai/governance/ecosystem/portfolio.v1.json"),
-).json()) as { items: { repository: string }[] };
 const exclusions = (await Bun.file(
   join(import.meta.dir, "data/card-exclusions.json"),
 ).json()) as Exclusion[];
 const universe = checkCardUniverse({
   repositories: portfolio.items.map((item) => item.repository),
-  cards: result.projects,
+  cards: cards.map((card) => card.project),
   exclusions,
 });
 if (universe.violations.length > 0) {
   throw new Error(`site.universe_refused:${universe.violations.join(",")}`);
 }
 
-// Binary assets are copied byte for byte; the licence ships with the font it covers.
-const binaries = new Map<string, Uint8Array>([
-  [
-    `assets/fonts/${FONT_FILE}`,
-    new Uint8Array(await Bun.file(join(fontRoot, "files", FONT_FILE)).arrayBuffer()),
-  ],
-  [FONT_LICENSE_FILE, new Uint8Array(await Bun.file(join(fontRoot, "LICENSE")).arrayBuffer())],
-]);
-const output = new Map<string, string | Uint8Array>([...result.files, ...binaries]);
+// Fonts and their licences, byte for byte from the pinned packages (ADR 0004 §4).
+const fonts = new Map<string, Uint8Array>();
+for (const font of FONTS) {
+  const packageRoot = join(process.cwd(), "node_modules", font.packageDir);
+  fonts.set(
+    `assets/fonts/${font.file}`,
+    new Uint8Array(await Bun.file(join(packageRoot, "files", font.file)).arrayBuffer()),
+  );
+  fonts.set(
+    font.licenseFile,
+    new Uint8Array(await Bun.file(join(packageRoot, "LICENSE")).arrayBuffer()),
+  );
+}
 
-// S6.4: a second assembly of the same input must write the same bytes; a difference refuses the build.
-const second = assemble();
-const differing = diffOutputs(result.files, second.files);
+const priorProofs: Proof[] = [
+  {
+    gate: "G2 instantané des fiches vérifié contre les empreintes épinglées",
+    examined: snapshot.examined,
+    violations: 0,
+    command: COMMAND,
+  },
+  {
+    gate: "S3.2 licences vérifiées contre les empreintes épinglées",
+    examined: licenceSnapshot.examined,
+    violations: 0,
+    command: COMMAND,
+  },
+  {
+    gate: "S3.3 document de déploiement vérifié",
+    examined: deploySnapshot.examined,
+    violations: 0,
+    command: COMMAND,
+  },
+  {
+    gate: "G2 univers du portefeuille couvert",
+    examined: universe.universe,
+    violations: 0,
+    command: COMMAND,
+  },
+];
+
+const input: LibreSiteInput = {
+  cards,
+  presentations: await loadPresentations(join(process.cwd(), "docs/presentations")),
+  extras,
+  priorProofs,
+  fonts,
+};
+const { files, report } = await buildLibreSite(input);
+
+// S6.4: a second assembly of the same input must write the same bytes.
+const second = await buildLibreSite(input);
+const differing = diffOutputs(files, second.files);
 if (differing.length > 0) throw new Error(`site.nondeterministic:${differing.join(",")}`);
 
-// S6.5: what a visitor downloads for one page stays under the budget, measured on the output.
-const budget = checkBudget(output);
-if (budget.violations.length > 0)
-  throw new Error(`site.budget_refused:${budget.violations.join(",")}`);
+await writeStaticSite(join(process.cwd(), "dist"), files);
 
-await writeStaticSite(join(process.cwd(), "dist"), output);
-console.log(
-  `G2 instantané: ${snapshot.examined} fiches vérifiées contre leurs empreintes (source: ${cardsDirectory === snapshotDirectory ? "instantané versionné" : cardsDirectory})`,
-);
+console.log(`G2 instantané: ${snapshot.examined} fiches vérifiées contre leurs empreintes`);
 console.log(`G2 univers: ${universe.universe}, fiches couvrant l'univers: ${universe.covered}`);
+console.log(`S3.2 licences: ${licenceSnapshot.examined} fichiers vérifiés`);
+console.log(`S3.3 déployer: document vérifié (${deploySnapshot.examined})`);
 console.log(
-  `G2 fiches lues: ${result.report.cardsRead}, pages produit: ${result.report.productPages}`,
-);
-console.log(`G1 pages fixes: ${result.report.fixedPages}, fichiers écrits: ${result.files.size}`);
-console.log(`O2 champs de marque rendus: ${result.report.brandFieldsRendered}`);
-console.log(`S1.2 affirmations de marque rendues: ${result.report.brandProofsRendered}`);
-console.log(
-  `S3.3 déployer: document vérifié (${deploySnapshot.examined}), révisions citées: ${Object.keys(extras.deploy?.facts ?? {}).length}`,
+  `Pages: ${report.pages}, dont briques de la forge: ${report.bricks}, fichiers écrits: ${files.size}`,
 );
 console.log(
-  `S3.2 licences: ${licenceSnapshot.examined} fichiers vérifiés, ${result.report.licencesRendered} dépôts rendus`,
-);
-console.log(`NFR déterminisme: deux assemblages, ${result.files.size} fichiers, 0 différence`);
-console.log(
-  `NFR poids: ${budget.examined} pages, la plus lourde ${budget.heaviest.page} (${budget.heaviest.bytes} octets sur ${PAGE_BUDGET_BYTES})`,
-);
-console.log(`G3 ressources examinées: ${result.report.resourcesExamined}`);
-console.log(
-  `ADR 0003 présentations: ${result.report.presentationsDrafted} rédigées, ${result.report.presentationsReviewed} relues et publiées`,
+  `ADR 0005 styles en ligne: ${report.inlineStyles.examined} pages examinées, violations: 0`,
 );
 console.log(
-  `G9 textes examinés: ${result.report.textsExamined}, violations: ${result.report.claimViolations}`,
+  `ADR 0007 copie: ${report.copy.examined} pages examinées, violations: 0 (pages de forge citées telles quelles: ${report.copy.forgeQuoted})`,
 );
+console.log(`G9 textes examinés: ${report.claims.examined}, violations: 0`);
+console.log(`Liens internes: ${report.links.examined} examinés, 0 cassé`);
+console.log(
+  `NFR poids: ${report.budget.examined} pages, la plus lourde ${report.budget.heaviest} (${report.budget.gzipBytes} octets transférés en gzip sur ${PAGE_BUDGET_BYTES})`,
+);
+console.log(
+  `NFR fichiers partagés: script ${report.bytes.script} octets sur 16384, feuille ${report.bytes.stylesheet} sur 49152, sprite ${report.bytes.sprite} sur 81920`,
+);
+console.log(`NFR déterminisme: deux assemblages, ${files.size} fichiers, 0 différence`);

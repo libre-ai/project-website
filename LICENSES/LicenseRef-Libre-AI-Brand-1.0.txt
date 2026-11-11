@@ -1,0 +1,26 @@
+Libre AI Brand Licence 1.0
+
+Copyright 2026 Libre AI contributors. All rights reserved.
+
+1. Covered works. This licence covers the figurative works in the files that
+   carry, or are annotated with, the identifier LicenseRef-Libre-AI-Brand-1.0:
+   the martinet, the application birds and the origami objects, in any form
+   (source data, generated drawing, rendering).
+
+2. What is permitted without further permission. You may view the covered
+   works and reproduce them only as part of an unmodified copy of the
+   repository that contains them, for the purpose of reviewing, building and
+   testing that repository. You may make the nominative references described in
+   TRADEMARKS.md.
+
+3. What requires prior written permission. Any other use, including modifying
+   a covered work, distributing it apart from the repository, using it as the
+   logo or branding of a product, service, fork, company or domain, and using
+   it in advertising, merchandising or certification.
+
+4. No other grant. The open-source and content licences that apply to other
+   files of the repository do not apply to the covered works. No trademark
+   right is granted.
+
+5. No warranty. The covered works are provided "as is", without warranty of
+   any kind.

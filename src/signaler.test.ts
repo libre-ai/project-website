@@ -1,71 +1,47 @@
 import { describe, expect, test } from "bun:test";
 
-import { buildCorpus, renderSitemap } from "./corpus";
-import { renderPages } from "./pages";
-import { parseProjectCard } from "./project-card";
+import { signalerBody } from "./pages/signaler";
+import { h } from "./web/html";
+import { layout } from "./web/layout";
+import { libreRoutes } from "./web/routes";
 
-const cards = [
-  parseProjectCard({
-    project: "sketch",
-    repository: "libre-ai/sketch",
-    exposure: "idea",
-    maturity: "idea",
-    summary: "Résumé court.",
-    current_situation: "Aucun code n'existe encore à ce stade.",
-    non_goals: ["Pas d'engagement de date."],
-    freshness: { last_verified_on: "2026-10-08" },
-    kind: "satellite",
-    layer: "couche-2",
-    dependencies: [],
-  }),
-];
-const corpus = buildCorpus(cards);
-const pages = renderPages(corpus, cards);
-const html = pages.get("/signaler") ?? "";
+const body = signalerBody();
+const forge = {
+  bricks: [],
+  proofs: "<h1>Preuves</h1>",
+  licences: "<h1>Licences</h1>",
+  deploy: "<h1>Déployer</h1>",
+  signal: body,
+  corrections: "<h1>Journal des corrections</h1>",
+};
 
 describe("/signaler (S3.5, FR-15)", () => {
-  test("is a fixed route of the corpus and of the sitemap", () => {
-    expect(corpus.pages.some((page) => page.path === "/signaler" && page.kind === "fixed")).toBe(
-      true,
-    );
-    expect(renderSitemap(corpus)).toContain("/signaler</loc>");
+  test("is a forge route of the site", () => {
+    expect(
+      libreRoutes(forge).some((entry) => entry.path === "/signaler/" && entry.kind === "forge"),
+    ).toBe(true);
   });
 
   test("points to the public forge issues of this site, as an external link", () => {
-    expect(html).toContain(
+    expect(body).toContain(
       '<a href="https://github.com/libre-ai/project-website/issues" rel="noopener noreferrer">',
     );
   });
 
-  test("collects nothing: no form, no field, no script", () => {
+  test("collects nothing: no form, no field, no script in its body", () => {
     for (const tag of ["<form", "<input", "<textarea", "<select", "<button", "<script"]) {
-      expect(html).not.toContain(tag);
+      expect(body).not.toContain(tag);
     }
-  });
-
-  test("is reachable from every other page by the footer", () => {
-    for (const [path, page] of pages) {
-      if (path === "/signaler") continue;
-      expect(page, path).toContain('<a href="/signaler">');
-    }
-  });
-
-  test("the navigation words are separated by a space", () => {
-    const nav = html.match(/<nav>[\s\S]*?<\/nav>/)?.[0] ?? "";
-    expect(nav).not.toContain("</a><a");
-  });
-
-  test("no page's footer links to the page itself, except the journal required by FR-05", () => {
-    for (const [path, page] of pages) {
-      const footer = page.match(/<footer>[\s\S]*?<\/footer>/)?.[0] ?? "";
-      if (path !== "/corrections") expect(footer, path).not.toContain(`<a href="${path}">`);
-      expect(footer, path).toContain("<a ");
-    }
-    const own = pages.get("/corrections") ?? "";
-    expect(own).toContain('<a href="/corrections">Journal des corrections</a>');
   });
 
   test("names the correction journal as where a handled report is recorded", () => {
-    expect(html).toContain('<a href="/corrections">');
+    expect(body).toContain('<a href="/corrections">');
+  });
+
+  test("is reachable from every page by the footer, next to the corrections journal (FR-05)", () => {
+    const page = layout({ title: "x", description: "x", path: "/", main: h("h1", {}, "x") });
+    const footer = page.slice(page.indexOf('<footer class="site-pied">'));
+    expect(footer).toContain('<a href="/signaler/">Signaler une erreur</a>');
+    expect(footer).toContain('<a href="/corrections/">Corrections</a>');
   });
 });

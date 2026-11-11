@@ -31,36 +31,48 @@ copie versionnée est tout de même vérifiée.
 ```sh
 bun run build                       # construit dist/, sans réseau ni variable
 bun run check                       # toolchain, build, secrets, données personnelles, licences, lint, typecheck, tests
-bunx playwright test                # e2e sur dist/, serveur local http://localhost:8080 (navigateurs : bunx playwright install firefox webkit)
-bun run build:brand                 # ancien générateur, fondé sur le portefeuille seul
+bun run test:e2e                    # build puis e2e Chromium, Firefox, WebKit et Chromium sans script, servis par la démo (navigateurs : bunx playwright install)
+bun run demo                        # construit dist/, puis sert le site et la liste d'attente sur http://localhost:8080
+bun src/brand/planche.ts <sortie>   # planche de recette des 40 emblèmes, couleurs résolues (hors site)
 ```
+
+## Démo locale de la liste d'attente
+
+`bun run demo` démarre le serveur de production (`server/http.ts`) sur `http://localhost:8080`,
+avec un PostgreSQL en mémoire (PGlite exposé en protocole PostgreSQL) et une boîte d'envoi locale :
+chaque message de confirmation est écrit en fichier `.eml` dans `.demo/outbox/`, ignoré par git.
+Pour suivre le parcours : s'inscrire depuis une page, ouvrir le dernier `.eml`, ouvrir son lien de
+confirmation, puis son lien de désinscription. Rien ne quitte la machine ; tout disparaît à l'arrêt.
+Options : `--port`, `--site` (dossier servi, `dist` par défaut), `--outbox`.
 
 ## Ce que le build imprime
 
 Chaque contrôle imprime ses compteurs, y compris les contrôles réussis :
 
-- `G2 instantané` : fiches vérifiées contre leurs empreintes, et la source lue.
-- `G2 univers` : dépôts du portefeuille, dont couverts par une fiche.
-- `G2 fiches lues` : fiches lues et pages produit générées.
-- `G1 pages fixes` : routes fixes et fichiers écrits.
-- `O2 champs de marque rendus` : champs de `public-brand.v1.json` rendus sur l'accueil (7 attendus).
-  La projection est lue de `node_modules/@libre-ai/governance/brand/projections/` ; absente ou
-  invalide, la construction est refusée.
+- `G2 instantané` : fiches vérifiées contre leurs empreintes.
+- `G2 univers` : dépôts du portefeuille, et fiches qui les couvrent.
 - `S3.2 licences` : fichiers `REUSE.toml` vérifiés contre leurs empreintes (copies sous
-  `src/data/licences`, épinglées dans `src/data/licence-sources.json`) et dépôts rendus sur
-  `/licences`. Mise à jour : `bun src/fetch-licences-cli.ts` (réseau, relire le diff). Un dépôt
-  sans identifiant SPDX lisible refuse la construction.
+  `src/data/licences`, épinglées dans `src/data/licence-sources.json`). Mise à jour :
+  `bun src/fetch-licences-cli.ts` (réseau, relire le diff). Un dépôt sans identifiant SPDX lisible
+  refuse la construction.
 - `S3.3 déployer` : document `LOCAL-COMPOSITION.md` vérifié contre son empreinte (copie sous
-  `src/data/deploy`, épinglée dans `src/data/deploy-source.json`) et nombre de révisions citées
-  (3 attendues). Mise à jour : `bun src/fetch-deploy-cli.ts` (réseau, relire le diff) ; une
-  constante absente ou une révision qui n'est pas un commit complet refuse la construction.
+  `src/data/deploy`, épinglée dans `src/data/deploy-source.json`). Mise à jour :
+  `bun src/fetch-deploy-cli.ts` (réseau, relire le diff) ; une constante absente ou une révision
+  qui n'est pas un commit complet refuse la construction.
+- `Pages` : pages rendues, dont briques de la forge (`/fabrique/briques/<dépôt>/`), et fichiers écrits.
+- `ADR 0005 styles en ligne` : pages examinées ; un attribut `style` ou un élément `<style>` refuse
+  la construction (la politique CSP n'autorise aucun style en ligne).
+- `ADR 0007 copie` : pages dont le texte propre passe le contrôle de promesse ; les pages de forge
+  citent les fiches telles quelles et sont comptées à part.
+- `G9 textes examinés` : textes passés au contrôle des mots interdits ; une violation refuse la
+  construction.
+- `Liens internes` : liens examinés ; un lien vers une page absente refuse la construction.
+- `NFR poids` : octets transférés par page (document, feuilles liées et polices qu'elles chargent,
+  scripts, icône, sprite ; chaque fichier compressé en gzip, sauf les polices WOFF2 déjà
+  compressées), la plus lourde et son budget (120 Kio) ; au-delà, la construction est refusée.
+- `NFR fichiers partagés` : script, feuille et sprite contre leurs budgets propres.
 - `NFR déterminisme` : deux assemblages du même contenu, fichiers comparés octet pour octet ;
   toute différence refuse la construction.
-- `NFR poids` : pages mesurées (document, feuilles liées, polices chargées) et la plus lourde,
-  sur un budget de 150 Kio par page ; au-delà, la construction est refusée.
-- `G3 ressources examinées` : présentations examinées (brouillons compris).
-- `ADR 0003 présentations` : rédigées, relues et publiées.
-- `G9 textes examinés` : textes passés au contrôle des mots interdits, et violations.
 
 La page `/preuves` reprend les mêmes compteurs, avec la commande de reproduction.
 

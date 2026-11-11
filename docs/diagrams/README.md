@@ -10,6 +10,10 @@ section du PRD indiquée ci-dessous.
 | `d-04-contributeur.html` | D-04, parcours contributeur | process | PRD §3.2, J3 |
 | `d-05-carte.html` | D-05, carte du site | tree | PRD §6 |
 
+D-05 décrit l'arbre de pages de la V1 (`/produits/:id`). Le socle de l'ADR 0007 l'a remplacé :
+la table des routes en vigueur est `src/web/routes.ts`, et les dépôts y sont des briques de la
+fabrique (`/fabrique/briques/<dépôt>/`). Le diagramme reste tel quel comme trace de la V1.
+
 ## Vérifier
 
 ```sh

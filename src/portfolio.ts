@@ -1,4 +1,8 @@
-import { escapeHtml } from "./security";
+/**
+ * The portfolio of `libre-ai/project-governance` (AGENTS.md, Boundaries): the authority on project
+ * names, groups and states. Validated at a fixed count; any other shape refuses the build. Change
+ * the count only together with the authority.
+ */
 
 type Language = "fr" | "en";
 type Group = "products" | "components" | "project";
@@ -127,26 +131,4 @@ export function parsePortfolio(value: unknown): Portfolio {
     sourcePublicationSha256: digest(input.sourcePublicationSha256),
     items,
   };
-}
-
-export function renderPortfolio(portfolio: Portfolio, language: Language): string {
-  const fr = language === "fr";
-  const labels = fr
-    ? ["Produits", "Composants et outils", "Le projet"]
-    : ["Products", "Components and tools", "The project"];
-  const sections = groups
-    .map(
-      (group, index) =>
-        `<section class="section lai-page" id="${group}"><h2>${labels[index]}</h2><div class="card-grid">${portfolio.items
-          .filter((item) => item.group === group)
-          .map(
-            (item) =>
-              `<article class="product-card lai-open-frame"><h3><a href="https://github.com/libre-ai/${item.repository}">${escapeHtml(item.name[language])}</a></h3><p>${escapeHtml(item.role[language])}</p></article>`,
-          )
-          .join("")}</div></section>`,
-    )
-    .join("\n");
-  return `<!doctype html>
-<html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; connect-src 'none'; form-action 'none'; object-src 'none'; script-src 'none'; style-src 'self'; img-src 'self'"><title>Libre AI — ${fr ? "Les projets" : "The projects"}</title><link rel="stylesheet" href="./assets/styles.css"></head>
-<body><a class="lai-skip-link" href="#contenu">${fr ? "Aller au contenu" : "Skip to content"}</a><header class="site-header lai-page"><a class="wordmark" href="./index.html">Libre AI</a><nav aria-label="${fr ? "Navigation principale" : "Main navigation"}"><a href="#products">${labels[0]}</a> <a href="#components">${labels[1]}</a> <a href="#project">${labels[2]}</a> <a href="${fr ? "index.en.html" : "index.html"}" lang="${fr ? "en" : "fr"}">${fr ? "English" : "Français"}</a></nav></header><main id="contenu"><section class="hero lai-page"><h1>${fr ? "Travailler et apprendre avec l’IA" : "Work and learn with AI"}</h1><p class="lede">${fr ? "Des projets pour garder la main sur vos sources, vos outils et vos décisions." : "Projects that keep you in control of your sources, tools and decisions."}</p><p class="availability">${fr ? "Le code récupéré est en cours d’intégration et de test local. Ce catalogue ne désigne pas des services déployés ni des paquets publiés. Le projet Voyage dispose de données et de contrôles, mais pas encore d’une application de planification." : "Recovered code is being integrated and tested locally. This catalogue does not list deployed services or published packages. The Travel project has data and checks, but no itinerary application yet."}</p></section>${sections}</main><footer class="site-footer lai-page"><a href="https://github.com/libre-ai/.github/blob/main/CONTRIBUTING.md">${fr ? "Contribuer" : "Contribute"}</a> · <a href="https://github.com/libre-ai/.github/blob/main/SECURITY.md">${fr ? "Signaler une vulnérabilité" : "Report a vulnerability"}</a></footer></body></html>`;
 }

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { parsePortfolio, renderPortfolio } from "./portfolio";
+
+import { parsePortfolio } from "./portfolio";
 
 // Read from the pinned install, like the build: no sibling checkout is assumed (S6.3).
 const data = await Bun.file(
@@ -47,30 +48,5 @@ describe("current portfolio", () => {
       mutate(changed);
       expect(() => parsePortfolio(changed)).toThrow();
     }
-  });
-
-  test("renders bilingual source links and local status without old product promises", () => {
-    const portfolio = parsePortfolio(data);
-    for (const language of ["fr", "en"] as const) {
-      const html = renderPortfolio(portfolio, language);
-      expect((html.match(/class="product-card/g) ?? []).length).toBe(17);
-      for (const item of portfolio.items) {
-        expect(html).toContain(`https://github.com/libre-ai/${item.repository}`);
-      }
-      expect(html).toContain("Content-Security-Policy");
-      expect(html).not.toContain("<script");
-      expect(html).not.toContain("Possédez la fabrique");
-      expect(html).not.toContain("couche-");
-      expect(html).not.toContain("VÉRIFIÉ LE");
-    }
-  });
-
-  test("escapes editorial content and never interpolates it into links", () => {
-    const changed = structuredClone(data);
-    changed.items[0].role.fr = '<img src="https://attacker.invalid/x" onerror="run()">';
-    const html = renderPortfolio(parsePortfolio(changed), "fr");
-    expect(html).toContain("&lt;img");
-    expect(html).not.toContain("<img");
-    expect(html).not.toContain('href="https://attacker.invalid');
   });
 });
