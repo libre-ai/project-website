@@ -121,8 +121,8 @@
   outline-offset: 0.15rem;
 }
 
+/* The scene takes the height of its content: a fixed minimum left two thirds of it empty. */
 .scene-avancer {
-  min-height: clamp(16rem, 40vw, 22rem);
   padding: clamp(1rem, 3vw, 1.75rem);
   border: 1px solid var(--bordure);
   border-radius: 1.2rem;
@@ -225,6 +225,11 @@
   min-height: 7rem;
   border-radius: 0.8rem;
   background: var(--surface-2);
+}
+
+.temps .visuel .embleme {
+  width: 6rem;
+  height: 6rem;
 }
 
 .temps-commun .visuel {
