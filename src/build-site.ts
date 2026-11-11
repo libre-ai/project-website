@@ -184,7 +184,7 @@ console.log(
 );
 console.log(`NFR déterminisme: deux assemblages, ${result.files.size} fichiers, 0 différence`);
 console.log(
-  `NFR poids: ${budget.examined} pages, la plus lourde ${budget.heaviest.page} (${budget.heaviest.bytes} octets sur ${PAGE_BUDGET_BYTES})`,
+  `NFR poids: ${budget.examined} pages, la plus lourde ${budget.heaviest.page} (${budget.heaviest.gzipBytes} octets transférés en gzip sur ${PAGE_BUDGET_BYTES}, ${budget.heaviest.bytes} bruts)`,
 );
 console.log(`G3 ressources examinées: ${result.report.resourcesExamined}`);
 console.log(

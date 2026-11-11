@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
-import { checkBudget, PAGE_BUDGET_BYTES, pageWeights } from "./budget";
+import {
+  ASSET_BUDGETS,
+  checkAssetBudgets,
+  checkBudget,
+  PAGE_BUDGET_BYTES,
+  pageWeights,
+} from "./budget";
 
 const page = (links: string[]) =>
   `<!doctype html><link rel="stylesheet" href="/assets/tokens.css">${links
@@ -70,14 +76,76 @@ describe("checkBudget", () => {
   });
 
   test("a page over the budget is a violation naming the page", () => {
+    // A font is already compressed: its transferred size is its size.
     const files = new Map<string, string | Uint8Array>([
       ["index.html", '<link href="/assets/a.css">'],
-      ["assets/a.css", "a".repeat(PAGE_BUDGET_BYTES)],
+      ["assets/a.css", '@font-face{src:url("/assets/fonts/f.woff2")}'],
+      ["assets/fonts/f.woff2", crypto.getRandomValues(new Uint8Array(PAGE_BUDGET_BYTES + 1))],
     ]);
     expect(checkBudget(files).violations).toEqual([expect.stringContaining("index.html")]);
   });
 
-  test("the budget is 150 KiB", () => {
-    expect(PAGE_BUDGET_BYTES).toBe(150 * 1024);
+  test("a compressible page is judged on what is transferred, not on its raw size", () => {
+    const files = new Map<string, string | Uint8Array>([
+      ["index.html", '<link href="/assets/a.css">'],
+      ["assets/a.css", "a".repeat(PAGE_BUDGET_BYTES * 2)],
+    ]);
+    const report = checkBudget(files);
+    expect(report.violations).toEqual([]);
+    expect(report.heaviest.bytes).toBeGreaterThan(PAGE_BUDGET_BYTES);
+    expect(report.heaviest.gzipBytes).toBeLessThan(PAGE_BUDGET_BYTES);
+  });
+
+  test("the budget is 120 KiB transferred (gzip)", () => {
+    expect(PAGE_BUDGET_BYTES).toBe(120 * 1024);
+  });
+});
+
+describe("pageWeights counts every asset a page loads (plan, Task 9)", () => {
+  test("scripts, sprite references and the icon are part of the page", () => {
+    const html =
+      '<link rel="icon" href="/assets/m.svg"><script src="/assets/theme-init.js"></script>' +
+      '<script src="/assets/main.js" type="module"></script>' +
+      '<svg><use href="/assets/volee.svg#martinet"/></svg><svg><use href="/assets/volee.svg#embleme-p01"/></svg>';
+    const files = new Map<string, string | Uint8Array>([
+      ["index.html", html],
+      ["assets/m.svg", "m".repeat(10)],
+      ["assets/theme-init.js", "t".repeat(20)],
+      ["assets/main.js", "j".repeat(30)],
+      ["assets/volee.svg", "v".repeat(40)],
+    ]);
+    const [weight] = pageWeights(files);
+    expect(weight?.bytes).toBe(new TextEncoder().encode(html).length + 10 + 20 + 30 + 40);
+  });
+});
+
+describe("checkAssetBudgets", () => {
+  test("holds the script, the stylesheet and the sprite to their own ceilings", () => {
+    const files = new Map<string, string | Uint8Array>([
+      ["assets/main.js", "j".repeat(ASSET_BUDGETS["assets/main.js"] + 1)],
+      ["assets/site.css", "c".repeat(10)],
+      ["assets/volee.svg", "v".repeat(10)],
+    ]);
+    const report = checkAssetBudgets(files);
+    expect(report.examined).toBe(3);
+    expect(report.violations).toEqual([
+      `budget.asset_over:assets/main.js:${ASSET_BUDGETS["assets/main.js"] + 1}`,
+    ]);
+  });
+
+  test("declares the planned ceilings", () => {
+    expect(ASSET_BUDGETS).toEqual({
+      "assets/main.js": 16 * 1024,
+      "assets/site.css": 48 * 1024,
+      "assets/volee.svg": 80 * 1024,
+    });
+  });
+
+  test("a missing asset is a failure, never a pass", () => {
+    expect(checkAssetBudgets(new Map()).violations).toEqual([
+      "budget.asset_missing:assets/main.js",
+      "budget.asset_missing:assets/site.css",
+      "budget.asset_missing:assets/volee.svg",
+    ]);
   });
 });
