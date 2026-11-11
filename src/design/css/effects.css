@@ -375,7 +375,7 @@
 
   @keyframes d-tete {
     to {
-      inset-inline-start: 97%;
+      left: 97%;
     }
   }
 
@@ -423,7 +423,7 @@
   @keyframes d-f1 {
     50%,
     90% {
-      inset-inline-start: 3%;
+      left: 3%;
       inset-block-start: 4%;
       width: 46%;
       height: 92%;
@@ -433,7 +433,7 @@
   @keyframes d-f2 {
     50%,
     90% {
-      inset-inline-start: 51%;
+      left: 51%;
       inset-block-start: 4%;
       width: 46%;
       height: 44%;
@@ -443,7 +443,7 @@
   @keyframes d-f3 {
     50%,
     90% {
-      inset-inline-start: 51%;
+      left: 51%;
       inset-block-start: 52%;
       width: 46%;
       height: 44%;

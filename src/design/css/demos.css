@@ -148,7 +148,7 @@
 
 .demo .illustration {
   position: absolute;
-  inset-inline-end: 0.5rem;
+  right: 0.5rem;
   inset-block-end: 0.45rem;
   font-size: 0.6rem;
   color: var(--encre-attenuee);
@@ -251,7 +251,7 @@
 .d-ok::after {
   content: "";
   position: absolute;
-  inset-inline-start: 0.25rem;
+  left: 0.25rem;
   inset-block-start: 0.12rem;
   width: 0.22rem;
   height: 0.4rem;
@@ -411,7 +411,7 @@
 
 .d-calcul {
   position: absolute;
-  inset-inline-start: 33.6%;
+  left: 33.6%;
   inset-block-end: 0;
   width: 33%;
   padding: 0.25rem 0.4rem;
@@ -560,7 +560,7 @@
 
 .d-ticket {
   position: absolute;
-  inset-inline-start: 3%;
+  left: 3%;
   inset-block-start: 38%;
   width: 30%;
   background: var(--encre);
@@ -695,7 +695,7 @@
 .d-lecture::after {
   content: "";
   position: absolute;
-  inset-inline-start: 0.72rem;
+  left: 0.72rem;
   inset-block-start: 0.5rem;
   border-inline-start: 0.55rem solid var(--encre-marque);
   border-block: 0.4rem solid transparent;
@@ -724,7 +724,7 @@
 .d-tete {
   position: absolute;
   inset-block: -3px;
-  inset-inline-start: 2%;
+  left: 2%;
   width: 2px;
   background: var(--encre);
 }
@@ -762,7 +762,7 @@
 
 .d-curseur {
   position: absolute;
-  inset-inline-start: 30%;
+  left: 30%;
   inset-block-start: 10%;
   width: 0;
   height: 0;
@@ -936,7 +936,7 @@
 .d-flux span::before {
   content: counter(f);
   position: absolute;
-  inset-inline-start: 0.45rem;
+  left: 0.45rem;
   inset-block-start: 0.3rem;
   width: 0.9rem;
   height: 0.9rem;
@@ -1003,21 +1003,21 @@
 }
 
 .d-fenetres .f1 {
-  inset-inline-start: 10%;
+  left: 10%;
   inset-block-start: 15%;
   width: 45%;
   height: 50%;
 }
 
 .d-fenetres .f2 {
-  inset-inline-start: 35%;
+  left: 35%;
   inset-block-start: 30%;
   width: 40%;
   height: 45%;
 }
 
 .d-fenetres .f3 {
-  inset-inline-start: 50%;
+  left: 50%;
   inset-block-start: 45%;
   width: 35%;
   height: 40%;

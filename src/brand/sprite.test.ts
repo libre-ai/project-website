@@ -9,6 +9,7 @@ import {
   emblemFacets,
   emblemUse,
   martinetUse,
+  renderFavicon,
   renderSprite,
   SPRITE_BUDGET_BYTES,
 } from "./sprite";
@@ -93,5 +94,16 @@ describe("references to the sprite", () => {
 
   test("escapes the label of a martinet", () => {
     expect(martinetUse('a"<b')).toContain('aria-label="a&quot;&lt;b"');
+  });
+});
+
+describe("favicon", () => {
+  test("is a standalone SVG of the martinet, with its gradient and an ink wing", () => {
+    const icon = renderFavicon();
+    expect(icon.startsWith('<svg xmlns="http://www.w3.org/2000/svg"')).toBe(true);
+    expect(icon).toContain(MARTINET_PATHS.body);
+    expect(icon).toContain(MARTINET_PATHS.wing);
+    expect(icon).toContain('id="aube-degrade"');
+    expect(icon).not.toMatch(/<use|var\(|\sstyle=|<script/);
   });
 });

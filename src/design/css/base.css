@@ -69,9 +69,12 @@ svg {
   border: 0;
 }
 
+/* The site is French, read left to right: horizontal offsets use physical left and right.
+   inset-inline-start/end would make Bun's CSS lowering add right-to-left :lang() variants for
+   nineteen languages (measured: 66364 bytes served instead of 55116). */
 .evitement {
   position: absolute;
-  inset-inline-start: 1rem;
+  left: 1rem;
   inset-block-start: -10rem;
   padding: 0.6rem 1rem;
   background: var(--surface);

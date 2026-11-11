@@ -111,6 +111,21 @@ export function renderSprite(): string {
   ].join("\n");
 }
 
+export const FAVICON_PATH = "assets/martinet.svg";
+
+/** The martinet as a standalone favicon: a `<use>` into the sprite cannot serve as an icon. */
+export function renderFavicon(): string {
+  return [
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${MARTINET_VIEWBOX}">`,
+    GRADIENT,
+    `<g transform="${MARTINET_TRANSFORM}">`,
+    `<path fill="url(#aube-degrade)" d="${MARTINET_PATHS.body}"/>`,
+    `<path fill="#0a2a1e" d="${MARTINET_PATHS.wing}"/>`,
+    "</g></svg>",
+    "",
+  ].join("\n");
+}
+
 const hrefTo = (id: string): string => `/${SPRITE_PATH}#${id}`;
 
 export function martinetUse(label: string | null): string {

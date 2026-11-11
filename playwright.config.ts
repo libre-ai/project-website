@@ -1,8 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// The e2e run serves a dist/ built by src/build-site.ts (see README), over HTTP on 8080.
-// Browsers are installed with `bunx playwright install firefox webkit` (see docs/build.md). A project
-// that cannot launch is reported as a failure rather than skipped.
+// The e2e run serves dist/ through the production server in its local demo form (server/demo.ts):
+// the security headers and the CSP are those of production, the waitlist writes to an in-memory
+// PostgreSQL and its messages to a local outbox the waitlist suite reads. A project that cannot
+// launch is reported as a failure rather than skipped.
+export const OUTBOX = ".demo/outbox-e2e";
+
 export default defineConfig({
   testDir: "./e2e",
   testMatch: "*.e2e.ts",
@@ -10,13 +13,15 @@ export default defineConfig({
   forbidOnly: true,
   retries: 0,
   reporter: "line",
+  // Visual baselines are per platform: a macOS rendering is never compared with a Linux one.
+  snapshotPathTemplate: "{testDir}/__screenshots__/{platform}/{projectName}/{arg}{ext}",
   use: {
     baseURL: "http://localhost:8080",
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "python3 -m http.server 8080 --bind localhost --directory dist",
+    command: `bun server/demo-main.ts --port 8080 --site dist --outbox ${OUTBOX}`,
     url: "http://localhost:8080/",
     reuseExistingServer: false,
   },

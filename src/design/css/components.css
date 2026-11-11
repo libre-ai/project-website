@@ -20,7 +20,7 @@
 .logotype .i::after {
   content: "";
   position: absolute;
-  inset-inline-start: 50%;
+  left: 50%;
   inset-block-start: 0.12em;
   width: 0.2em;
   height: 0.2em;
@@ -130,7 +130,7 @@
 /* Out of sight and out of reach, but present for robots that fill every field. */
 .piege {
   position: absolute;
-  inset-inline-start: -100vw;
+  left: -100vw;
   width: 1px;
   height: 1px;
   overflow: hidden;
@@ -165,7 +165,7 @@
   content: "";
   position: absolute;
   inset-block-end: 0;
-  inset-inline-start: 0;
+  left: 0;
   width: var(--indicateur-largeur, 0);
   height: 0.2rem;
   border-radius: 0.1rem;
