@@ -1,7 +1,9 @@
 /**
  * The martinet of the original libre-ia.fr identity, drawn by the owner (ADR 0004 §1). Paths are
  * copied once, unchanged, from the legacy identity file `identity/libre-ia-icon-dark.svg` of the
- * design system snapshot c8fb246; they live in a 1254 × 1254 box with a y-up transform. The body
+ * design system snapshot c8fb246, versioned here as `source/libre-ia-icon-dark.svg` and compared
+ * with these paths by `martinet-paths.test.ts` (I-39); they live in a 1254 × 1254 box with a y-up
+ * transform. The body
  * carries the Aube gradient and the wing the ink; both include their trailing pixels.
  * Licence: LicenseRef-Libre-AI-Brand-1.0 (all rights reserved, owner decision of 2026-11-11);
  * unpublished candidate until the brand controls of TRADEMARKS.md are complete.
