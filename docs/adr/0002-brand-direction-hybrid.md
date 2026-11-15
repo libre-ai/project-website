@@ -15,7 +15,9 @@ Deux systèmes visuels coexistent dans les sources :
    cerveaux, étincelles, orbites, chatbots, réseaux décoratifs, contours topographiques, dégradés
    jade/iris. Aucun élément figuratif publié tant que le signe « Portique d'atelier » n'a pas sa
    licence dédiée et son contrôle de similarité.
-2. **Identité legacy** (`~/Documents/assets/references/legacy/design-system-c8fb246`) : oiseau vert,
+2. **Identité legacy** (instantané `design-system-c8fb246`, hors dépôt ; le seul fichier que le site
+   utilise, `identity/libre-ia-icon-dark.svg`, est versionné dans `src/brand/source/` depuis le
+   2026-11-15, I-39) : oiseau vert,
    domaine `libre-ia.fr`, illustrations, mascotte, hero en globe 3D, animations de logo (Lottie/SVG).
    Classée legacy ; l'historique des anciennes marques est déclaré détruit.
 

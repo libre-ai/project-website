@@ -56,7 +56,7 @@ SPDX-License-Identifier = "CC-BY-4.0"
 # TRADEMARKS.md of project-governance, text accepted by the owner on 2026-11-11;
 # src/brand/controls.ts keeps any publication closed until the similarity review.
 [[annotations]]
-path = ["src/brand/*.ts"]
+path = ["src/brand/*.ts", "src/brand/source/*.svg"]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 Libre AI contributors"
 SPDX-License-Identifier = "LicenseRef-Libre-AI-Brand-1.0"
