@@ -59,6 +59,14 @@ Chaque contrôle imprime ses compteurs, y compris les contrôles réussis :
   `src/data/deploy`, épinglée dans `src/data/deploy-source.json`). Mise à jour :
   `bun src/fetch-deploy-cli.ts` (réseau, relire le diff) ; une constante absente ou une révision
   qui n'est pas un commit complet refuse la construction.
+- `Banc de confiance` : la mesure montrée sur `/fabrique/` (ADR 0008), copie de
+  `distribution/index/trust-bench.v1.json` du dépôt de gouvernance sous `src/data/trust-bench`,
+  épinglée dans `src/data/trust-bench-source.json`. La ligne imprime les mesures, couches, défauts
+  semés et cas sains lus. Une copie absente, vide, modifiée (empreinte différente) ou d'une autre
+  forme refuse la construction (`site.trust_bench_refused:…`, `trust_bench.…`), comme une mesure
+  sans couche ou sans limites. Mise à jour : éditer `sha`, puis `bun src/fetch-trust-bench-cli.ts`
+  (réseau, relire le diff). Le rapport lié par la page (`TRUST_BENCH_REPORT_PATH` dans
+  `src/trust-bench.ts`) n'est pas nommé par la donnée : vérifier qu'il existe au nouveau commit.
 - `Pages` : pages rendues, dont briques de la forge (`/fabrique/briques/<dépôt>/`), et fichiers écrits.
 - `ADR 0005 styles en ligne` : pages examinées ; un attribut `style` ou un élément `<style>` refuse
   la construction (la politique CSP n'autorise aucun style en ligne).

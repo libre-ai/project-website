@@ -359,7 +359,8 @@ export function applicationMain(application: Application): Html {
   );
 }
 
-export function factoryMain(briques: Html): Html {
+/** `measure` comes already escaped from src/trust-bench.ts, like the forge page bodies. */
+export function factoryMain(briques: Html, measure: string): Html {
   return h(
     "div",
     {},
@@ -377,6 +378,15 @@ export function factoryMain(briques: Html): Html {
       "visite",
       heading("Visite guidée", "Suivez une demande, de l'intention au résultat.", null),
       guidedTour(),
+    ),
+    block(
+      "mesure",
+      heading(
+        "Mesure",
+        "Quelle vérification attrape quoi.",
+        "Des défauts connus ont été semés dans une brique, puis chaque couche de vérification a été lancée séparément : analyse statique, types, tests, contrôles propres au dépôt, exécution réelle, relecture du changement par un modèle local. Le tableau dit ce que chacune a attrapé, et ce qu'elle a signalé à tort sur des cas sains.",
+      ),
+      raw(measure),
     ),
     block(
       "briques",

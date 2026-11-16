@@ -8,6 +8,7 @@ import { libreRoutes } from "./web/routes";
 const body = signalerBody();
 const forge = {
   bricks: [],
+  measure: "<p>Mesure.</p>",
   proofs: "<h1>Preuves</h1>",
   licences: "<h1>Licences</h1>",
   deploy: "<h1>Déployer</h1>",

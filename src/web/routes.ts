@@ -31,6 +31,8 @@ export interface ForgeBrick {
 
 export interface ForgeInput {
   readonly bricks: readonly ForgeBrick[];
+  /** The trust bench measure shown on /fabrique/, rendered from the pinned copy. */
+  readonly measure: string;
   readonly proofs: string;
   readonly licences: string;
   readonly deploy: string;
@@ -105,8 +107,8 @@ export function libreRoutes(forge: ForgeInput): readonly Route[] {
       "/fabrique/",
       "page",
       `Comment c'est fait, ${SITE}`,
-      "La fabrique couche par couche, une demande suivie de l'intention au résultat, et les briques de la forge.",
-      () => factoryMain(bricksList(forge.bricks)),
+      "La fabrique couche par couche, une demande suivie de l'intention au résultat, une mesure de ses vérifications, et les briques de la forge.",
+      () => factoryMain(bricksList(forge.bricks), forge.measure),
     ),
     ...forge.bricks.map((brick) =>
       route(brickPath(brick.project), "forge", `${brick.title}, ${SITE}`, brick.lead, () =>
