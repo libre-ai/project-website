@@ -62,9 +62,23 @@ Chaque contrôle imprime ses compteurs, y compris les contrôles réussis :
 - `Banc de confiance` : la mesure montrée sur `/fabrique/` (ADR 0008), copie de
   `distribution/index/trust-bench.v1.json` du dépôt de gouvernance sous `src/data/trust-bench`,
   épinglée dans `src/data/trust-bench-source.json`. La ligne imprime les mesures, couches, défauts
-  semés et cas sains lus. Une copie absente, vide, modifiée (empreinte différente) ou d'une autre
-  forme refuse la construction (`site.trust_bench_refused:…`, `trust_bench.…`), comme une mesure
-  sans couche ou sans limites. Mise à jour : éditer `sha`, puis `bun src/fetch-trust-bench-cli.ts`
+  semés, cas sains, modèles et bascules du second passage lus. Une copie absente, vide, modifiée
+  (empreinte différente) ou d'une autre forme refuse la construction
+  (`site.trust_bench_refused:…`, `trust_bench.…`), comme une mesure sans couche, sans limites ou
+  sans second passage. Le contrôle de forme refuse aussi une mesure qui se contredit : une couche à
+  qui l'on a soumis plus de cas que le corpus n'en compte, un corpus dont les comptes ne sont pas
+  ceux des cas listés, une date qui n'existe pas, un dépôt hors de la forme `libre-ai/<nom>` (un
+  point seulement entre deux segments du nom), un nombre qui n'est pas un entier sûr, une bascule
+  ou un modèle qui nomme un cas ou une couche absents de la mesure. Ces règles sont écrites dans
+  `src/trust-bench.ts` : le schéma JSON du dépôt de gouvernance
+  (`ecosystem/schemas/trust-bench.v1.schema.json`) n'est pas dans la composition épinglée par
+  `tooling_ref`, il ne dit pas ces cohérences entre champs, et le dépôt n'a pas de validateur de
+  schéma parmi ses dépendances.
+- `Banc de confiance rendu` : lignes de couche comptées dans la page `/fabrique/` écrite, contre
+  les couches lues. `buildLibreSite` rend un avis quand aucune mesure ne lui est donnée (les tests
+  des autres pages s'en servent) ; la construction refuse une page qui ne montre pas toutes les
+  mesures et toutes les couches lues (`site.trust_bench_refused:trust_bench.rendered_…`).
+- Mise à jour du banc de confiance : éditer `sha`, puis `bun src/fetch-trust-bench-cli.ts`
   (réseau, relire le diff). Le rapport lié par la page (`TRUST_BENCH_REPORT_PATH` dans
   `src/trust-bench.ts`) n'est pas nommé par la donnée : vérifier qu'il existe au nouveau commit.
 - `Pages` : pages rendues, dont briques de la forge (`/fabrique/briques/<dépôt>/`), et fichiers écrits.

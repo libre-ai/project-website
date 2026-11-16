@@ -107,7 +107,7 @@ export function libreRoutes(forge: ForgeInput): readonly Route[] {
       "/fabrique/",
       "page",
       `Comment c'est fait, ${SITE}`,
-      "La fabrique couche par couche, une demande suivie de l'intention au résultat, une mesure de ses vérifications, et les briques de la forge.",
+      "La fabrique couche par couche, une demande suivie de l'intention au résultat, une mesure de vérifications faite sur une brique, et les briques de la forge.",
       () => factoryMain(bricksList(forge.bricks), forge.measure),
     ),
     ...forge.bricks.map((brick) =>

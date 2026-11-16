@@ -383,8 +383,10 @@ export function factoryMain(briques: Html, measure: string): Html {
       "mesure",
       heading(
         "Mesure",
-        "Quelle vérification attrape quoi.",
-        "Des défauts connus ont été semés dans une brique, puis chaque couche de vérification a été lancée séparément : analyse statique, types, tests, contrôles propres au dépôt, exécution réelle, relecture du changement par un modèle local. Le tableau dit ce que chacune a attrapé, et ce qu'elle a signalé à tort sur des cas sains.",
+        "Sur une brique, quelle vérification attrape quoi.",
+        // Nothing countable is typed here: which layers, how many, which models and which passes
+        // are read from the data and rendered below (src/trust-bench.ts).
+        "Des défauts connus ont été semés dans une brique, puis soumis à des couches de vérification. Le tableau dit ce que chacune a attrapé, et ce qu'elle a signalé à tort sur des cas sains.",
       ),
       raw(measure),
     ),

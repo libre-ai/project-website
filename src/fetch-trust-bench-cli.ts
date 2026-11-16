@@ -26,6 +26,6 @@ if (import.meta.main) {
   });
   const { counts } = await loadTrustBench(data);
   console.log(
-    `Banc de confiance récupéré: ${result.total} épinglé, empreintes modifiées: ${result.changed} ; mesures: ${counts.measures}, couches: ${counts.layers}, défauts semés: ${counts.defects}, cas sains: ${counts.healthy}`,
+    `Banc de confiance récupéré: ${result.total} épinglé, empreintes modifiées: ${result.changed} ; mesures: ${counts.measures}, couches: ${counts.layers}, défauts semés: ${counts.defects}, cas sains: ${counts.healthy}, modèles: ${counts.models}, bascules du second passage: ${counts.flips}`,
   );
 }

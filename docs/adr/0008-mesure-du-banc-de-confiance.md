@@ -22,13 +22,19 @@ ni avancement.
 
 1. La page `/fabrique/` montre la mesure, par couche : défauts attrapés sur défauts soumis, apport
    au-delà des couches moins chères, fausses alertes sur cas sains, réponses illisibles ; avec le
-   dépôt et la révision mesurés, la date, et un lien vers le rapport et la donnée.
+   dépôt et la révision mesurés, la date, et un lien vers le rapport et la donnée. Le titre et la
+   description de la page nomment ce qui est mesuré : une brique, pas la fabrique.
 2. Chaque nombre vient d'une copie versionnée de la donnée, épinglée comme les fiches (dépôt,
    commit, SHA-256 ; chemin fixé dans `src/trust-bench.ts`). Aucun nombre n'est saisi dans le site.
    La construction ne va pas sur le réseau et refuse une copie absente, vide, modifiée ou d'une
    autre forme.
+   Ce qui se compte ou se nomme dans la donnée se rend depuis la donnée : le nombre de couches,
+   propres et dérivées, les modèles consignés, et le second passage (ses conditions, son statut,
+   ses lignes comparées, chaque état qui diffère de la référence). Le texte saisi autour du
+   tableau n'affirme rien que la donnée ne porte.
 3. Une couche dérivée, dont l'apport est déclaré non applicable par la donnée, est rendue « non
-   applicable », jamais zéro.
+   applicable », jamais zéro. Une couche à qui aucun cas sain, ou aucun défaut, n'a été soumis est
+   rendue « non mesuré », jamais « 0 sur 0 ».
 4. Les limites déclarées par la mesure sont reprises telles quelles, toutes, sans tri ni résumé.
    La page ne généralise la mesure à aucun autre dépôt et ne promet aucun résultat.
 5. **Portée de l'amendement à l'ADR 0007 §3** : les nombres d'une mesure datée, sourcée et

@@ -60,6 +60,19 @@ describe("loadTrustBench (the versioned copy equals the pinned source)", () => {
     );
   });
 
+  test("a copy that cannot be read keeps its own error, and is not reported as missing", async () => {
+    const directory = await dataWith(null);
+    // A directory where the file is expected: present, and unreadable as a file.
+    await mkdir(join(directory, TRUST_BENCH_COPY), { recursive: true });
+    const refusal = await loadTrustBench(directory).then(
+      () => "loaded",
+      (error: unknown) => String(error),
+    );
+    expect(refusal).not.toBe("loaded");
+    expect(refusal).not.toContain("snapshot.missing");
+    expect(refusal).toContain("EISDIR");
+  });
+
   test("an empty copy is refused", async () => {
     await expect(loadTrustBench(await dataWith(new Uint8Array()))).rejects.toThrow(
       "site.trust_bench_refused:",
