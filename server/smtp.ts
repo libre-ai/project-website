@@ -23,7 +23,7 @@ export interface SmtpConfig {
   readonly password?: string;
   /** Lets a loopback relay without STARTTLS be spoken to in clear. No effect on port 465. */
   readonly allowInsecureLocal?: boolean;
-  /** Longest wait for one reply of the relay, 30000 when absent. */
+  /** Longest wait for one reply of the relay, 30000 when absent, an integer in 1..2^31-1. */
   readonly timeoutMs?: number;
   readonly clock?: () => Date;
 }
@@ -34,6 +34,11 @@ export type SmtpDial = (port: number, host: string) => Socket;
 const DEFAULT_PORT = 587;
 const IMPLICIT_TLS_PORT = 465;
 const DEFAULT_TIMEOUT_MS = 30_000;
+// setTimeout turns NaN, a negative delay or one above 2^31-1 into 1 ms.
+const MAX_TIMEOUT_MS = 2 ** 31 - 1;
+// Printable ASCII without brackets: an address outside it needs SMTPUTF8, never negotiated here.
+const ENVELOPE_ADDRESS = /^[\x21-\x3b\x3d\x3f-\x7e]+$/;
+const SINGLE_AT = /^[^@]+@[^@]+$/;
 // A relay that never ends its reply must not fill the memory of the server.
 const MAX_REPLY_LENGTH = 65_536;
 const LOOPBACK_HOSTS: ReadonlySet<string> = new Set(["localhost", "127.0.0.1", "::1"]);
@@ -198,6 +203,7 @@ function validated(config: SmtpConfig): {
   readonly port: number;
   readonly credentials: string | undefined;
   readonly clearAllowed: boolean;
+  readonly timeoutMs: number;
 } {
   const host = config.host;
   if (typeof host !== "string" || host === "") throw new Error("mail.smtp_host_missing");
@@ -212,11 +218,20 @@ function validated(config: SmtpConfig): {
   if (clearAllowed && !LOOPBACK_HOSTS.has(host.toLowerCase())) {
     throw new Error("mail.smtp_insecure_not_local");
   }
+  const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > MAX_TIMEOUT_MS) {
+    throw new Error("mail.smtp_timeout_invalid");
+  }
   const credentials =
     config.user === undefined
       ? undefined
       : Buffer.from(`\0${config.user}\0${config.password}`, "utf8").toString("base64");
-  return { host, port, credentials, clearAllowed };
+  return { host, port, credentials, clearAllowed, timeoutMs };
+}
+
+/** True for `local@domain` in printable ASCII, which needs no SMTPUTF8 in the envelope. */
+function isEnvelopeAddress(address: string): boolean {
+  return ENVELOPE_ADDRESS.test(address) && SINGLE_AT.test(address);
 }
 
 /** DATA content: no bare CR a relay could read as a line end, leading dots doubled, final CRLF. */
@@ -231,8 +246,7 @@ function dataContent(rfc5322: string): string {
  * code otherwise.
  */
 export function createSmtpMailer(config: SmtpConfig, dial: SmtpDial = netConnect): Mailer {
-  const { host, port, credentials, clearAllowed } = validated(config);
-  const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const { host, port, credentials, clearAllowed, timeoutMs } = validated(config);
   const clock = config.clock ?? (() => new Date());
   const implicitTls = port === IMPLICIT_TLS_PORT;
 
@@ -240,6 +254,7 @@ export function createSmtpMailer(config: SmtpConfig, dial: SmtpDial = netConnect
     async send(message) {
       // Everything that can be refused without the relay is refused before a socket is opened.
       const sender = senderAddress(message.from);
+      if (!isEnvelopeAddress(sender)) throw new Error("mail.sender_invalid");
       const domain = sender.slice(sender.lastIndexOf("@") + 1);
       const content = dataContent(
         toRfc5322(message, clock(), `<${crypto.randomUUID()}@${domain}>`),
@@ -247,6 +262,7 @@ export function createSmtpMailer(config: SmtpConfig, dial: SmtpDial = netConnect
       // The recipient also goes into the envelope, where a bracket or a space would add a
       // parameter to the command.
       if (/[<>\s\p{Cc}]/u.test(message.to)) throw new Error("mail.header_injection");
+      if (!isEnvelopeAddress(message.to)) throw new Error("mail.recipient_invalid");
 
       const session = new Session(dial(port, host), timeoutMs);
       if (implicitTls) await session.secure(host);

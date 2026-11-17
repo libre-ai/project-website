@@ -172,6 +172,15 @@ describe("configuration", () => {
     expect(build({ user: "u", password: "p" })).not.toThrow();
   });
 
+  test("requires a timeout that is an integer between 1 and 2^31-1 milliseconds", () => {
+    // A timer outside that range fires after 1 ms, which would turn every send into a timeout.
+    const invalid = [Number.NaN, -1, 0, 1.5, 2 ** 31, Number.POSITIVE_INFINITY];
+    for (const timeoutMs of invalid) {
+      expect(build({ timeoutMs })).toThrow("mail.smtp_timeout_invalid");
+    }
+    for (const timeoutMs of [1, 30_000, 2 ** 31 - 1]) expect(build({ timeoutMs })).not.toThrow();
+  });
+
   test("accepts the clear-text way out for a loopback host only", () => {
     expect(build({ ...local })).toThrow("mail.smtp_insecure_not_local");
     expect(build({ ...local, host: "127.0.0.2" })).toThrow("mail.smtp_insecure_not_local");
@@ -252,6 +261,25 @@ describe("encryption is required", () => {
     await expect(mailer(target, local).send(message)).rejects.toThrow(
       "mail.smtp_connection_failed",
     );
+    await target.settled();
+    expect(target.commands).toEqual(["EHLO libre-ia.example", "STARTTLS"]);
+    expect(target.rawFirstBytes).toEqual([TLS_HANDSHAKE_RECORD]);
+  });
+
+  test("credentials are never sent to a relay without STARTTLS", async () => {
+    const target = await stub();
+    await expect(
+      mailer(target, { port: 587, user: "liste", password: "s3cret" }).send(message),
+    ).rejects.toThrow("mail.smtp_starttls_unavailable");
+    await target.settled();
+    expect(target.commands).toEqual(["EHLO libre-ia.example"]);
+  });
+
+  test("credentials wait for the TLS handshake after STARTTLS", async () => {
+    const target = await stub({ starttls: true });
+    await expect(
+      mailer(target, { port: 587, user: "liste", password: "s3cret" }).send(message),
+    ).rejects.toThrow("mail.smtp_connection_failed");
     await target.settled();
     expect(target.commands).toEqual(["EHLO libre-ia.example", "STARTTLS"]);
     expect(target.rawFirstBytes).toEqual([TLS_HANDSHAKE_RECORD]);
@@ -350,6 +378,18 @@ describe("refused before any connection", () => {
       "a recipient that would extend the command",
       { ...message, to: "a@example.org> NOTIFY=SUCCESS" },
       "mail.header_injection",
+    ],
+    ["an empty recipient", { ...message, to: "" }, "mail.recipient_invalid"],
+    ["a recipient without @", { ...message, to: "a.example.org" }, "mail.recipient_invalid"],
+    ["a recipient with an empty domain", { ...message, to: "a@" }, "mail.recipient_invalid"],
+    ["a recipient with two @", { ...message, to: "a@b@example.org" }, "mail.recipient_invalid"],
+    // Non-ASCII addresses need SMTPUTF8, which this transport does not negotiate.
+    ["a non-ASCII recipient", { ...message, to: "élise@example.org" }, "mail.recipient_invalid"],
+    ["a non-ASCII domain", { ...message, to: "a@exämple.org" }, "mail.recipient_invalid"],
+    [
+      "a non-ASCII sender",
+      { ...message, from: "Libre IA <lïste@libre-ia.example>" },
+      "mail.sender_invalid",
     ],
   ];
 
