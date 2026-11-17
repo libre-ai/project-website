@@ -1,8 +1,9 @@
 /**
  * Sending waitlist messages (ADR 0006 §7). This milestone ships the interface and a local outbox
  * that writes each message as an RFC 5322 file, which the demo and the end-to-end tests read.
- * shortcut: no SMTP transport yet, upgrade trigger: the deployment milestone (Infomaniak SMTP,
- * secret through request_secret).
+ * The SMTP transport is the second implementation, in ./smtp.ts.
+ * shortcut: the SMTP transport is not wired into a production entry point, upgrade trigger: the
+ * deployment milestone (Infomaniak SMTP, secret through request_secret).
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -17,6 +18,16 @@ function senderDomain(from: string): string {
   const domain = /@([^>\s]+)>?\s*$/.exec(from)?.[1];
   if (domain === undefined) throw new Error("mail.sender_invalid");
   return domain;
+}
+
+/**
+ * The address of a sender written `Name <a@b>` or `a@b`. It goes into the SMTP envelope, so
+ * anything that could end the command or add a parameter to it is refused.
+ */
+export function senderAddress(from: string): string {
+  const address = /<([^<>]*)>\s*$/.exec(from)?.[1] ?? from.trim();
+  if (!/^[^<>\s@\p{Cc}]+@[^<>\s@\p{Cc}]+$/u.test(address)) throw new Error("mail.sender_invalid");
+  return address;
 }
 
 export function createOutboxMailer(
