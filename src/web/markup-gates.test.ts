@@ -79,6 +79,55 @@ describe("checkUrlSchemes", () => {
     expect(checkUrlSchemes(new Map([["index.html", page]]))).toEqual({ examined: 2, refused: [] });
   });
 
+  test("reads an attribute after a slash or a closing quote, as a browser does", () => {
+    const page = [
+      '<a/href="javascript:alert(1)">a</a>',
+      '<a class="c"href="javascript:alert(1)">b</a>',
+      "<a title='x'href=\"vbscript:x\">c</a>",
+      '<img/src="data:x"/>',
+    ].join("\n");
+    expect(checkUrlSchemes(new Map([["p.html", page]]))).toEqual({
+      examined: 4,
+      refused: [
+        "url.scheme_refused:p.html:1:javascript",
+        "url.scheme_refused:p.html:2:javascript",
+        "url.scheme_refused:p.html:3:vbscript",
+        "url.scheme_refused:p.html:4:data",
+      ],
+    });
+  });
+
+  test("a decoy inside another attribute's value neither hides nor counts as a URL", () => {
+    const single = new Map([["d.html", `<a title=' href="' href="javascript:alert(1)">a</a>`]]);
+    expect(checkUrlSchemes(single)).toEqual({
+      examined: 1,
+      refused: ["url.scheme_refused:d.html:1:javascript"],
+    });
+    const double = new Map([["e.html", '<a title=" href=\'/x\' >" href="https://x.test/">a</a>']]);
+    expect(checkUrlSchemes(double)).toEqual({ examined: 1, refused: [] });
+  });
+
+  test("a tag the reading cannot close is a named refusal, never a pass", () => {
+    const page = '<p>\n<a href="javascript:x"';
+    expect(checkUrlSchemes(new Map([["u.html", page]])).refused).toEqual([
+      "url.markup_unreadable:u.html:2",
+    ]);
+  });
+
+  test("a tag opening inside a value is read too, so a broken quote cannot hide a URL", () => {
+    const page = '<a title="x>\n<a href="javascript:x">';
+    expect(checkUrlSchemes(new Map([["v.html", page]]))).toEqual({
+      examined: 1,
+      refused: ["url.scheme_refused:v.html:2:javascript"],
+    });
+  });
+
+  test("an attribute without a value is not between double quotes", () => {
+    expect(checkUrlSchemes(new Map([["w.html", "<a href>a</a>"]])).refused).toEqual([
+      "url.attribute_unquoted:w.html:1:href",
+    ]);
+  });
+
   test("reads only .html entries, as text or as bytes", () => {
     const hostile = '<a href="javascript:x">a</a>';
     const ignored = new Map<string, string | Uint8Array>([
@@ -102,6 +151,33 @@ describe("checkButtonTypes", () => {
       markup: 1,
       createElement: 0,
       missing: [],
+    });
+  });
+
+  test("a type written inside another attribute's value is not a type", () => {
+    const decoy = new Map([["d.html", '<button aria-label=" type=x">x</button>']]);
+    expect(checkButtonTypes(decoy).missing).toEqual(["button.type_missing:d.html:1"]);
+    const glued = new Map([["g.html", '<BUTTON/class="c"type="button">x</BUTTON>']]);
+    expect(checkButtonTypes(glued)).toEqual({
+      files: 1,
+      buttons: 1,
+      markup: 1,
+      createElement: 0,
+      missing: [],
+    });
+    const unclosed = new Map([["u.html", '<button type="button"']]);
+    expect(checkButtonTypes(unclosed).missing).toEqual(["button.type_missing:u.html:1"]);
+  });
+
+  test("a DOM creation is counted whatever the case of the tag name", () => {
+    const upper =
+      'const b = root.createElement("BUTTON");\nconst c = root.createElement(`Button`);';
+    expect(checkButtonTypes(new Map([["a.ts", upper]]))).toEqual({
+      files: 1,
+      buttons: 2,
+      markup: 0,
+      createElement: 2,
+      missing: ["button.type_missing:a.ts:1", "button.type_missing:a.ts:2"],
     });
   });
 
@@ -155,16 +231,6 @@ describe("checkButtonTypes", () => {
   });
 });
 
-/** The six failure conditions of the sweep: a refusal, a missing type, or any empty reading. */
-function expectSweep(urls: UrlSweep, buttons: ButtonSweep): void {
-  expect(urls.refused).toEqual([]);
-  expect(buttons.missing).toEqual([]);
-  expect(urls.examined).toBeGreaterThan(0);
-  expect(buttons.files).toBeGreaterThan(0);
-  expect(buttons.markup).toBeGreaterThan(0);
-  expect(buttons.createElement).toBeGreaterThan(0);
-}
-
 function countersLine(urls: UrlSweep, buttons: ButtonSweep): string {
   return (
     `markup-gates: urls examined=${urls.examined} refused=${urls.refused.length} | ` +
@@ -173,12 +239,31 @@ function countersLine(urls: UrlSweep, buttons: ButtonSweep): string {
   );
 }
 
+/**
+ * The six failure conditions of the sweep: a refusal, a missing type, or any empty reading.
+ * On success it prints its counters, so a pass always shows what it looked at.
+ */
+function expectSweep(urls: UrlSweep, buttons: ButtonSweep): void {
+  expect(urls.refused).toEqual([]);
+  expect(buttons.missing).toEqual([]);
+  expect(urls.examined).toBeGreaterThan(0);
+  expect(buttons.files).toBeGreaterThan(0);
+  expect(buttons.markup).toBeGreaterThan(0);
+  expect(buttons.createElement).toBeGreaterThan(0);
+  console.log(countersLine(urls, buttons));
+}
+
 describe("sweep conditions", () => {
   const urls: UrlSweep = { examined: 4, refused: [] };
   const buttons: ButtonSweep = { files: 3, buttons: 2, markup: 1, createElement: 1, missing: [] };
 
   test("a clean, non-empty sweep passes", () => {
-    expect(() => expectSweep(urls, buttons)).not.toThrow();
+    const log = spyOn(console, "log").mockImplementation(() => undefined);
+    try {
+      expect(() => expectSweep(urls, buttons)).not.toThrow();
+    } finally {
+      log.mockRestore();
+    }
   });
 
   test.each<readonly [string, UrlSweep, ButtonSweep]>([
@@ -275,11 +360,12 @@ describe("the assembled site and the sources of the repository", () => {
     expectSweep(urls, buttons);
   });
 
-  test("prints the seven counters", () => {
+  test("the sweep prints the seven counters", () => {
     const log = spyOn(console, "log");
     try {
-      console.log(countersLine(urls, buttons));
-      const line = String(log.mock.calls.at(-1)?.[0]);
+      expectSweep(urls, buttons);
+      expect(log).toHaveBeenCalledTimes(1);
+      const line = String(log.mock.calls[0]?.[0]);
       const numbers =
         /^markup-gates: urls examined=(\d+) refused=(\d+) \| files=(\d+) buttons=(\d+) markup=(\d+) createElement=(\d+) missing=(\d+)$/.exec(
           line,

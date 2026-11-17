@@ -7,6 +7,10 @@
  * - checkButtonTypes: every button declares its type, as markup or through the DOM API, so none
  *   silently submits the form around it.
  * Each returns what it examined, so a pass is never compatible with having looked at nothing.
+ * Both read attributes by splitting each tag as the HTML tokenizer does, never by searching the
+ * raw text: a `type=` or `href=` inside another attribute's value is not an attribute, and an
+ * attribute glued to a `/` or a closing quote is one. A tag the text ends inside is refused
+ * (`url.markup_unreadable`) or counted as missing its type, never passed.
  */
 
 /** Adding a scheme is one line of data here, together with its test case. */
@@ -31,20 +35,102 @@ export function urlScheme(value: string): string | null {
 // The `#` of a numeric reference ends the head right after its `&`, so no decoding is needed.
 const ENCODED_HEAD = /^[^/?#]*&/;
 
-/** Line of an offset, counted from 1; offsets must be asked in increasing order. */
+/** Line of an offset, counted from 1, in any order. */
 function lineCounter(text: string): (offset: number) => number {
-  let line = 1;
-  let cursor = 0;
+  const breaks: number[] = [];
+  for (let index = text.indexOf("\n"); index >= 0; index = text.indexOf("\n", index + 1)) {
+    breaks.push(index);
+  }
   return (offset) => {
-    for (; cursor < offset; cursor += 1) if (text[cursor] === "\n") line += 1;
-    return line;
+    let low = 0;
+    let high = breaks.length;
+    while (low < high) {
+      const middle = (low + high) >> 1;
+      if ((breaks[middle] ?? 0) < offset) low = middle + 1;
+      else high = middle;
+    }
+    return low + 1;
   };
 }
 
-const URL_ATTRIBUTE = new RegExp(
-  `\\s(${URL_ATTRIBUTES.join("|")})\\s*=\\s*(?:"([^"]*)"|'[^']*'|[^\\s>]*)`,
-  "gi",
-);
+interface TagAttribute {
+  /** Lower-cased, as the browser stores it. */
+  readonly name: string;
+  readonly offset: number;
+  readonly value: string;
+  /** The quote around the value, or null for an unquoted or missing value. */
+  readonly quote: '"' | "'" | null;
+}
+
+interface Tag {
+  readonly name: string;
+  readonly attributes: readonly TagAttribute[];
+  /** False when the text ends inside the tag: a browser drops it, and a gate cannot read it. */
+  readonly complete: boolean;
+}
+
+const BLANKS = new Set(["\t", "\n", "\f", "\r", " "]);
+const TAG_OPENING = /<[A-Za-z]/g;
+
+/**
+ * Splits the start tag at `start` (a `<` followed by an ASCII letter) into attributes, following
+ * the tokenizer states of the HTML standard: attributes are separated by blanks or `/`, and also
+ * start right after a closing quote; a value is double-quoted, single-quoted, unquoted or missing.
+ * A tag the text ends inside is returned incomplete, so that its reader refuses it.
+ */
+function readTag(text: string, start: number): Tag {
+  const at = (index: number): string => text[index] ?? "";
+  const isBlank = (index: number): boolean => BLANKS.has(at(index));
+  const end = text.length;
+  let index = start + 1;
+  while (index < end && !isBlank(index) && at(index) !== "/" && at(index) !== ">") index += 1;
+  const name = text.slice(start + 1, index).toLowerCase();
+  const attributes: TagAttribute[] = [];
+  const unread: Tag = { name, attributes, complete: false };
+  for (;;) {
+    while (index < end && (isBlank(index) || at(index) === "/")) index += 1;
+    if (index >= end) return unread;
+    if (at(index) === ">") return { name, attributes, complete: true };
+    const offset = index;
+    // The first character belongs to the name even when it is `=`, as in the standard.
+    index += 1;
+    while (index < end && !isBlank(index) && !["/", ">", "="].includes(at(index))) index += 1;
+    const attribute = text.slice(offset, index).toLowerCase();
+    while (index < end && isBlank(index)) index += 1;
+    if (index >= end) return unread;
+    if (at(index) !== "=") {
+      attributes.push({ name: attribute, offset, value: "", quote: null });
+      continue;
+    }
+    index += 1;
+    while (index < end && isBlank(index)) index += 1;
+    if (index >= end) return unread;
+    const quote = at(index);
+    if (quote === '"' || quote === "'") {
+      const closing = text.indexOf(quote, index + 1);
+      if (closing < 0) return unread;
+      attributes.push({ name: attribute, offset, value: text.slice(index + 1, closing), quote });
+      index = closing + 1;
+      continue;
+    }
+    const valueStart = index;
+    while (index < end && !isBlank(index) && at(index) !== ">") index += 1;
+    attributes.push({ name: attribute, offset, value: text.slice(valueStart, index), quote: null });
+  }
+}
+
+/**
+ * Every start tag of a text, with its offset. A `<` followed by a letter is read wherever it
+ * stands, inside a value, a comment or a script included: reading a tag the browser would not
+ * see can only add a refusal, while skipping one the browser does see could hide a URL.
+ */
+function* tagsOf(text: string): Generator<{ readonly offset: number; readonly tag: Tag }> {
+  for (const opening of text.matchAll(TAG_OPENING)) {
+    yield { offset: opening.index, tag: readTag(text, opening.index) };
+  }
+}
+
+const URL_ATTRIBUTE_NAMES: ReadonlySet<string> = new Set(URL_ATTRIBUTES);
 
 /**
  * Same input shape as `checkInternalLinks`: only `.html` entries are read. The URL itself is never
@@ -60,21 +146,27 @@ export function checkUrlSchemes(files: ReadonlyMap<string, string | Uint8Array>)
     if (!file.endsWith(".html")) continue;
     const html = typeof content === "string" ? content : new TextDecoder().decode(content);
     const lineOf = lineCounter(html);
-    for (const match of html.matchAll(URL_ATTRIBUTE)) {
-      examined += 1;
-      const where = `${file}:${lineOf(match.index + 1)}`;
-      const quoted = match[2];
-      if (quoted === undefined) {
-        refused.push(`url.attribute_unquoted:${where}:${(match[1] ?? "").toLowerCase()}`);
+    for (const { offset, tag } of tagsOf(html)) {
+      if (!tag.complete) {
+        refused.push(`url.markup_unreadable:${file}:${lineOf(offset)}`);
         continue;
       }
-      if (ENCODED_HEAD.test(quoted)) {
-        refused.push(`url.scheme_encoded:${where}`);
-        continue;
+      for (const attribute of tag.attributes) {
+        if (!URL_ATTRIBUTE_NAMES.has(attribute.name)) continue;
+        examined += 1;
+        const where = `${file}:${lineOf(attribute.offset)}`;
+        if (attribute.quote !== '"') {
+          refused.push(`url.attribute_unquoted:${where}:${attribute.name}`);
+          continue;
+        }
+        if (ENCODED_HEAD.test(attribute.value)) {
+          refused.push(`url.scheme_encoded:${where}`);
+          continue;
+        }
+        const scheme = urlScheme(attribute.value);
+        if (scheme !== null && !ALLOWED_URL_SCHEMES.has(scheme))
+          refused.push(`url.scheme_refused:${where}:${scheme}`);
       }
-      const scheme = urlScheme(quoted);
-      if (scheme !== null && !ALLOWED_URL_SCHEMES.has(scheme))
-        refused.push(`url.scheme_refused:${where}:${scheme}`);
     }
   }
   return { examined, refused };
@@ -83,10 +175,10 @@ export function checkUrlSchemes(files: ReadonlyMap<string, string | Uint8Array>)
 // The tag name is kept out of the patterns' source text: this file is itself among the sources
 // the gate reads, and a literal opening tag here would be counted as a button.
 const BUTTON = "button";
-const BUTTON_TAG = new RegExp(`<${BUTTON}\\b[^>]*>`, "gi");
-const TYPE_ATTRIBUTE = /\stype\s*=/i;
+// `createElement` lower-cases the tag name of an HTML document, so `"BUTTON"` makes a button too.
+const ANY_CASE_BUTTON = [...BUTTON].map((char) => `[${char}${char.toUpperCase()}]`).join("");
 const BUTTON_CREATION = new RegExp(
-  `(?:([A-Za-z_$][\\w$]*)\\s*=\\s*)?[\\w$.]*createElement\\(\\s*["']${BUTTON}["']\\s*\\)`,
+  `(?:([A-Za-z_$][\\w$]*)\\s*=\\s*)?[\\w$.]*createElement\\(\\s*["'\`]${ANY_CASE_BUTTON}["'\`]\\s*\\)`,
   "g",
 );
 const TYPE_PROOF_WINDOW = 3;
@@ -117,10 +209,12 @@ export function checkButtonTypes(sources: ReadonlyMap<string, string>): {
   let createElement = 0;
   for (const [file, text] of sources) {
     const lineOf = lineCounter(text);
-    for (const tag of text.matchAll(BUTTON_TAG)) {
+    for (const { offset, tag } of tagsOf(text)) {
+      if (tag.name !== BUTTON) continue;
       markup += 1;
-      if (!TYPE_ATTRIBUTE.test(tag[0])) {
-        missing.push(`button.type_missing:${file}:${lineOf(tag.index)}`);
+      // A tag that cannot be read to its end proves nothing, whatever it holds so far.
+      if (!tag.complete || !tag.attributes.some((attribute) => attribute.name === "type")) {
+        missing.push(`button.type_missing:${file}:${lineOf(offset)}`);
       }
     }
     const lines = text.split("\n");
