@@ -4,6 +4,7 @@
  */
 import type { DeployFacts } from "../deploy";
 import type { LicenceRow } from "../licences";
+import type { TrustBench } from "../trust-bench";
 
 export interface PageExtras {
   // One row per repository, and the pinned commit each row was read at.
@@ -13,4 +14,6 @@ export interface PageExtras {
   };
   // The revisions the deploy document names, and the commit that document was read at.
   readonly deploy?: { readonly facts: DeployFacts; readonly commit: string };
+  // The trust bench measure shown on /fabrique/, and the commit its copy was read at.
+  readonly trustBench?: { readonly bench: TrustBench; readonly commit: string };
 }

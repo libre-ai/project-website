@@ -20,6 +20,8 @@ import type { Proof } from "./pages/proofs";
 import { parsePortfolio } from "./portfolio";
 import { loadPresentations } from "./presentation";
 import { parseProjectCard } from "./project-card";
+import { checkTrustBenchRendered } from "./trust-bench";
+import { loadTrustBench } from "./trust-bench-snapshot";
 import { checkCardUniverse, type Exclusion } from "./universe";
 import { buildLibreSite, type LibreSiteInput } from "./web/site";
 import { writeStaticSite } from "./write-site";
@@ -85,7 +87,11 @@ if (deploySnapshot.violations.length > 0) {
 const deployPin = deployPins[0];
 if (deployPin === undefined) throw new Error("site.deploy_refused:pin_missing");
 
+// The trust bench measure of /fabrique/, verified like the cards, then read at its expected shape.
+const trustBench = await loadTrustBench(join(import.meta.dir, "data"));
+
 const extras: PageExtras = {
+  trustBench: { bench: trustBench.bench, commit: trustBench.commit },
   licences: {
     rows: licenceFiles.map((file) => parseLicences(file.repository, file.text)),
     commits: new Map(licencePins.map((pin) => [pin.repository, pin.sha])),
@@ -156,6 +162,12 @@ const priorProofs: Proof[] = [
     command: COMMAND,
   },
   {
+    gate: `Banc de confiance vérifié contre l'empreinte épinglée (couches lues : ${trustBench.counts.layers})`,
+    examined: trustBench.counts.measures,
+    violations: 0,
+    command: COMMAND,
+  },
+  {
     gate: "G2 univers du portefeuille couvert",
     examined: universe.universe,
     violations: 0,
@@ -172,6 +184,16 @@ const input: LibreSiteInput = {
 };
 const { files, report } = await buildLibreSite(input);
 
+// buildLibreSite renders a notice when it is given no measure; a build never ships that notice.
+const factoryPage = files.get("fabrique/index.html");
+const renderedBench = checkTrustBenchRendered(
+  typeof factoryPage === "string" ? factoryPage : undefined,
+  trustBench.counts,
+);
+if (renderedBench.violations.length > 0) {
+  throw new Error(`site.trust_bench_refused:${renderedBench.violations.join(",")}`);
+}
+
 // S6.4: a second assembly of the same input must write the same bytes.
 const second = await buildLibreSite(input);
 const differing = diffOutputs(files, second.files);
@@ -183,6 +205,12 @@ console.log(`G2 instantané: ${snapshot.examined} fiches vérifiées contre leur
 console.log(`G2 univers: ${universe.universe}, fiches couvrant l'univers: ${universe.covered}`);
 console.log(`S3.2 licences: ${licenceSnapshot.examined} fichiers vérifiés`);
 console.log(`S3.3 déployer: document vérifié (${deploySnapshot.examined})`);
+console.log(
+  `Banc de confiance: copie vérifiée contre son empreinte, mesures lues: ${trustBench.counts.measures}, couches: ${trustBench.counts.layers}, défauts semés: ${trustBench.counts.defects}, cas sains: ${trustBench.counts.healthy}, modèles: ${trustBench.counts.models}, bascules du second passage: ${trustBench.counts.flips}`,
+);
+console.log(
+  `Banc de confiance rendu: ${renderedBench.examined} lignes de couche sur /fabrique/ pour ${trustBench.counts.layers} lues, violations: 0`,
+);
 console.log(
   `Pages: ${report.pages}, dont briques de la forge: ${report.bricks}, fichiers écrits: ${files.size}`,
 );

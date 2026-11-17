@@ -22,6 +22,7 @@ import { signalerBody } from "../pages/signaler";
 import type { Presentation } from "../presentation";
 import { checkProjectCardGates, type ProjectCard } from "../project-card";
 import { checkResourceGates } from "../resource";
+import { trustBenchBody } from "../trust-bench";
 import { checkCopy, checkInternalLinks, findInlineStyles } from "./gates";
 import { type ForgeInput, libreRoutes, type Route, renderRoute } from "./routes";
 import { hoistedContentCss } from "./sections";
@@ -64,8 +65,12 @@ const CORRECTIONS = "<h1>Journal des corrections</h1><p>Aucune correction publiÃ
 
 function forgeInput(input: LibreSiteInput, proofs: readonly Proof[]): ForgeInput {
   const presentations = new Map(input.presentations.map((entry) => [entry.project, entry]));
-  const { licences, deploy } = input.extras;
+  const { licences, deploy, trustBench } = input.extras;
   return {
+    measure:
+      trustBench === undefined
+        ? "<p>Aucune mesure n'est fournie Ã  cette construction.</p>"
+        : trustBenchBody(trustBench.bench, trustBench.commit),
     bricks: input.cards.map((card) => {
       const presentation = presentations.get(card.project);
       return {
