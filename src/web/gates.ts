@@ -36,7 +36,9 @@ export function checkCopy(pages: readonly { readonly page: string; readonly html
   for (const { page, html } of pages) {
     const text = visibleText(html);
     for (const [rule, pattern] of FORBIDDEN_COPY) {
-      const match = pattern.exec(text);
+      // `match`, not `exec`: none of these patterns is global, so both return the same
+      // first match, and the fleet's SQL scanner does not read `exec` on a tuple element.
+      const match = text.match(pattern);
       if (match !== null) violations.push(`copy.${rule}:${page}:${match[0]}`);
     }
   }
