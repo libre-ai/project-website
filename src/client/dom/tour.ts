@@ -32,7 +32,8 @@ export function setupTour(root: Document): void {
       });
       previous.disabled = current === 0;
       next.disabled = current === steps.length - 1;
-      status.textContent = `Étape ${current + 1} sur ${steps.length}`;
+      // Written after the page is served, so src/web/typography.ts never sees it: same rule here.
+      status.textContent = `Étape\xa0${current + 1} sur\xa0${steps.length}`;
     };
     previous.addEventListener("click", () => show(current - 1));
     next.addEventListener("click", () => show(current + 1));

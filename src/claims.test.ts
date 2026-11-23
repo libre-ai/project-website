@@ -26,6 +26,21 @@ describe("forbidden claims list (PRD §9, G9)", () => {
     expect(report.violations).toEqual(["claim.forbidden:page:gratuit"]);
   });
 
+  test("matches through any spacing or inline markup a page can carry", () => {
+    // The site typesets its pages with no-break spaces, and authored markup writes entities.
+    const texts = [
+      "Une sécurité\xa0totale.",
+      "Une sécurité&nbsp;totale.",
+      "Une sécurité&#160;totale.",
+      "Une sécurité\n    totale.",
+      "Une sécurité <em>totale</em>.",
+    ].map((text, index) => ({ id: `variante-${index}`, text }));
+    const report = checkForbiddenClaims(texts, ["sécurité totale"]);
+    expect(report.violations).toEqual(
+      texts.map(({ id }) => `claim.forbidden:${id}:sécurité totale`),
+    );
+  });
+
   test("passes a clean text and counts it as examined", () => {
     const report = checkForbiddenClaims([
       { id: "clean", text: "Le produit est en état idée, sans URL applicative." },

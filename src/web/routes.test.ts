@@ -10,7 +10,7 @@ const forge: ForgeInput = {
       project: "project-governance",
       title: "Gouvernance",
       lead: "Les décisions écrites.",
-      body: "<h1>Gouvernance</h1><p>Corps.</p>",
+      body: "<h1>Gouvernance</h1><p>Corps cité tel quel : sans retouche.</p>",
     },
   ],
   proofs: "<h1>Preuves</h1>",
@@ -98,6 +98,35 @@ describe("rendered pages", () => {
     const report = checkInternalLinks(files);
     expect(report.examined).toBeGreaterThan(routes.length);
     expect(report.broken).toEqual([]);
+  });
+
+  test("binds high punctuation, guillemets and numbers with no-break spaces", () => {
+    // Prose only: verbatim elements and comments out, inline elements joined to their words,
+    // every other element a line break, so the start of a block is never read as a gap.
+    const inline = /<\/?(a|abbr|b|cite|em|i|small|span|strong|time)\b[^>]*>/g;
+    const prose = (html: string): string =>
+      html
+        .replace(/<!--[\s\S]*?-->|<(script|style|pre|code|kbd|samp|textarea)\b[\s\S]*?<\/\1>/g, "")
+        .replace(inline, "")
+        .replace(/<[^>]+>/g, "\n");
+    let bound = 0;
+    for (const { entry, html } of pages) {
+      const text = prose(html);
+      // A sign, a guillemet, a group of thousands, or a whole number before a word or a unit,
+      // except in a rank (« 1 sur 7 »), which breaks before « sur ».
+      const gaps =
+        text.match(
+          /\S[ \t\r]+[:;!?»]|«[ \t\r]+\S|(?<![\p{L}\d.,:#/-])\d+[ \t\r]+(?:\d{3}(?!\d)|(?!sur\s*\d)[\p{L}€%])/gu,
+        ) ?? [];
+      expect([entry.path, gaps]).toEqual([entry.path, []]);
+      bound += text.match(/\S\u00a0[:;!?»]|«\u00a0\S/g)?.length ?? 0;
+    }
+    // Volume: the home title, the authored demos and the quoted record of the fixture all count.
+    expect(bound).toBeGreaterThan(routes.length);
+    const home = pages.find(({ entry }) => entry.path === "/")?.html ?? "";
+    expect(home).toContain("ensemble</span>\u00a0?</h1>");
+    const brick = pages.find(({ entry }) => entry.path === "/fabrique/briques/project-governance/");
+    expect(brick?.html).toContain("tel quel\u00a0: sans retouche.");
   });
 
   test("an application page offers the waitlist for that application", () => {
