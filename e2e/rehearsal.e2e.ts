@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { expect, type Page, test } from "@playwright/test";
+import { type BrowserType, expect, type Page, type TestInfo, test } from "@playwright/test";
 
 import { APPLICATIONS } from "../src/content/applications";
 
@@ -298,46 +298,84 @@ function assertKnown(label: string, surface: Surface, reports: readonly DemoRepo
 
 const scriptless = (name: string): boolean => name === "chromium-no-js";
 
+// The rehearsal runs in a browser of its own, closed with its test. Hypothesis, not measured:
+// WebKit shares one network process across the contexts of a browser, and after these long
+// in-page measurements a later WebKit test of the same worker twice saw its document request
+// never answered (CI runs 45207683110 and 45211358188; never seen on the served branch).
+async function ownBrowser(
+  browserType: BrowserType,
+  testInfo: TestInfo,
+  width: number,
+): Promise<{ page: Page; close: () => Promise<void> }> {
+  const browser = await browserType.launch();
+  const use = testInfo.project.use;
+  const context = await browser.newContext({
+    baseURL: use.baseURL,
+    userAgent: use.userAgent,
+    deviceScaleFactor: use.deviceScaleFactor,
+    isMobile: use.isMobile,
+    hasTouch: use.hasTouch,
+    viewport: { width, height: 900 },
+  });
+  return { page: await context.newPage(), close: () => browser.close() };
+}
+
 test.describe("micro-demo rehearsal", () => {
   test.setTimeout(240_000);
 
   for (const width of [390, 1440]) {
-    test(`every card demo of /applications/ at ${width} px`, async ({ page }, testInfo) => {
+    test(`every card demo of /applications/ at ${width} px`, async ({ browser }, testInfo) => {
       test.skip(scriptless(testInfo.project.name), "seeking animations needs script");
-      await page.setViewportSize({ width, height: 900 });
-      await open(page, "/applications/");
-      // The universes are tabs: each panel is shown in turn, and every demo must be met at least
-      // once (the first rehearsal of a demo is kept).
-      const tabs = page.getByRole("tab");
-      const tabCount = await tabs.count();
-      expect(tabCount).toBeGreaterThan(0);
-      const byDemo = new Map<string, DemoReport>();
-      for (let index = 0; index < tabCount; index += 1) {
-        await tabs.nth(index).click();
-        for (const report of await rehearseRendered(page, "figure.demo")) {
-          if (!byDemo.has(report.demo)) byDemo.set(report.demo, report);
-        }
+      const { page, close } = await ownBrowser(browser.browserType(), testInfo, width);
+      try {
+        await rehearseCards(page, testInfo, width);
+      } finally {
+        await close();
       }
-      const reports = [...byDemo.values()];
-      expect(reports).toHaveLength(APPLICATIONS.length);
-      assertKnown(
-        `${testInfo.project.name} /applications/ ${width} px, ${tabCount} onglets`,
-        "cartes",
-        reports,
-      );
     });
   }
 
-  test("the large demo of every application page at 390 px", async ({ page }, testInfo) => {
+  test("the large demo of every application page at 390 px", async ({ browser }, testInfo) => {
     test.skip(scriptless(testInfo.project.name), "seeking animations needs script");
-    await page.setViewportSize({ width: 390, height: 900 });
-    const reports: DemoReport[] = [];
-    for (const application of APPLICATIONS) {
-      await open(page, `/applications/${application.slug}/`);
-      const found = await rehearseRendered(page, "figure.demo-grande");
-      expect(found, application.slug).toHaveLength(1);
-      reports.push(...found);
+    const { page, close } = await ownBrowser(browser.browserType(), testInfo, 390);
+    try {
+      await rehearseLarge(page, testInfo);
+    } finally {
+      await close();
     }
-    assertKnown(`${testInfo.project.name} pages d'application 390 px`, "grandes", reports);
   });
 });
+
+// The universes are tabs: each panel is shown in turn, and every demo must be met at least once
+// (the first rehearsal of a demo is kept).
+async function rehearseCards(page: Page, testInfo: TestInfo, width: number): Promise<void> {
+  await open(page, "/applications/");
+  const tabs = page.getByRole("tab");
+  const tabCount = await tabs.count();
+  expect(tabCount).toBeGreaterThan(0);
+  const byDemo = new Map<string, DemoReport>();
+  for (let index = 0; index < tabCount; index += 1) {
+    await tabs.nth(index).click();
+    for (const report of await rehearseRendered(page, "figure.demo")) {
+      if (!byDemo.has(report.demo)) byDemo.set(report.demo, report);
+    }
+  }
+  const reports = [...byDemo.values()];
+  expect(reports).toHaveLength(APPLICATIONS.length);
+  assertKnown(
+    `${testInfo.project.name} /applications/ ${width} px, ${tabCount} onglets`,
+    "cartes",
+    reports,
+  );
+}
+
+async function rehearseLarge(page: Page, testInfo: TestInfo): Promise<void> {
+  const reports: DemoReport[] = [];
+  for (const application of APPLICATIONS) {
+    await open(page, `/applications/${application.slug}/`);
+    const found = await rehearseRendered(page, "figure.demo-grande");
+    expect(found, application.slug).toHaveLength(1);
+    reports.push(...found);
+  }
+  assertKnown(`${testInfo.project.name} pages d'application 390 px`, "grandes", reports);
+}
