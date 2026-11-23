@@ -140,9 +140,12 @@
   font-size: 0.72rem;
   line-height: 1.3;
   color: var(--encre);
-  /* `clip`, not `hidden`: a box with an aspect ratio grows to its content unless it is a scroll
-     container, so at narrow widths the stage gets taller instead of cutting its last row. */
-  overflow: clip;
+  /* Not clipped: a box with an aspect ratio grows to its content when its overflow is visible,
+     so at narrow widths the stage gets taller instead of cutting its last row (with `clip`,
+     Chromium and Firefox grew it and WebKit did not). Nothing has to be clipped:
+     e2e/rehearsal.e2e.ts fails on any visible element leaving the stage, and the static state
+     keeps everything inside. */
+  overflow: visible;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -472,10 +475,12 @@
   overflow: hidden;
 }
 
+/* Only seen while it moves: still, it would be a stray band across the page. */
 .d-balayage {
   position: absolute;
   inset-inline: 0;
-  inset-block-start: -20%;
+  inset-block-start: 0;
+  opacity: 0;
   height: 1.4rem;
   background: linear-gradient(
     to bottom,
@@ -839,9 +844,9 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2px;
-  /* At 500px a turning page grew by a third and left the frame of a card: farther, it grows by
-     about a seventh. */
-  perspective: 1000px;
+  /* At 500px a turning page grew by a third and left the frame of a card (14 to 17 px); at 1000px
+     WebKit still drew it 2 px outside a card at 1440 px. At 1400px it grows by about a twelfth. */
+  perspective: 1400px;
   padding: 0 12%;
 }
 
