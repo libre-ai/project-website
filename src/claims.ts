@@ -16,9 +16,16 @@ export interface ClaimGateReport {
   readonly violations: readonly string[];
 }
 
-// Case-insensitive, with composed Unicode forms so an accented word matches either way.
+// Case-insensitive, with composed Unicode forms so an accented word matches either way. Inline
+// markup, no-break spaces (typed, or as entities) and line breaks never split a claim: the pages
+// are typeset with no-break spaces (src/web/typography.ts) and the authored markup writes entities.
 function normalize(value: string): string {
-  return value.normalize("NFC").toLocaleLowerCase("fr");
+  return value
+    .normalize("NFC")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&(?:nbsp|#160|#xa0);/gi, " ")
+    .replace(/\s+/g, " ")
+    .toLocaleLowerCase("fr");
 }
 
 export function checkForbiddenClaims(

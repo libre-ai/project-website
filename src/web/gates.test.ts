@@ -26,6 +26,15 @@ describe("checkCopy (ADR 0007)", () => {
     expect(checkCopy(page(text)).violations).toHaveLength(1);
   });
 
+  test.each([
+    ["a typed no-break space", "15\xa0dépôts publics"],
+    ["a no-break space entity", "15&nbsp;dépôts publics"],
+    ["a numeric no-break space entity", "La bêta&#160;ouverte commence."],
+  ])("flags a count or a claim written with %s", (_case, text) => {
+    // The pages are typeset with no-break spaces, and the authored markup writes entities.
+    expect(checkCopy(page(text)).violations).toHaveLength(1);
+  });
+
   test("leaves a promise, a duration and a reference alone", () => {
     const report = checkCopy(
       page("Ce que chacun réinvente seul, faisons-le ensemble. Confirmez sous 48 heures. P07."),

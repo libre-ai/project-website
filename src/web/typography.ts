@@ -7,7 +7,7 @@
  * styles and comments stay as written, and among attributes only the readable ones.
  */
 
-const NBSP = " ";
+const NBSP = "\u00a0";
 
 /** Elements whose content is not prose, or not shown as prose. */
 const VERBATIM = "script|style|pre|code|kbd|samp|textarea";
@@ -47,6 +47,29 @@ const TOKEN = new RegExp(
 );
 const BEFORE_SIGN = /(?<=\S)[ \t\r\n]+(?=[:;!?»])/g;
 const AFTER_GUILLEMET = /(?<=«)[ \t\r\n]+/g;
+// A number of the text stands alone: not part of a word, a version, a date, a time or a hash.
+const NUMBER_START = String.raw`(?<![\p{L}\d.,:#\/\-])`;
+const NUMBER_END = String.raw`(?![\p{L}\d]|[.,:\/\-]\d)`;
+/** Spaces between the groups of thousands: 1 200, 1 234 567. */
+const THOUSANDS = new RegExp(
+  String.raw`(?<=${NUMBER_START}\d{1,3}(?:[ \t\r\n]+\d{3})*)[ \t\r\n]+(?=\d{3}${NUMBER_END})`,
+  "gu",
+);
+/**
+ * The space after a number, before its unit, sign or counted word: 480 €, 3 jours, 14 h. Not in
+ * a rank (1 sur 7), where « sur » goes with the total and the line breaks before it.
+ */
+const AFTER_NUMBER = new RegExp(
+  String.raw`(?<=${NUMBER_START}\d+(?:[.,]\d+)?)${NUMBER_END}[ \t\r\n]+(?=[\p{L}€%$£°])(?!sur[ \t\r\n]+\d)`,
+  "gu",
+);
+/** The total of a rank: 1 sur 7. */
+const RANK_TOTAL = /(?<=\d[ \t\r\n]+sur)[ \t\r\n]+(?=\d)/g;
+/** The minutes of a time: 14 h 30. */
+const MINUTES = /(?<=\d\u00a0h)[ \t\r\n]+(?=\d)/g;
+/** The space between a numbering word and its number: étape 1, chapitre 4, ADR 0005. */
+const NUMBERING =
+  /(?<=(?<!\p{L})(?:étape|chapitre|page|épisode|question|séance|version|couche|article|tome|ADR|n°))[ \t\r\n]+(?=\d)/giu;
 const LEADING_BEFORE_SIGN = /^[ \t\r\n]+(?=[:;!?»])/;
 const LEADING = /^[ \t\r\n]+/;
 
@@ -62,7 +85,12 @@ function within(text: string): { text: string; replaced: number } {
     replaced++;
     return NBSP;
   };
-  const result = text.replace(BEFORE_SIGN, count).replace(AFTER_GUILLEMET, count);
+  let result = text;
+  // Order matters once: the minutes of a time are found after its hour has been bound.
+  const rules = [BEFORE_SIGN, AFTER_GUILLEMET, THOUSANDS, AFTER_NUMBER, MINUTES, RANK_TOTAL];
+  for (const rule of [...rules, NUMBERING]) {
+    result = result.replace(rule, count);
+  }
   return { text: result, replaced };
 }
 
