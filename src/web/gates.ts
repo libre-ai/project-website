@@ -20,11 +20,15 @@ const FORBIDDEN_COPY: readonly (readonly [string, RegExp])[] = [
   ["progress", /\b\d+\s*%/],
 ];
 
-/** Visible text of a page: markup removed, entities left as written. */
+/**
+ * Visible text of a page: markup removed, entities left as written except the no-break space,
+ * read as the space it is, so `15&nbsp;dépôts` is the count it shows.
+ */
 function visibleText(html: string): string {
   return html
     .replace(/<(script|svg)\b[\s\S]*?<\/\1>/gi, " ")
     .replace(/<[^>]+>/g, " ")
+    .replace(/&(?:nbsp|#160|#xa0);/gi, " ")
     .replace(/\s+/g, " ");
 }
 
