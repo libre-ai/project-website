@@ -92,7 +92,8 @@ describe("buildLibreSite (plan, Task 9)", () => {
     expect(report.links.examined).toBeGreaterThan(report.pages);
     expect(report.budget.violations).toBe(0);
     expect(report.assets.violations).toBe(0);
-    const proofs = String(built.files.get("preuves/index.html"));
+    // Read as text: the typography binds a numbering word to its number with a no-break space.
+    const proofs = String(built.files.get("preuves/index.html")).replace(/\s/g, " ");
     for (const gate of ["ADR 0005", "ADR 0007", "Liens internes", "Poids transféré"]) {
       expect(proofs).toContain(gate);
     }
