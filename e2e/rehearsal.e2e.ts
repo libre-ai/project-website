@@ -12,8 +12,8 @@ import { APPLICATIONS } from "../src/content/applications";
 // film/jumps/layout scripts of Stageshow (benjitaylor/skills, MIT); no code is taken from it.
 //
 // Not covered, by construction: colour changes (computed colours serialise in several syntaxes
-// once color-mix() is involved), discrete properties such as text-decoration, SVG internals,
-// and anything outside the figure.
+// once color-mix() is involved), discrete properties such as text-decoration, the angle of a
+// rotating element, SVG internals, and anything outside the figure.
 
 const FPS = 30;
 const JUMP_PX = 4;
@@ -45,6 +45,7 @@ interface DemoReport {
   frames: number;
   elements: number;
   stepped: number;
+  turning: number;
   defects: Defect[];
 }
 
@@ -89,6 +90,7 @@ function rehearse(args: Thresholds): DemoReport[] {
         frames: 0,
         elements: 0,
         stepped: 0,
+        turning: 0,
         defects: [...defects.values()],
       };
     }
@@ -104,12 +106,23 @@ function rehearse(args: Thresholds): DemoReport[] {
     const lastDelay = Math.max(...timings.map((timing) => Number(timing?.delay ?? 0)));
 
     // A steps() easing changes size on purpose (typewriter): only its position is watched.
+    // A 2D rotation changes the bounding box on purpose (a die spinning fast swells and shrinks
+    // its box from one frame to the next): such an element is watched through its centre and its
+    // own, unrotated size, so a snap in place or in scale is still seen.
     const stepped = new Set<Element>();
+    const turning = new Set<Element>();
     for (const animation of animations) {
       const effect = animation.effect;
       if (!(effect instanceof KeyframeEffect) || effect.target === null) continue;
-      const easings = [effect.getTiming().easing, ...effect.getKeyframes().map((k) => k.easing)];
+      const keyframes = effect.getKeyframes();
+      const easings = [effect.getTiming().easing, ...keyframes.map((k) => k.easing)];
       if (easings.some((easing) => String(easing).startsWith("steps"))) stepped.add(effect.target);
+      const rotates = keyframes.some(
+        (k) =>
+          /\brotate(Z)?\(/.test(String(k.transform ?? "")) ||
+          (k.rotate !== undefined && String(k.rotate) !== "none"),
+      );
+      if (rotates) turning.add(effect.target);
     }
 
     const elements = [figure, ...figure.querySelectorAll<Element>("*:not(svg *)")];
@@ -141,7 +154,15 @@ function rehearse(args: Thresholds): DemoReport[] {
         const parent = element.parentElement;
         const o = (parent === null ? 1 : (current.get(parent)?.o ?? 1)) * own;
         const box = element.getBoundingClientRect();
-        const sample = { o, l: box.left, t: box.top, r: box.right, b: box.bottom };
+        let sample = { o, l: box.left, t: box.top, r: box.right, b: box.bottom };
+        if (turning.has(element) && element instanceof HTMLElement) {
+          const matrix = new DOMMatrixReadOnly(style.transform === "none" ? "" : style.transform);
+          const halfWidth = (element.offsetWidth * Math.hypot(matrix.a, matrix.b)) / 2;
+          const halfHeight = (element.offsetHeight * Math.hypot(matrix.c, matrix.d)) / 2;
+          const x = (box.left + box.right) / 2;
+          const y = (box.top + box.bottom) / 2;
+          sample = { o, l: x - halfWidth, t: y - halfHeight, r: x + halfWidth, b: y + halfHeight };
+        }
         current.set(element, sample);
         const name = describe(element);
 
@@ -201,6 +222,7 @@ function rehearse(args: Thresholds): DemoReport[] {
       frames,
       elements: elements.length,
       stepped: stepped.size,
+      turning: turning.size,
       defects: [...defects.values()],
     };
   });
@@ -228,7 +250,7 @@ function rehearseRendered(page: Page, selector: string): Promise<DemoReport[]> {
 function summarise(label: string, reports: readonly DemoReport[]): string {
   const sum = (pick: (report: DemoReport) => number): number =>
     reports.reduce((total, report) => total + pick(report), 0);
-  return `${label}: ${reports.length} démos, ${sum((r) => r.animations)} animations, ${sum((r) => r.frames)} images, ${sum((r) => r.elements)} éléments suivis dont ${sum((r) => r.stepped)} pas à pas, ${sum((r) => r.defects.length)} défauts`;
+  return `${label}: ${reports.length} démos, ${sum((r) => r.animations)} animations, ${sum((r) => r.frames)} images, ${sum((r) => r.elements)} éléments suivis dont ${sum((r) => r.stepped)} pas à pas et ${sum((r) => r.turning)} en rotation, ${sum((r) => r.defects.length)} défauts`;
 }
 
 // Known defects are data (e2e/rehearsal-known.json), each one listed in the issue it points to.
