@@ -15,6 +15,7 @@ import { APPLICATIONS } from "../src/content/applications";
 
 const FPS = 30;
 const JUMP_PX = 4;
+const SPIKE = 3;
 const OPACITY_POP = 0.5;
 const SEEN = 0.1;
 const VISIBLE = 0.5;
@@ -49,6 +50,7 @@ interface Thresholds {
   selector: string;
   fps: number;
   jumpPx: number;
+  spike: number;
   opacityPop: number;
   seen: number;
   visible: number;
@@ -56,7 +58,11 @@ interface Thresholds {
 
 // Runs inside the page: it must stay self-contained (serialised by Playwright).
 function rehearse(args: Thresholds): DemoReport[] {
-  const figures = [...document.querySelectorAll<HTMLElement>(args.selector)];
+  // A figure in a hidden tab panel is not rendered and runs no animation: only rendered figures
+  // are rehearsed, and the caller shows each panel in turn.
+  const figures = [...document.querySelectorAll<HTMLElement>(args.selector)].filter(
+    (figure) => figure.getClientRects().length > 0,
+  );
   return figures.map((figure): DemoReport => {
     const demo =
       figure.closest("li")?.querySelector("a.couvrir")?.getAttribute("href") ?? location.pathname;
@@ -114,6 +120,7 @@ function rehearse(args: Thresholds): DemoReport[] {
       elements.filter((element) => element !== figure && (element.textContent ?? "").trim() !== ""),
     );
     const leastOverflow = new Map<Element, number>();
+    const travel = new Map<Element, { time: number; move: number }[]>();
 
     for (const animation of animations) animation.pause();
     const step = 1000 / args.fps;
@@ -155,17 +162,31 @@ function rehearse(args: Thresholds): DemoReport[] {
 
         const before = previous.get(element);
         if (before === undefined) continue;
+        let move = 0;
         if (Math.min(before.o, o) >= args.seen) {
           const moves = stepped.has(element)
             ? [sample.l - before.l, sample.t - before.t]
             : [sample.l - before.l, sample.t - before.t, sample.r - before.r, sample.b - before.b];
-          const jump = Math.max(...moves.map(Math.abs));
-          if (jump > args.jumpPx) record(name, "jump", time, Math.round(jump * 10) / 10);
+          move = Math.max(...moves.map(Math.abs));
         }
+        const series = travel.get(element) ?? [];
+        series.push({ time, move });
+        travel.set(element, series);
         const pop = Math.abs(o - before.o);
         if (pop > args.opacityPop) record(name, "opacity-pop", time, Math.round(pop * 100) / 100);
       }
       previous = current;
+    }
+    // A jump is an isolated discontinuity, as in Stageshow's jumps script: a frame that moves
+    // much more than both of its neighbours. A fast but continuous motion (a card turning, a bar
+    // growing) moves about as much from one frame to the next and is not one.
+    for (const [element, series] of travel) {
+      series.forEach(({ time, move }, index) => {
+        const around = Math.max(series[index - 1]?.move ?? 0, series[index + 1]?.move ?? 0);
+        if (move > args.jumpPx && move > args.spike * around) {
+          record(describe(element), "jump", time, Math.round(move * 10) / 10);
+        }
+      });
     }
     for (const [element, overflow] of leastOverflow) {
       if (overflow > 1) record(describe(element), "never-fits", 0, overflow);
@@ -183,14 +204,18 @@ function rehearse(args: Thresholds): DemoReport[] {
   });
 }
 
-async function rehearsePage(page: Page, path: string, selector: string): Promise<DemoReport[]> {
+async function open(page: Page, path: string): Promise<void> {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto(path);
   await page.evaluate(() => document.fonts.ready);
+}
+
+function rehearseRendered(page: Page, selector: string): Promise<DemoReport[]> {
   return page.evaluate(rehearse, {
     selector,
     fps: FPS,
     jumpPx: JUMP_PX,
+    spike: SPIKE,
     opacityPop: OPACITY_POP,
     seen: SEEN,
     visible: VISIBLE,
@@ -213,8 +238,25 @@ test.describe("micro-demo rehearsal", () => {
     test(`every card demo of /applications/ at ${width} px`, async ({ page }, testInfo) => {
       test.skip(scriptless(testInfo.project.name), "seeking animations needs script");
       await page.setViewportSize({ width, height: 900 });
-      const reports = await rehearsePage(page, "/applications/", "figure.demo");
-      console.log(summarise(`${testInfo.project.name} /applications/ ${width} px`, reports));
+      await open(page, "/applications/");
+      // The universes are tabs: each panel is shown in turn, and every demo must be met once.
+      const tabs = page.getByRole("tab");
+      const tabCount = await tabs.count();
+      expect(tabCount).toBeGreaterThan(0);
+      const byDemo = new Map<string, DemoReport>();
+      for (let index = 0; index < tabCount; index += 1) {
+        await tabs.nth(index).click();
+        for (const report of await rehearseRendered(page, "figure.demo")) {
+          if (!byDemo.has(report.demo)) byDemo.set(report.demo, report);
+        }
+      }
+      const reports = [...byDemo.values()];
+      console.log(
+        summarise(
+          `${testInfo.project.name} /applications/ ${width} px, ${tabCount} onglets`,
+          reports,
+        ),
+      );
       expect(reports).toHaveLength(APPLICATIONS.length);
       expect(reports.flatMap((report) => report.defects)).toEqual([]);
     });
@@ -225,11 +267,8 @@ test.describe("micro-demo rehearsal", () => {
     await page.setViewportSize({ width: 390, height: 900 });
     const reports: DemoReport[] = [];
     for (const application of APPLICATIONS) {
-      const found = await rehearsePage(
-        page,
-        `/applications/${application.slug}/`,
-        "figure.demo-grande",
-      );
+      await open(page, `/applications/${application.slug}/`);
+      const found = await rehearseRendered(page, "figure.demo-grande");
       expect(found, application.slug).toHaveLength(1);
       reports.push(...found);
     }
