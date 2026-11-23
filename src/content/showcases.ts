@@ -41,7 +41,7 @@ export const showcases: Readonly<Record<string, Showcase>> = {
     demo: `<div class="d-graphe"><svg viewBox="0 0 200 110"><path class="a-trace" d="M100 55 L40 25 M100 55 L45 88 M100 55 L160 28 M100 55 L158 85"/></svg>
       <span class="d-noeud centre a-in" style="--i:0;left:50%;top:50%">Votre article</span>
       <span class="d-noeud a-in" style="--i:1;left:20%;top:22%">Cité par 12</span><span class="d-noeud a-in" style="--i:2;left:22%;top:80%">Méthode proche</span>
-      <span class="d-noeud ko a-in" style="--i:3;left:80%;top:25%">Hors sujet : archiver ?</span><span class="d-noeud ok a-in" style="--i:4;left:80%;top:78%">À lire ensuite</span></div>`,
+      <span class="d-noeud ko a-in" style="--i:3;left:80%;top:25%">Hors sujet&nbsp;: archiver&nbsp;?</span><span class="d-noeud ok a-in" style="--i:4;left:80%;top:78%">À lire ensuite</span></div>`,
   },
   notes: {
     category: "Prise de notes",
