@@ -26,7 +26,7 @@ const DEFAULT_TIMEOUT_MS: u64 = 30_000;
 const MAX_TIMEOUT_MS: u64 = (1 << 31) - 1;
 const LOOPBACK_HOSTS: [&str; 3] = ["localhost", "127.0.0.1", "::1"];
 
-#[derive(Debug, Clone, Default)]
+#[derive(Clone, Default)]
 pub struct SmtpConfig {
     pub host: String,
     /// 587 when absent. 465 means implicit TLS, any other port means STARTTLS.
@@ -39,12 +39,29 @@ pub struct SmtpConfig {
     pub timeout_ms: Option<u64>,
 }
 
+/// The password prints as `<redacted>`: a `{:?}` added later cannot leak it.
+impl std::fmt::Debug for SmtpConfig {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("SmtpConfig")
+            .field("host", &self.host)
+            .field("port", &self.port)
+            .field("user", &self.user)
+            .field("password", &self.password.as_ref().map(|_| "<redacted>"))
+            .field("allow_insecure_local", &self.allow_insecure_local)
+            .field("timeout_ms", &self.timeout_ms)
+            .finish()
+    }
+}
+
+/// The relay client, prepared once at start: TLS parameters (the system's root certificates,
+/// read from disk), credentials and greeting are set up here and never on a send.
 pub struct SmtpMailer {
-    host: String,
-    port: u16,
-    credentials: Option<Credentials>,
-    clear_allowed: bool,
-    timeout: Duration,
+    transport: AsyncSmtpTransport<Tokio1Executor>,
+    /// The configured sender, as messages carry it.
+    from: String,
+    /// Its address, the envelope sender.
+    sender: Address,
 }
 
 /// Printable ASCII without brackets, one `@`: an address outside it needs SMTPUTF8, never
@@ -68,8 +85,9 @@ fn envelope_address(address: &str, code: &'static str) -> Result<Address, MailEr
 }
 
 impl SmtpMailer {
-    /// Refuses an invalid configuration with a named code, before any connection.
-    pub fn new(config: SmtpConfig) -> Result<Self, MailError> {
+    /// Refuses an invalid configuration with a named code, before any connection, and prepares
+    /// the transport for the sender `from` (`Name <a@b>` or `a@b`), whose domain is the greeting.
+    pub fn new(config: SmtpConfig, from: &str) -> Result<Self, MailError> {
         if config.host.is_empty() {
             return Err(MailError("mail.smtp_host_missing"));
         }
@@ -91,37 +109,31 @@ impl SmtpMailer {
         if !(1..=MAX_TIMEOUT_MS).contains(&timeout_ms) {
             return Err(MailError("mail.smtp_timeout_invalid"));
         }
-        Ok(Self {
-            host: config.host,
-            port,
-            credentials,
-            clear_allowed: config.allow_insecure_local,
-            timeout: Duration::from_millis(timeout_ms),
-        })
-    }
-
-    fn transport(&self, hello: &str) -> Result<AsyncSmtpTransport<Tokio1Executor>, MailError> {
-        let parameters = TlsParameters::new_rustls(self.host.clone())
-            .map_err(|_| MailError("mail.smtp_connection_failed"))?;
-        let tls = if self.port == IMPLICIT_TLS_PORT {
+        let sender = envelope_address(&sender_address(from)?, "mail.sender_invalid")?;
+        let parameters = TlsParameters::new_rustls(config.host.clone())
+            .map_err(|_| MailError("mail.smtp_tls_unavailable"))?;
+        let tls = if port == IMPLICIT_TLS_PORT {
             Tls::Wrapper(parameters)
-        } else if self.clear_allowed {
+        } else if config.allow_insecure_local {
             Tls::Opportunistic(parameters)
         } else {
             Tls::Required(parameters)
         };
-        let mut builder =
-            AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(self.host.clone())
-                .port(self.port)
-                .tls(tls)
-                .timeout(Some(self.timeout))
-                .hello_name(ClientId::Domain(hello.to_owned()));
-        if let Some(credentials) = &self.credentials {
+        let mut builder = AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(config.host)
+            .port(port)
+            .tls(tls)
+            .timeout(Some(Duration::from_millis(timeout_ms)))
+            .hello_name(ClientId::Domain(sender.domain().to_owned()));
+        if let Some(credentials) = credentials {
             builder = builder
-                .credentials(credentials.clone())
+                .credentials(credentials)
                 .authentication(vec![Mechanism::Plain]);
         }
-        Ok(builder.build())
+        Ok(Self {
+            transport: builder.build(),
+            from: from.to_owned(),
+            sender,
+        })
     }
 }
 
@@ -139,8 +151,12 @@ impl Mailer for SmtpMailer {
     fn send(&self, message: MailMessage) -> SendFuture {
         // Everything that can be refused without the relay is refused before a socket is opened.
         let prepared = (|| {
-            let sender = sender_address(&message.from)?;
-            let from = envelope_address(&sender, "mail.sender_invalid")?;
+            // The transport greets with the configured sender's domain: another sender is
+            // refused rather than sent under it.
+            if message.from != self.from {
+                return Err(MailError("mail.sender_invalid"));
+            }
+            let from = self.sender.clone();
             let domain = from.domain().to_owned();
             let uuid = random_uuid().map_err(|_| MailError("mail.random_unavailable"))?;
             let raw = to_rfc5322(
@@ -159,7 +175,7 @@ impl Mailer for SmtpMailer {
             let to = envelope_address(&message.to, "mail.recipient_invalid")?;
             let envelope = Envelope::new(Some(from), vec![to])
                 .map_err(|_| MailError("mail.recipient_invalid"))?;
-            Ok((self.transport(&domain)?, envelope, raw))
+            Ok((self.transport.clone(), envelope, raw))
         })();
         Box::pin(async move {
             let (transport, envelope, raw) = prepared?;
@@ -186,6 +202,32 @@ mod tests {
     use super::*;
     use crate::messages::confirmation_message;
 
+    const FROM: &str = "Libre IA <liste@libre-ia.example>";
+
+    fn mailer_for(config: SmtpConfig) -> Result<SmtpMailer, MailError> {
+        SmtpMailer::new(config, FROM)
+    }
+
+    #[test]
+    fn refuses_a_sender_it_cannot_put_in_an_envelope_and_a_message_from_another() {
+        let local = || SmtpConfig {
+            allow_insecure_local: true,
+            ..config("localhost")
+        };
+        assert_eq!(
+            SmtpMailer::new(local(), "x <a@b.example> SIZE=1").err(),
+            Some(MailError("mail.sender_invalid"))
+        );
+        let mailer = mailer_for(local()).unwrap();
+        let mut other = message();
+        other.from = "Autre <autre@libre-ia.example>".to_owned();
+        let refused = tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap()
+            .block_on(mailer.send(other));
+        assert_eq!(refused, Err(MailError("mail.sender_invalid")));
+    }
+
     fn config(host: &str) -> SmtpConfig {
         SmtpConfig {
             host: host.to_owned(),
@@ -195,7 +237,7 @@ mod tests {
 
     #[test]
     fn refuses_an_invalid_configuration() {
-        let code = |config: SmtpConfig| SmtpMailer::new(config).err().map(|error| error.0);
+        let code = |config: SmtpConfig| mailer_for(config).err().map(|error| error.0);
         assert_eq!(code(config("")), Some("mail.smtp_host_missing"));
         assert_eq!(
             code(SmtpConfig {
@@ -233,7 +275,7 @@ mod tests {
             Some("mail.smtp_timeout_invalid")
         );
         assert!(
-            SmtpMailer::new(SmtpConfig {
+            mailer_for(SmtpConfig {
                 allow_insecure_local: true,
                 ..config("LOCALHOST")
             })
@@ -293,7 +335,7 @@ mod tests {
     #[tokio::test]
     async fn sends_in_clear_to_a_loopback_relay_only_when_allowed() {
         let (port, relay) = clear_relay().await;
-        let mailer = SmtpMailer::new(SmtpConfig {
+        let mailer = mailer_for(SmtpConfig {
             port: Some(u32::from(port)),
             allow_insecure_local: true,
             timeout_ms: Some(5000),
@@ -319,7 +361,7 @@ mod tests {
     #[tokio::test]
     async fn never_falls_back_to_clear_text_without_starttls() {
         let (port, relay) = clear_relay().await;
-        let mailer = SmtpMailer::new(SmtpConfig {
+        let mailer = mailer_for(SmtpConfig {
             port: Some(u32::from(port)),
             timeout_ms: Some(5000),
             ..config("127.0.0.1")
@@ -336,7 +378,7 @@ mod tests {
 
     #[tokio::test]
     async fn refuses_an_envelope_breaker_before_connecting() {
-        let mailer = SmtpMailer::new(SmtpConfig {
+        let mailer = mailer_for(SmtpConfig {
             allow_insecure_local: true,
             ..config("localhost")
         })

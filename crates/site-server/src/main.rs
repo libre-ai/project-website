@@ -7,20 +7,20 @@
 //! scheduled task or a test.
 #![forbid(unsafe_code)]
 
-use std::net::SocketAddr;
 use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
 
-use site_server::config::{Config, ConfigError, MailSetting};
-use site_server::http::{App, InFlight, RATE_LIMIT, RATE_WINDOW_MS, canonical, router};
+use site_server::config::{Config, ConfigError, DatabaseSetting, MailSetting};
+use site_server::http::{App, RATE_LIMIT, RATE_WINDOW_MS, canonical, router};
 use site_server::limiter::Limiter;
 use site_server::log::Logger;
-use site_server::mailer::{Mailer, OutboxMailer, sender_address, sender_domain};
+use site_server::mailer::{InFlight, MailQueue, Mailer, OutboxMailer, sender_domain};
 use site_server::policy;
+use site_server::server::{self, Limits, Stopped};
 use site_server::site::load_site;
 use site_server::smtp::SmtpMailer;
-use site_server::store::{PgStore, Store};
+use site_server::store::{PgStore, Store, connect_options};
 use time::OffsetDateTime;
 
 const PURGE_INTERVAL: Duration = Duration::from_secs(3600);
@@ -54,25 +54,34 @@ async fn purge_once(store: &dyn Store, logger: &Logger) -> bool {
     }
 }
 
-async fn stop_signal() {
-    let interrupt = tokio::signal::ctrl_c();
-    #[cfg(unix)]
-    {
-        match tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()) {
-            Ok(mut terminate) => {
-                tokio::select! {
-                    _ = interrupt => {}
-                    _ = terminate.recv() => {}
+/// The stop request. The handlers are installed when this is called, not when the future is
+/// first polled: a SIGTERM that follows the start line at once must stop the server gracefully,
+/// not kill it with the default action.
+#[cfg(unix)]
+fn stop_signal() -> impl std::future::Future<Output = ()> {
+    use tokio::signal::unix::{SignalKind, signal};
+    let terminate = signal(SignalKind::terminate()).ok();
+    let interrupt = signal(SignalKind::interrupt()).ok();
+    async move {
+        let wait = |stream: Option<tokio::signal::unix::Signal>| async move {
+            match stream {
+                Some(mut stream) => {
+                    stream.recv().await;
                 }
+                None => std::future::pending::<()>().await,
             }
-            Err(_) => {
-                let _ = interrupt.await;
-            }
+        };
+        tokio::select! {
+            () = wait(terminate) => {}
+            () = wait(interrupt) => {}
         }
     }
-    #[cfg(not(unix))]
-    {
-        let _ = interrupt.await;
+}
+
+#[cfg(not(unix))]
+fn stop_signal() -> impl std::future::Future<Output = ()> {
+    async {
+        let _ = tokio::signal::ctrl_c().await;
     }
 }
 
@@ -93,14 +102,17 @@ async fn serve(logger: &Logger) -> Result<(), StartFailure> {
     let mailer: Arc<dyn Mailer> = match config.mail {
         MailSetting::Outbox(directory) => Arc::new(OutboxMailer::new(directory)),
         MailSetting::Smtp(smtp) => {
-            sender_address(&config.from).map_err(|error| StartFailure(error.0))?;
-            Arc::new(SmtpMailer::new(smtp).map_err(|error| StartFailure(error.0))?)
+            // The relay client is prepared here, once: no send prepares anything (ADR 0006 §4).
+            Arc::new(SmtpMailer::new(smtp, &config.from).map_err(|error| StartFailure(error.0))?)
         }
     };
     let site = load_site(&config.site_directory).map_err(|error| StartFailure(error.code()))?;
+    // Refused before any connection: an unverified channel is never opened.
+    let options = connect_options(&config.database.url, config.database.allow_insecure_local)
+        .map_err(StartFailure)?;
     let store = Arc::new(
         PgStore::connect(
-            &config.database_url,
+            options,
             config.database_max_connections,
             policy.consent_text_version.clone(),
         )
@@ -116,26 +128,29 @@ async fn serve(logger: &Logger) -> Result<(), StartFailure> {
         .port();
 
     let in_flight = InFlight::default();
+    let mail = MailQueue::start(mailer, in_flight.clone(), logger.clone());
     let app = Arc::new(App {
         site,
         origin,
         canonical_host,
         redirect_hosts: config.redirect_hosts,
         store: store.clone(),
-        mailer,
+        mail,
         from: config.from,
         limiter: Limiter::new(RATE_LIMIT, RATE_WINDOW_MS),
         logger: logger.clone(),
         policy,
         clock: OffsetDateTime::now_utc,
-        in_flight: in_flight.clone(),
     });
 
+    // A purge at every start, before the first request: restarts more frequent than the interval
+    // never leave expired requests behind. A failure is logged and does not stop the start.
+    purge_once(store.as_ref(), logger).await;
     let purge_store = store.clone();
     let purge_logger = logger.clone();
     let purge = tokio::spawn(async move {
         let mut ticks = tokio::time::interval(PURGE_INTERVAL);
-        // The first tick is immediate: the first purge comes one interval after the start.
+        // The first tick is immediate, and the start has just purged.
         ticks.tick().await;
         loop {
             ticks.tick().await;
@@ -143,32 +158,30 @@ async fn serve(logger: &Logger) -> Result<(), StartFailure> {
         }
     });
 
+    let stop = stop_signal();
     logger.event("server.listening", &[("port", u64::from(port).into())]);
-    let service = router(app).into_make_service_with_connect_info::<SocketAddr>();
-    let served = axum::serve(listener, service)
-        .with_graceful_shutdown(stop_signal())
-        .await;
+    // Bounded at every stage: connections still open after `Limits::SERVED.stop` are dropped,
+    // then the sends get `SEND_DRAIN`, so a slow client can never keep the process past both.
+    if server::serve(listener, router(app), Limits::SERVED, stop).await == Stopped::Abandoned {
+        logger.event("server.connections_abandoned", &[]);
+    }
     purge.abort();
     if !in_flight.settled(SEND_DRAIN).await {
         logger.event("mail.abandoned", &[]);
     }
     store.close().await;
     logger.event("server.stopped", &[]);
-    served.map_err(|_| StartFailure("server.listen_failed"))
+    Ok(())
 }
 
 async fn purge_command(logger: &Logger) -> Result<(), StartFailure> {
     let policy = policy::embedded().map_err(|_| StartFailure("server.policy_invalid"))?;
-    let url = environment("POSTGRESQL_ADDON_URI")
-        .filter(|value| !value.is_empty())
-        .ok_or_else(|| {
-            logger.event(
-                "server.config_invalid",
-                &[("variable", "POSTGRESQL_ADDON_URI".into())],
-            );
-            StartFailure("server.config_invalid")
-        })?;
-    let store = PgStore::connect(&url, 1, policy.consent_text_version)
+    let database = DatabaseSetting::from_source(&environment).inspect_err(|error| {
+        logger.event("server.config_invalid", &[("variable", error.0.into())]);
+    })?;
+    let options =
+        connect_options(&database.url, database.allow_insecure_local).map_err(StartFailure)?;
+    let store = PgStore::connect(options, 1, policy.consent_text_version)
         .await
         .map_err(|_| StartFailure("server.database_unavailable"))?;
     let purged = purge_once(&store, logger).await;

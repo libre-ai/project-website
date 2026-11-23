@@ -6,10 +6,13 @@ use std::future::Future;
 use std::path::PathBuf;
 use std::pin::Pin;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::time::Duration;
 
 use time::OffsetDateTime;
+use tokio::sync::{Notify, mpsc};
 
+use crate::log::Logger;
 use crate::messages::{MailMessage, to_rfc5322};
 use crate::tokens::random_uuid;
 use crate::web::is_js_whitespace;
@@ -69,6 +72,104 @@ pub fn sender_address(from: &str) -> Result<String, MailError> {
     match address.split_once('@') {
         Some((local, domain)) if valid_part(local) && valid_part(domain) => Ok(address),
         _ => Err(MailError("mail.sender_invalid")),
+    }
+}
+
+/// Sends queued or started and not finished, so a stop can wait for them instead of dropping a
+/// message.
+#[derive(Clone, Default)]
+pub struct InFlight {
+    count: Arc<AtomicUsize>,
+    idle: Arc<Notify>,
+}
+
+pub struct InFlightGuard(InFlight);
+
+impl Drop for InFlightGuard {
+    fn drop(&mut self) {
+        if self.0.count.fetch_sub(1, Ordering::SeqCst) == 1 {
+            self.0.idle.notify_waiters();
+        }
+    }
+}
+
+impl InFlight {
+    pub fn start(&self) -> InFlightGuard {
+        self.count.fetch_add(1, Ordering::SeqCst);
+        InFlightGuard(self.clone())
+    }
+
+    /// Waits until no send is in flight, or the bound has passed; true when none is left.
+    pub async fn settled(&self, bound: Duration) -> bool {
+        let wait = async {
+            loop {
+                let idle = self.idle.notified();
+                if self.count.load(Ordering::SeqCst) == 0 {
+                    return;
+                }
+                idle.await;
+            }
+        };
+        tokio::time::timeout(bound, wait).await.is_ok()
+    }
+}
+
+/// Messages waiting for the dispatcher. Past this, a message is dropped and logged: the request
+/// stays pending and a new subscription sends again.
+pub const MAIL_QUEUE_CAPACITY: usize = 1024;
+
+struct Queued {
+    message: MailMessage,
+    _guard: InFlightGuard,
+}
+
+/// The only way a request starts a send. The request hands the message over and returns; the
+/// dispatcher task, one for the process, calls `Mailer::send` — whose synchronous part may
+/// block (a relay's preparation) — on the blocking pool, in arrival order, so the outbox
+/// numbering and any relay preparation stay out of the request path (ADR 0006 §4: the answer
+/// time must not depend on whether a send happens).
+#[derive(Clone)]
+pub struct MailQueue {
+    sender: mpsc::Sender<Queued>,
+    in_flight: InFlight,
+}
+
+impl MailQueue {
+    /// Starts the dispatcher on the current runtime.
+    pub fn start(mailer: Arc<dyn Mailer>, in_flight: InFlight, logger: Logger) -> Self {
+        let (sender, mut receiver) = mpsc::channel::<Queued>(MAIL_QUEUE_CAPACITY);
+        tokio::spawn(async move {
+            while let Some(Queued { message, _guard }) = receiver.recv().await {
+                let mailer = mailer.clone();
+                let logger = logger.clone();
+                match tokio::task::spawn_blocking(move || mailer.send(message)).await {
+                    Ok(sending) => {
+                        tokio::spawn(async move {
+                            if sending.await.is_err() {
+                                logger.event("mail.failed", &[]);
+                            }
+                            drop(_guard);
+                        });
+                    }
+                    Err(_) => logger.event("mail.failed", &[]),
+                }
+            }
+        });
+        Self { sender, in_flight }
+    }
+
+    /// The sends this queue holds or started, for a stop to wait on.
+    pub fn in_flight(&self) -> &InFlight {
+        &self.in_flight
+    }
+
+    /// Hands the message over without waiting; false when the queue is full or closed.
+    pub fn enqueue(&self, message: MailMessage) -> bool {
+        let queued = Queued {
+            message,
+            _guard: self.in_flight.start(),
+        };
+        self.sender.try_send(queued).is_ok()
     }
 }
 

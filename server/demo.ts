@@ -51,6 +51,8 @@ export async function startDemo(
         // The demo answers this machine only, never the local network.
         SITE_LISTEN: `127.0.0.1:${options.port}`,
         POSTGRESQL_ADDON_URI: database.url,
+        // An in-memory database on the loopback, without TLS: the named local exception.
+        POSTGRESQL_ALLOW_INSECURE_LOCAL: "1",
         POSTGRESQL_MAX_CONNECTIONS: String(DATABASE_CONNECTIONS),
         WAITLIST_FROM: DEMO_SENDER,
         WAITLIST_OUTBOX: options.outboxDirectory,

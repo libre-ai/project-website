@@ -4,9 +4,10 @@
 
 use std::future::Future;
 use std::pin::Pin;
+use std::str::FromStr;
 use std::time::Duration;
 
-use sqlx::postgres::{PgPool, PgPoolOptions};
+use sqlx::postgres::{PgConnectOptions, PgPool, PgPoolOptions, PgSslMode};
 use time::OffsetDateTime;
 
 use crate::subscription::SubscriptionRequest;
@@ -79,17 +80,49 @@ fn expiry(now: OffsetDateTime) -> OffsetDateTime {
     now - PENDING_TTL
 }
 
+const LOOPBACK_HOSTS: [&str; 3] = ["localhost", "127.0.0.1", "::1"];
+
+/// The connection settings of `url`, refused unless the channel is encrypted and the server
+/// verified: `sslmode=verify-full` (in the URI, or `PGSSLMODE` in the environment, which the
+/// driver reads too). Anything weaker — sqlx's default `prefer` falls back to clear text and
+/// verifies no certificate — lets an interceptor read and change the whole list. The only way
+/// out is `allow_insecure_local`, accepted for a loopback server alone: the local tests and
+/// the demo. The error is a code; the URI holds the password and is never quoted.
+pub fn connect_options(
+    url: &str,
+    allow_insecure_local: bool,
+) -> Result<PgConnectOptions, &'static str> {
+    let options = PgConnectOptions::from_str(url).map_err(|_| "database.uri_invalid")?;
+    if matches!(options.get_ssl_mode(), PgSslMode::VerifyFull) {
+        return Ok(options);
+    }
+    if !allow_insecure_local {
+        return Err("database.tls_unverified");
+    }
+    let host = options.get_host().to_lowercase();
+    let host = host
+        .strip_prefix('[')
+        .and_then(|inner| inner.strip_suffix(']'))
+        .unwrap_or(&host);
+    let local = options.get_socket().is_some() || LOOPBACK_HOSTS.contains(&host);
+    if local {
+        Ok(options)
+    } else {
+        Err("database.insecure_not_local")
+    }
+}
+
 impl PgStore {
     /// Connects lazily and creates the table when absent.
     pub async fn connect(
-        url: &str,
+        options: PgConnectOptions,
         max_connections: u32,
         consent_version: String,
     ) -> Result<Self, StoreError> {
         let pool = PgPoolOptions::new()
             .max_connections(max_connections)
             .acquire_timeout(Duration::from_secs(10))
-            .connect(url)
+            .connect_with(options)
             .await
             .map_err(|_| StoreError)?;
         sqlx::raw_sql(SCHEMA_SQL)
@@ -197,5 +230,71 @@ impl Store for PgStore {
             .map_err(|_| StoreError)?;
             Ok(result.rows_affected())
         })
+    }
+}
+
+#[cfg(test)]
+#[allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::indexing_slicing
+)]
+mod tests {
+    use super::*;
+
+    fn refusal(url: &str, allow_insecure_local: bool) -> Option<&'static str> {
+        connect_options(url, allow_insecure_local).err()
+    }
+
+    #[test]
+    fn requires_a_verified_encrypted_channel() {
+        let remote = "postgres://db.example:5432/w";
+        assert_eq!(
+            refusal(&format!("{remote}?sslmode=verify-full"), false),
+            None
+        );
+        for mode in ["disable", "allow", "prefer", "require", "verify-ca"] {
+            assert_eq!(
+                refusal(&format!("{remote}?sslmode={mode}"), false),
+                Some("database.tls_unverified"),
+                "{mode}"
+            );
+        }
+        // Without a mode the driver falls back to `PGSSLMODE`, then to `prefer`.
+        assert!(
+            std::env::var_os("PGSSLMODE").is_none(),
+            "PGSSLMODE is set: this case reads it"
+        );
+        assert_eq!(refusal(remote, false), Some("database.tls_unverified"));
+        assert_eq!(
+            refusal("postgres://db.example/w?sslmode=unknown", false),
+            Some("database.uri_invalid")
+        );
+    }
+
+    #[test]
+    fn allows_clear_text_to_a_loopback_server_only_when_asked() {
+        for url in [
+            "postgres://127.0.0.1:5432/w?sslmode=disable",
+            "postgres://localhost/w?sslmode=prefer",
+            "postgres://[::1]:5432/w?sslmode=disable",
+        ] {
+            assert_eq!(refusal(url, true), None, "{url}");
+            assert_eq!(
+                refusal(url, false),
+                Some("database.tls_unverified"),
+                "{url}"
+            );
+        }
+        assert_eq!(
+            refusal("postgres://db.example/w?sslmode=disable", true),
+            Some("database.insecure_not_local")
+        );
+        // The exception never weakens a verified remote channel.
+        assert_eq!(
+            refusal("postgres://db.example/w?sslmode=verify-full", true),
+            None
+        );
     }
 }

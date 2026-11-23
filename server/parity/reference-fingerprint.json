@@ -1,4 +1,8 @@
 {
+  "runtime": {
+    "version": "1.4.0",
+    "revision": "57f349f6307cf89dcfb8893f003c1ef421a74589"
+  },
   "files": {
     "server/http.ts": "2624d31bea0233a9b975c0451798b7de1eaef6a773b04bec2597f38efa0f1cc1",
     "server/email.ts": "0ecb4f93d6017666f5331ff8e11b6d92a90de1e7090718413bd9c94078727dd4",

@@ -6,8 +6,6 @@
 
 use std::net::SocketAddr;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::time::Duration;
 
 use axum::Router;
 use axum::body::{Body, to_bytes};
@@ -15,13 +13,12 @@ use axum::extract::{ConnectInfo, Request, State};
 use axum::http::{HeaderMap, HeaderName, HeaderValue, StatusCode};
 use axum::response::Response;
 use time::OffsetDateTime;
-use tokio::sync::Notify;
 use url::Url;
 
 use crate::form::{decode_text, search_params};
-use crate::limiter::Limiter;
+use crate::limiter::{Limiter, client_key};
 use crate::log::Logger;
-use crate::mailer::Mailer;
+use crate::mailer::MailQueue;
 use crate::messages::confirmation_message;
 use crate::policy::Policy;
 use crate::site::{HTML, Site, none_match_hits, resolve_path};
@@ -38,44 +35,6 @@ const ONE_CLICK: &str = "List-Unsubscribe=One-Click";
 pub const RATE_LIMIT: u32 = 5;
 pub const RATE_WINDOW_MS: i64 = 10 * 60 * 1000;
 
-/// Sends started and not finished, so a stop can wait for them instead of dropping a message.
-#[derive(Clone, Default)]
-pub struct InFlight {
-    count: Arc<AtomicUsize>,
-    idle: Arc<Notify>,
-}
-
-struct InFlightGuard(InFlight);
-
-impl Drop for InFlightGuard {
-    fn drop(&mut self) {
-        if self.0.count.fetch_sub(1, Ordering::SeqCst) == 1 {
-            self.0.idle.notify_waiters();
-        }
-    }
-}
-
-impl InFlight {
-    fn start(&self) -> InFlightGuard {
-        self.count.fetch_add(1, Ordering::SeqCst);
-        InFlightGuard(self.clone())
-    }
-
-    /// Waits until no send is in flight, or the bound has passed; true when none is left.
-    pub async fn settled(&self, bound: Duration) -> bool {
-        let wait = async {
-            loop {
-                let idle = self.idle.notified();
-                if self.count.load(Ordering::SeqCst) == 0 {
-                    return;
-                }
-                idle.await;
-            }
-        };
-        tokio::time::timeout(bound, wait).await.is_ok()
-    }
-}
-
 pub struct App {
     pub site: Site,
     /// Canonical origin, used for message links and redirects, e.g. `https://libre-ia.fr`.
@@ -84,14 +43,15 @@ pub struct App {
     /// Hosts answered with a permanent redirect to the canonical origin.
     pub redirect_hosts: Vec<String>,
     pub store: Arc<dyn Store>,
-    pub mailer: Arc<dyn Mailer>,
+    /// The only way a request starts a send (`MailQueue`): nothing of the send runs before the
+    /// answer.
+    pub mail: MailQueue,
     /// Sender of the waitlist messages, a deployment setting.
     pub from: String,
     pub limiter: Limiter,
     pub logger: Logger,
     pub policy: Policy,
     pub clock: fn() -> OffsetDateTime,
-    pub in_flight: InFlight,
 }
 
 /// The origin and host name of a configured origin, as `new URL(origin)` reads them.
@@ -109,12 +69,22 @@ pub fn canonical(origin: &str) -> Option<(String, String)> {
 /// A failure the client sees as a 500 without detail.
 struct Failure;
 
-/// A header as `Headers.get` reads it: every occurrence, joined by `, `.
+/// A header as `Headers.get` reads it: every occurrence, joined by `, `, each byte one code
+/// point (Latin-1) — Bun exposes a byte 0xE9 as U+00E9 and the UTF-8 pair C3 A9 as two code
+/// points (both versions, measured on 2026-11-23). A value with such bytes is kept, never
+/// emptied: `gzip, é` still accepts gzip, and a form type with a non-ASCII parameter is still a
+/// form.
 fn header(headers: &HeaderMap, name: &str) -> Option<String> {
-    let values: Vec<&str> = headers
+    let values: Vec<String> = headers
         .get_all(name)
         .iter()
-        .map(|value| value.to_str().unwrap_or_default())
+        .map(|value| {
+            value
+                .as_bytes()
+                .iter()
+                .map(|byte| char::from(*byte))
+                .collect()
+        })
         .collect();
     (!values.is_empty()).then(|| values.join(", "))
 }
@@ -130,29 +100,15 @@ fn is_host_byte(byte: u8) -> bool {
 /// or port the WHATWG parser rejects. Either way the reference answers 500 (measured on
 /// 2026-11-23, ADR 0009).
 ///
-/// One difference of parsers is bridged: Bun keeps an all-ASCII `xn--` label without decoding
-/// it, where the `url` crate refuses one that is not valid punycode. Its prefix is shortened to
-/// `xn-` for the host check only — a plain label, which leaves the other checks (forbidden code
-/// points, IPv4, port) as they were. A host with `%` is checked as it is (not compared). The
-/// path and query do not depend on the host: they are read under a fixed one.
+/// An `xn--` label that is not valid punycode is refused, as Bun 1.4.4 refuses it; the pinned
+/// reference (1.4.0-canary.1) still accepts it and then answers 421 for the unknown host. That
+/// divergence is admitted (ADR 0009) and checked by the parity test. The path and query do not
+/// depend on the host: they are read under a fixed one.
 fn request_url(first_host: Option<&[u8]>, target: &str) -> Option<Url> {
     let host = first_host
         .filter(|host| !host.is_empty() && host.iter().all(|byte| is_host_byte(*byte)))?;
     let host = std::str::from_utf8(host).ok()?;
-    let checked = if host.contains('%') {
-        host.to_owned()
-    } else {
-        host.split('.')
-            .map(|label| match label.get(..4) {
-                Some(prefix) if prefix.eq_ignore_ascii_case("xn--") => {
-                    format!("xn-{}", label.get(4..).unwrap_or_default())
-                }
-                _ => label.to_owned(),
-            })
-            .collect::<Vec<_>>()
-            .join(".")
-    };
-    Url::parse(&format!("http://{checked}/")).ok()?;
+    Url::parse(&format!("http://{host}/")).ok()?;
     Url::parse(&format!("http://localhost{target}")).ok()
 }
 
@@ -314,9 +270,10 @@ impl App {
             "subscription.request",
             &[("outcome", outcome.code().into())],
         );
-        // The answer never waits for the send: only a new or pending address triggers one, so
-        // waiting would let the response time reveal a confirmed address (ADR 0006 §4). A failed
-        // send is logged; the request stays pending and a new subscription sends again.
+        // Nothing of the send runs before the answer, not even its preparation: only a new or
+        // pending address triggers one, so any such work would let the response time reveal a
+        // confirmed address (ADR 0006 §4). A failed send is logged; the request stays pending
+        // and a new subscription sends again.
         if outcome != RequestOutcome::AlreadyConfirmed {
             let message = confirmation_message(
                 &self.from,
@@ -324,15 +281,9 @@ impl App {
                 &format!("{}/confirmer?jeton={}", self.origin, confirm.token),
                 &format!("{}/desinscrire?jeton={}", self.origin, unsubscribe.token),
             );
-            let sending = self.mailer.send(message);
-            let guard = self.in_flight.start();
-            let logger = self.logger.clone();
-            tokio::spawn(async move {
-                if sending.await.is_err() {
-                    logger.event("mail.failed", &[]);
-                }
-                drop(guard);
-            });
+            if !self.mail.enqueue(message) {
+                self.logger.event("mail.dropped", &[]);
+            }
         }
         Ok(self.see_other("/inscription/merci/"))
     }
@@ -480,7 +431,7 @@ async fn handle(
     ConnectInfo(peer): ConnectInfo<SocketAddr>,
     request: Request,
 ) -> Response {
-    match app.route(request, &peer.ip().to_string()).await {
+    match app.route(request, &client_key(peer.ip())).await {
         Ok(response) => response,
         Err(Failure) => {
             app.logger.event("server.error", &[]);
@@ -503,11 +454,14 @@ pub fn router(app: Arc<App>) -> Router {
 )]
 mod tests {
     use std::sync::Mutex;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::time::Duration;
 
     use tokio::net::TcpListener;
+    use tokio::sync::Notify;
 
     use super::*;
-    use crate::mailer::{MailError, SendFuture};
+    use crate::mailer::{InFlight, MailError, Mailer, SendFuture};
     use crate::messages::MailMessage;
     use crate::policy::embedded;
     use crate::store::{StoreError, StoreFuture};
@@ -596,21 +550,24 @@ mod tests {
             canonical_host: "127.0.0.1".into(),
             redirect_hosts: vec![],
             store,
-            mailer,
+            mail: MailQueue::start(mailer, InFlight::default(), Logger::Memory(lines.clone())),
             from: "Libre IA <liste@libre-ia.example>".into(),
             limiter: Limiter::new(RATE_LIMIT, RATE_WINDOW_MS),
             logger: Logger::Memory(lines),
             policy: embedded().unwrap(),
             clock: OffsetDateTime::now_utc,
-            in_flight: InFlight::default(),
         })
     }
 
     async fn serve(app: Arc<App>) -> SocketAddr {
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
-        let service = router(app).into_make_service_with_connect_info::<SocketAddr>();
-        tokio::spawn(async move { axum::serve(listener, service).await });
+        tokio::spawn(crate::server::serve(
+            listener,
+            router(app),
+            crate::server::Limits::SERVED,
+            std::future::pending(),
+        ));
         address
     }
 
@@ -661,16 +618,147 @@ mod tests {
         .await;
         // The send is still held: the answer came anyway.
         assert!(answer.starts_with("HTTP/1.1 303"));
+        assert!(
+            !app.mail
+                .in_flight()
+                .settled(Duration::from_millis(50))
+                .await
+        );
+        // The dispatcher calls the mailer after the answer, on its own.
+        for _ in 0..500 {
+            if *attempts.lock().unwrap() == 1 {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
         assert_eq!(*attempts.lock().unwrap(), 1);
-        assert!(!app.in_flight.settled(Duration::from_millis(50)).await);
-        release.notify_waiters();
-        assert!(app.in_flight.settled(Duration::from_secs(5)).await);
+        // A stored permit: the release holds even if the send is not awaiting yet.
+        release.notify_one();
+        assert!(app.mail.in_flight().settled(Duration::from_secs(5)).await);
         assert!(
             lines
                 .lock()
                 .unwrap()
                 .contains(&r#"{"event":"mail.failed"}"#.to_owned())
         );
+    }
+
+    /// A store that answers the outcome it is given.
+    struct OutcomeStore(RequestOutcome);
+
+    impl Store for OutcomeStore {
+        fn request<'a>(
+            &'a self,
+            _: &'a SubscriptionRequest,
+            _: &'a str,
+            _: &'a str,
+            _: OffsetDateTime,
+        ) -> StoreFuture<'a, RequestOutcome> {
+            let outcome = self.0;
+            Box::pin(async move { Ok(outcome) })
+        }
+        fn confirm<'a>(&'a self, _: &'a str, _: OffsetDateTime) -> StoreFuture<'a, bool> {
+            Box::pin(async { Ok(false) })
+        }
+        fn unsubscribe<'a>(&'a self, _: &'a str) -> StoreFuture<'a, bool> {
+            Box::pin(async { Ok(false) })
+        }
+        fn purge_expired(&self, _: OffsetDateTime) -> StoreFuture<'_, u64> {
+            Box::pin(async { Ok(0) })
+        }
+    }
+
+    /// A mailer whose `send` blocks the calling thread until released, the way a synchronous
+    /// preparation (certificates read from disk, TLS set up) would: whatever calls it in the
+    /// request path holds the answer back.
+    struct BlockingMailer {
+        release: Mutex<std::sync::mpsc::Receiver<()>>,
+        calls: Arc<AtomicUsize>,
+    }
+
+    impl Mailer for BlockingMailer {
+        fn send(&self, _: MailMessage) -> SendFuture {
+            self.calls.fetch_add(1, Ordering::SeqCst);
+            // Err once the sender is dropped: the end of the test always unblocks it.
+            let _ = self.release.lock().unwrap().recv();
+            Box::pin(async { Ok(()) })
+        }
+    }
+
+    /// One subscription on a blocking socket with a read deadline. The deadline is the operating
+    /// system's, not a tokio timer: a runtime worker held by a blocking call can stall the
+    /// runtime's own timers, and the test would hang instead of failing.
+    async fn subscribe_within(address: SocketAddr, bound: Duration) -> std::io::Result<String> {
+        tokio::task::spawn_blocking(move || {
+            use std::io::{Read, Write};
+            let body = "courriel=a%40example.org";
+            let mut socket = std::net::TcpStream::connect(address)?;
+            socket.set_read_timeout(Some(bound))?;
+            socket.write_all(format!(
+                "POST /inscription HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            ).as_bytes())?;
+            let mut answer = Vec::new();
+            socket.read_to_end(&mut answer)?;
+            Ok(String::from_utf8_lossy(&answer).into_owned())
+        })
+        .await
+        .map_err(std::io::Error::other)?
+    }
+
+    /// ADR 0006 §4: a new and a confirmed address must answer alike, so no mail work — not even
+    /// its synchronous preparation — may run before the answer. A mailer that blocks its caller
+    /// shows it: the answer of a new address still comes, and a confirmed one never reaches the
+    /// mailer at all. One worker only: mail work that held a runtime worker, in the request or
+    /// in the dispatcher, would hold every answer back.
+    #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
+    async fn no_mail_work_runs_before_the_answer_on_either_path() {
+        for (outcome, expected_calls) in [
+            (RequestOutcome::Created, 2),
+            (RequestOutcome::Renewed, 2),
+            (RequestOutcome::AlreadyConfirmed, 0),
+        ] {
+            let (release, held) = std::sync::mpsc::channel();
+            let calls = Arc::new(AtomicUsize::new(0));
+            let mailer = Arc::new(BlockingMailer {
+                release: Mutex::new(held),
+                calls: calls.clone(),
+            });
+            let lines = Arc::new(Mutex::new(Vec::new()));
+            let app = app(Arc::new(OutcomeStore(outcome)), mailer, lines);
+            let address = serve(app.clone()).await;
+            let first = subscribe_within(address, Duration::from_secs(5)).await;
+            // Time for the first send to start and block, measured without a runtime timer.
+            tokio::task::spawn_blocking(|| std::thread::sleep(Duration::from_millis(200)))
+                .await
+                .unwrap();
+            // The first send is held now: the next answer must not wait for it either.
+            let second = subscribe_within(address, Duration::from_secs(5)).await;
+            // Released before any assertion, so a failure never leaves a worker blocked.
+            drop(release);
+            for answer in [first, second] {
+                let answer = answer
+                    .unwrap_or_else(|_| panic!("{outcome:?}: an answer waited for the mailer"));
+                assert!(answer.starts_with("HTTP/1.1 303"), "{outcome:?}: {answer}");
+            }
+            assert!(app.mail.in_flight().settled(Duration::from_secs(5)).await);
+            assert_eq!(calls.load(Ordering::SeqCst), expected_calls, "{outcome:?}");
+        }
+    }
+
+    /// `Headers.get` in Bun (1.4.0-canary.1 and 1.4.4), measured on 2026-11-23: one code point
+    /// per byte, occurrences joined by `, `.
+    #[test]
+    fn reads_header_bytes_as_bun_does() {
+        let mut headers = HeaderMap::new();
+        headers.append("x-probe", HeaderValue::from_bytes(b"a\xe9b").unwrap());
+        headers.append("x-probe", HeaderValue::from_bytes(b"a\xc3\xa9b").unwrap());
+        headers.append("x-probe", HeaderValue::from_bytes(b"\xff\x80").unwrap());
+        assert_eq!(
+            header(&headers, "x-probe").as_deref(),
+            Some("a\u{e9}b, a\u{c3}\u{a9}b, \u{ff}\u{80}")
+        );
+        assert_eq!(header(&headers, "absent"), None);
     }
 
     #[test]
@@ -682,12 +770,34 @@ mod tests {
         assert_eq!(canonical("ftp://libre-ia.fr"), None);
     }
 
-    /// Whether `new URL(request.url)` succeeds in Bun 1.4.0-canary.1+57f349f63 for a request
-    /// `GET /x?q` with this Host value, measured on 2026-11-23: the expected column comes from
-    /// the reference, not from this port.
+    /// Whether `new URL(request.url)` succeeds for a request `GET /x?q` with this Host value,
+    /// measured on 2026-11-23 under the pinned reference (1.4.0-canary.1+57f349f63) and under
+    /// 1.4.4-canary.1+963452075: the lists come from Bun, not from this port. Both versions
+    /// agree on every host below; the port follows them.
     #[test]
     fn builds_the_request_url_as_the_reference_measured() {
+        // Accepted by the pinned reference, refused by 1.4.4 and by the port: an `xn--` label
+        // that is not valid punycode (admitted divergence, ADR 0009).
+        for host in [
+            "xn--a.fr",
+            "XN--A.libreia.fr",
+            "xn--a",
+            "a.xn--a.fr",
+            "xn--.fr",
+            "xn--abc-.fr",
+        ] {
+            assert!(
+                request_url(Some(host.as_bytes()), "/x?q").is_none(),
+                "{host:?}"
+            );
+        }
         let accepted = [
+            "xn--9ca.fr",
+            "a%41.fr",
+            "[::1]:80",
+            "%41",
+            "a%2Eb",
+            "libre-ia.fr",
             "a!b.fr",
             "a$b.fr",
             "a&b.fr",
@@ -713,7 +823,6 @@ mod tests {
             "a..b",
             "1.2.3.4",
             "0x7f.1",
-            "xn--a.fr",
             "xn--zca.fr",
             "a%41b",
             "a%2eb",
@@ -753,6 +862,11 @@ mod tests {
             "aé",
             "ÿ",
             "",
+            "a@libre-ai.fr",
+            "libre-ia.fr:99999",
+            "libre-ia.fr:+1",
+            "é.fr",
+            "a%zz",
         ];
         for host in accepted {
             assert!(

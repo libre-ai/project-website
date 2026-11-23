@@ -8,6 +8,7 @@
 
 use std::collections::BTreeSet;
 
+use axum::http::{HeaderName, HeaderValue};
 use serde::Deserialize;
 
 const POLICY_JSON: &str = include_str!("../policy.json");
@@ -42,7 +43,8 @@ impl std::fmt::Display for PolicyError {
 
 impl std::error::Error for PolicyError {}
 
-/// Parses a policy document; an empty list or an unknown field is refused, never defaulted.
+/// Parses a policy document; an empty list, an unknown field or a security header that cannot
+/// be sent is refused, never defaulted: a response would otherwise go out without it, silently.
 pub fn parse(text: &str) -> Result<Policy, PolicyError> {
     let raw: RawPolicy = serde_json::from_str(text).map_err(|_| PolicyError)?;
     if raw.security_headers.is_empty()
@@ -50,6 +52,12 @@ pub fn parse(text: &str) -> Result<Policy, PolicyError> {
         || raw.follow.is_empty()
         || raw.consent_text_version.is_empty()
     {
+        return Err(PolicyError);
+    }
+    let sendable = raw.security_headers.iter().all(|(name, value)| {
+        HeaderName::try_from(name.as_str()).is_ok() && HeaderValue::try_from(value.as_str()).is_ok()
+    });
+    if !sendable {
         return Err(PolicyError);
     }
     Ok(Policy {
@@ -95,5 +103,18 @@ mod tests {
         assert_eq!(parse(empty).unwrap_err(), PolicyError);
         let unknown = r#"{"securityHeaders":[["a","b"]],"consentTextVersion":"v","universes":["a"],"follow":["P01"],"x":1}"#;
         assert_eq!(parse(unknown).unwrap_err(), PolicyError);
+    }
+
+    #[test]
+    fn a_security_header_that_cannot_be_sent_is_refused_not_skipped() {
+        let with = |name: &str, value: &str| {
+            format!(
+                r#"{{"securityHeaders":[["X-Frame-Options","DENY"],[{name:?},{value:?}]],"consentTextVersion":"v","universes":["a"],"follow":["P01"]}}"#
+            )
+        };
+        assert!(parse(&with("X-Ok", "a; b")).is_ok());
+        assert_eq!(parse(&with("bad name", "v")).unwrap_err(), PolicyError);
+        assert_eq!(parse(&with("X-Bad", "a\nb")).unwrap_err(), PolicyError);
+        assert_eq!(parse(&with("", "v")).unwrap_err(), PolicyError);
     }
 }

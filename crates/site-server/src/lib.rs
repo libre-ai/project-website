@@ -16,6 +16,7 @@ pub mod log;
 pub mod mailer;
 pub mod messages;
 pub mod policy;
+pub mod server;
 pub mod site;
 pub mod smtp;
 pub mod store;

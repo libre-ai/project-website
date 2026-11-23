@@ -15,13 +15,44 @@ pub enum MailSetting {
     Smtp(SmtpConfig),
 }
 
+/// The database, read by the server and by `site-server purge` alike.
+#[derive(Clone)]
+pub struct DatabaseSetting {
+    /// Holds the password: never printed (`Debug` below writes `<redacted>`).
+    pub url: String,
+    /// `POSTGRESQL_ALLOW_INSECURE_LOCAL=1`: a loopback server may be spoken to without a
+    /// verified TLS channel (`store::connect_options`). Local tests and the demo only.
+    pub allow_insecure_local: bool,
+}
+
+impl std::fmt::Debug for DatabaseSetting {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("DatabaseSetting")
+            .field("url", &"<redacted>")
+            .field("allow_insecure_local", &self.allow_insecure_local)
+            .finish()
+    }
+}
+
+impl DatabaseSetting {
+    pub fn from_source(read: &dyn Fn(&str) -> Option<String>) -> Result<Self, ConfigError> {
+        Ok(Self {
+            url: required(read, "POSTGRESQL_ADDON_URI")?,
+            allow_insecure_local: flag(read, "POSTGRESQL_ALLOW_INSECURE_LOCAL")?,
+        })
+    }
+}
+
+/// `Debug` comes from the fields, and the only secrets (database URI, SMTP password) print as
+/// `<redacted>` in their own types: a `{:?}` added to a log later cannot leak them.
 #[derive(Debug, Clone)]
 pub struct Config {
     pub site_directory: PathBuf,
     pub origin: String,
     pub redirect_hosts: Vec<String>,
     pub listen: SocketAddr,
-    pub database_url: String,
+    pub database: DatabaseSetting,
     pub database_max_connections: u32,
     pub from: String,
     pub mail: MailSetting,
@@ -44,6 +75,15 @@ fn required(
 
 fn optional(read: &dyn Fn(&str) -> Option<String>, name: &str) -> Option<String> {
     read(name).filter(|value| !value.is_empty())
+}
+
+/// `1` or `0`, absent meaning `0`; anything else is refused rather than guessed.
+fn flag(read: &dyn Fn(&str) -> Option<String>, name: &'static str) -> Result<bool, ConfigError> {
+    match optional(read, name).as_deref() {
+        None | Some("0") => Ok(false),
+        Some("1") => Ok(true),
+        Some(_) => Err(ConfigError(name)),
+    }
 }
 
 fn parsed<T: std::str::FromStr>(
@@ -84,11 +124,7 @@ impl Config {
                 port: parsed(read, "SMTP_PORT")?,
                 user: optional(read, "SMTP_USER"),
                 password: optional(read, "SMTP_PASSWORD"),
-                allow_insecure_local: match optional(read, "SMTP_ALLOW_INSECURE_LOCAL").as_deref() {
-                    None | Some("0") => false,
-                    Some("1") => true,
-                    Some(_) => return Err(ConfigError("SMTP_ALLOW_INSECURE_LOCAL")),
-                },
+                allow_insecure_local: flag(read, "SMTP_ALLOW_INSECURE_LOCAL")?,
                 timeout_ms: parsed(read, "SMTP_TIMEOUT_MS")?,
             }),
             // Exactly one destination: a deployment never writes files by accident, and a demo
@@ -100,7 +136,7 @@ impl Config {
             origin: required(read, "SITE_ORIGIN")?,
             redirect_hosts,
             listen,
-            database_url: required(read, "POSTGRESQL_ADDON_URI")?,
+            database: DatabaseSetting::from_source(read)?,
             database_max_connections,
             from: required(read, "WAITLIST_FROM")?,
             mail,
@@ -159,6 +195,42 @@ mod tests {
                 ..
             })
         ));
+    }
+
+    #[test]
+    fn never_prints_a_secret_in_debug() {
+        let mut pairs = BASE.to_vec();
+        pairs.retain(|(name, _)| *name != "POSTGRESQL_ADDON_URI");
+        pairs.extend([
+            // The whole URI is redacted; a value in its path stands for the password, which a
+            // literal credential would make the secret scan refuse.
+            (
+                "POSTGRESQL_ADDON_URI",
+                "postgres://db.example/db-secret-value",
+            ),
+            ("SMTP_HOST", "mail.example"),
+            ("SMTP_USER", "u"),
+            ("SMTP_PASSWORD", "smtp-secret-value"),
+        ]);
+        let printed = format!("{:?}", read(&pairs).unwrap());
+        assert!(!printed.contains("secret-value"), "{printed}");
+        assert!(printed.contains("<redacted>"), "{printed}");
+    }
+
+    #[test]
+    fn reads_the_local_database_exception_as_a_strict_flag() {
+        let mut pairs = BASE.to_vec();
+        pairs.push(("WAITLIST_OUTBOX", "o"));
+        assert!(!read(&pairs).unwrap().database.allow_insecure_local);
+        let mut on = pairs.clone();
+        on.push(("POSTGRESQL_ALLOW_INSECURE_LOCAL", "1"));
+        assert!(read(&on).unwrap().database.allow_insecure_local);
+        let mut unclear = pairs;
+        unclear.push(("POSTGRESQL_ALLOW_INSECURE_LOCAL", "yes"));
+        assert_eq!(
+            read(&unclear).unwrap_err(),
+            ConfigError("POSTGRESQL_ALLOW_INSECURE_LOCAL")
+        );
     }
 
     #[test]

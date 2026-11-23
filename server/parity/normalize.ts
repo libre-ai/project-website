@@ -9,7 +9,13 @@
  * - `token`: the 43-character base64url tokens written into each message (32 random bytes);
  * - `token-digest`: `confirm_hash` and `unsubscribe_hash`, replaced by the token whose SHA-256
  *   they are — a digest that matches no token of the run stays as it is;
- * - `row-timestamp`: `requested_at` and `confirmed_at`, the clock at the request;
+ * - `row-clock`: `requested_at` and `confirmed_at`, replaced by the step of the run whose test
+ *   clock window holds them (from the step's start to its end, `CLOCK_SLACK_MS` after) —
+ *   `requested_at` once the ageing done since that step is undone,
+ *   `confirmed_at` as it is, since ageing never moves it. A renewal that keeps the first
+ *   request's time, or a date away from the test clock, names another step or none, and a value
+ *   that falls in no window stays as it is, so the comparison fails. `clockOrderViolations`
+ *   holds the last relation: a row is never confirmed before it was requested;
  * - `message-date`: the `Date` header of a message, in the RFC 5322 form;
  * - `message-id`: the random UUID of `Message-ID`, the domain kept;
  * - `outbox-file-stamp`: the ISO 8601 stamp of an outbox file name, the order number kept.
@@ -25,7 +31,7 @@ export const NORMALISERS = [
   "gzip-body",
   "token",
   "token-digest",
-  "row-timestamp",
+  "row-clock",
   "message-date",
   "message-id",
   "outbox-file-stamp",
@@ -55,6 +61,11 @@ export interface StepTrace {
   readonly response: ResponseTrace | null;
   readonly rows: readonly RowTrace[];
   readonly messageCount: number;
+  /** Test clock, in milliseconds, when the step began and once its trace was read. */
+  readonly started: number;
+  readonly ended: number;
+  /** Hours every `requested_at` was moved back since the start of the run, this step included. */
+  readonly agedHours: number;
 }
 
 export interface MessageTrace {
@@ -158,12 +169,73 @@ function normaliseResponse(
   return { status: response.status, headers, body: replaceTokens(bodyText(body), tokens, applied) };
 }
 
-function normaliseRow(row: RowTrace, digests: Map<string, string>, applied: Applied): unknown {
+const HOUR_MS = 3_600_000;
+
+/**
+ * Milliseconds a stored time may read past the end of its step: the port writes microseconds,
+ * which the database driver may round up to the next millisecond. The runners start each step
+ * at least `STEP_GAP_MS` after the previous one ended, so the windows never touch.
+ */
+export const CLOCK_SLACK_MS = 1;
+export const STEP_GAP_MS = CLOCK_SLACK_MS + 1;
+
+/**
+ * The step whose window holds `value`, read in the rows of step `at`: step k owns
+ * [its start, its end + `CLOCK_SLACK_MS`]. Windows that touch are a failure of the run.
+ */
+export function clockStep(
+  value: Date,
+  column: "requested_at" | "confirmed_at",
+  at: number,
+  steps: readonly StepTrace[],
+): number | null {
+  const reading = steps[at];
+  if (reading === undefined) return null;
+  for (let k = at; k >= 0; k -= 1) {
+    const step = steps[k];
+    if (step === undefined) return null;
+    const previous = steps[k - 1];
+    if (previous !== undefined && step.started <= previous.ended + CLOCK_SLACK_MS) {
+      throw new Error(`parity.clock_windows_touch:${k}`);
+    }
+    // Ageing moves `requested_at` back; undone here, what remains is the time it was written.
+    const shift = column === "requested_at" ? (reading.agedHours - step.agedHours) * HOUR_MS : 0;
+    const time = value.getTime() + shift;
+    if (time >= step.started && time <= step.ended + CLOCK_SLACK_MS) return k;
+  }
+  return null;
+}
+
+/** Rows confirmed before they were requested, by step; empty when the relation holds. */
+export function clockOrderViolations(run: RunTrace): string[] {
+  return run.steps.flatMap((step, index) =>
+    step.rows
+      .filter(
+        ({ requested_at, confirmed_at }) =>
+          requested_at instanceof Date &&
+          confirmed_at instanceof Date &&
+          confirmed_at.getTime() < requested_at.getTime(),
+      )
+      .map(() => `step ${index} (${step.label}): confirmed_at before requested_at`),
+  );
+}
+
+function normaliseRow(
+  row: RowTrace,
+  at: number,
+  steps: readonly StepTrace[],
+  digests: Map<string, string>,
+  applied: Applied,
+): unknown {
   const out: Record<string, unknown> = {};
   for (const [column, value] of Object.entries(row)) {
-    if ((column === "requested_at" || column === "confirmed_at") && value instanceof Date) {
-      applied["row-timestamp"] += 1;
-      out[column] = "<timestamp>";
+    const step =
+      (column === "requested_at" || column === "confirmed_at") && value instanceof Date
+        ? clockStep(value, column, at, steps)
+        : null;
+    if (step !== null) {
+      applied["row-clock"] += 1;
+      out[column] = `<clock of step ${step}>`;
     } else if (
       (column === "confirm_hash" || column === "unsubscribe_hash") &&
       typeof value === "string" &&
@@ -211,10 +283,10 @@ function normaliseMessage(
 export function normaliseRun(run: RunTrace, applied: Applied): unknown {
   const { tokens, digests } = replacements(run.messages);
   return {
-    steps: run.steps.map((step) => ({
+    steps: run.steps.map((step, at) => ({
       label: step.label,
       response: step.response === null ? null : normaliseResponse(step.response, tokens, applied),
-      rows: step.rows.map((row) => normaliseRow(row, digests, applied)),
+      rows: step.rows.map((row) => normaliseRow(row, at, run.steps, digests, applied)),
       messageCount: step.messageCount,
     })),
     messages: run.messages.map((message) => normaliseMessage(message, tokens, applied)),

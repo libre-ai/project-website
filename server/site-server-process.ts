@@ -4,7 +4,7 @@
  * site-server` (`bun run test`, `bun run demo` and `bun run test:e2e` build it first); an absent
  * binary fails, it is never replaced by the Bun reference.
  */
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 export const SITE_SERVER_BINARY = join(import.meta.dir, "..", "target", "debug", "site-server");
@@ -17,8 +17,36 @@ export interface SiteServerProcess {
   stop(): Promise<number>;
 }
 
-export function requireBinary(binary: string = SITE_SERVER_BINARY): string {
+/** The crate's own sources: every file rustc reads for the binary (`policy.json` is embedded). */
+export const SITE_SERVER_SOURCES = join(import.meta.dir, "..", "crates", "site-server");
+
+/** The newest modification time among the `.rs` files and `policy.json` under `sources`. */
+function newestSource(sources: string): number {
+  let newest = 0;
+  for (const entry of readdirSync(sources, { recursive: true, withFileTypes: true })) {
+    if (!entry.isFile()) continue;
+    if (!entry.name.endsWith(".rs") && entry.name !== "policy.json") continue;
+    newest = Math.max(newest, statSync(join(entry.parentPath, entry.name)).mtimeMs);
+  }
+  if (newest === 0) throw new Error(`site_server.sources_missing:${sources}`);
+  return newest;
+}
+
+/**
+ * The binary to run, refused when absent or older than its sources: a `bun test` run without
+ * the build of `bun run test` would otherwise test a binary that no longer matches the code.
+ * Cargo rewrites the binary whenever one of these files is newer than its last build.
+ */
+export function requireBinary(
+  binary: string = SITE_SERVER_BINARY,
+  sources: string = SITE_SERVER_SOURCES,
+): string {
   if (!existsSync(binary)) throw new Error(`site_server.binary_missing:${binary}`);
+  if (statSync(binary).mtimeMs < newestSource(sources)) {
+    throw new Error(
+      `site_server.binary_stale:${binary} (run cargo build --locked --bin site-server)`,
+    );
+  }
   return binary;
 }
 
@@ -107,7 +135,12 @@ export async function purgeWithSiteServer(
   binary?: string,
 ): Promise<{ readonly code: number; readonly lines: string[] }> {
   const child = Bun.spawn([requireBinary(binary), "purge"], {
-    env: { PATH: process.env.PATH ?? "", POSTGRESQL_ADDON_URI: databaseUrl },
+    env: {
+      PATH: process.env.PATH ?? "",
+      POSTGRESQL_ADDON_URI: databaseUrl,
+      // The test databases are in-memory servers on the loopback, without TLS.
+      POSTGRESQL_ALLOW_INSECURE_LOCAL: "1",
+    },
     stdout: "pipe",
     stderr: "inherit",
   });

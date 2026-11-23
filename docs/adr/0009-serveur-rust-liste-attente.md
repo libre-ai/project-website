@@ -36,11 +36,21 @@ Caddy).
    D5 ») : `server/parity.test.ts`. Les mêmes requêtes vont à l'implémentation Bun (la
    référence), lancée deux fois, et au binaire Rust, chacun sur une base neuve. Sont comparés
    après chaque étape : statut, en-têtes, corps, état de `subscribers` ; puis les messages
-   écrits et les lignes de journal. Le corpus nomme ses sources (`server/parity/corpus.ts`) ;
-   ce qui varie entre deux exécutions de la référence est couvert par des normaliseurs nommés
-   (`server/parity/normalize.ts`), sans joker ; une empreinte des fichiers de la référence
-   (`server/parity/reference-fingerprint.json`) fait rougir le test si la référence change ; le
-   test imprime le volume comparé et échoue sur une source absente.
+   écrits et les lignes de journal. Le corpus nomme ses sources (`server/parity/corpus.ts`), et
+   chaque source est reliée à un contrôle : un scénario `reference-tests` cite les tests de
+   `server/http.test.ts`, `store.test.ts` et `purge.test.ts` qu'il rejoue, et un test de ces
+   fichiers ni rejoué ni excusé (`NOT_IN_CORPUS`, avec le test Rust qui tient l'affirmation) fait
+   rougir ; un scénario `porting-risks` nomme la construction de la référence qu'il exerce, et
+   une construction absente de la référence fait rougir ; `authored` désigne les cas écrits pour
+   des bords qu'aucun test de la référence n'atteint. Ce qui varie entre deux exécutions de la
+   référence est couvert par des normaliseurs nommés (`server/parity/normalize.ts`), sans
+   joker ; les dates de `subscribers` y sont rapportées à l'étape du test dont la fenêtre
+   d'horloge les contient, le vieillissement défait pour `requested_at` (un renouvellement qui
+   garde la date de la première demande, ou une date loin de l'horloge du test, désigne une
+   autre étape ou aucune), et `confirmed_at >= requested_at` est vérifié à chaque étape.
+   L'empreinte de la référence (`server/parity/reference-fingerprint.json`) couvre ses fichiers
+   **et l'exécutable Bun, version et révision exactes** : le test rougit si l'un ou l'autre
+   change. Le test imprime le volume comparé et échoue sur une source absente.
 4. **Bun ne sert plus aucune requête.** `server/http.ts` et les modules qu'il emploie restent
    comme **référence de parité**, non déployable : rien ne la lance hors du test de parité. La
    démonstration locale (`bun run demo`) et la suite e2e passent par le binaire Rust ;
@@ -50,34 +60,107 @@ Caddy).
    déploiement du binaire vérifié par les smokes. Sa suppression retire `server/http.ts` et ses
    modules, le test de parité, son corpus et son empreinte, dans une même pull request.
 
+## Version de Bun de la référence
+
+La référence s'exécute sous le Bun épinglé par la flotte : `toolchains/bun.json` de
+`project-governance` donne la révision `1.4.0-canary.1+57f349f63`, et la CI l'emploie (journal
+du run 45239055419 : « bun install v1.4.0-canary.1 (57f349f63) », mesuré le 2026-11-23). Les
+réponses de la référence en dépendent : Bun 1.4.4 refuse des adresses et des hôtes que
+1.4.0-canary.1 accepte (ci-dessous). D'où l'empreinte du runtime au point 3 : sous un autre Bun,
+même de même version, le test de parité rougit avant toute comparaison, jusqu'à ce que la
+référence soit rejouée et réenregistrée (`bun run parity:record`).
+
+`engines.bun` reste `>=1.4.0` : le gate de flotte `check-bun-manifests.ts` de
+`project-governance` exige exactement `">=" + minimumVersion`, et une valeur exacte le ferait
+échouer. `packageManager` porte déjà `bun@1.4.0-canary.1`. L'épinglage exact vit donc dans
+l'empreinte, pas dans `engines`.
+
 ## Divergences enregistrées
 
-Mesurées pendant le portage, sur Bun 1.4.0-canary.1+57f349f63 ; le port reproduit chaque
-comportement de la référence, et un test Rust garde la table mesurée.
+Mesurées pendant le portage, sur Bun 1.4.0-canary.1+57f349f63 (la référence épinglée) et sur
+Bun 1.4.4-canary.1+963452075 ; un test Rust garde chaque table mesurée.
 
-- `domainToASCII` de `node:url` sous Bun rend tel quel un domaine tout ASCII (un label `xn--`
-  invalide passe) sauf s'il contient un code point interdit d'hôte (`%` et `*` passent) ; un
-  domaine non ASCII passe par UTS 46 (`email.rs`, `converts_domains_as_the_reference_measured`).
+- `domainToASCII` de `node:url` : sous 1.4.0-canary.1, un domaine tout ASCII est rendu tel quel
+  (un label `xn--` invalide passe, `%` aussi) ; sous 1.4.4, il passe par UTS 46 et un label
+  `xn--` invalide ou un `%` sont refusés. **Le port suit 1.4.4** : il refuse `%` et les labels
+  `xn--` invalides, et n'enregistre donc pas une adresse que la référence épinglée enregistre.
+  Divergence **admise** : le corpus déclare, pour chacun de ces cas, l'issue de la référence
+  (303 `merci`, une ligne, un message) et celle du port (303 `erreur`, rien), et le test de
+  parité les vérifie toutes deux sous la seule révision mesurée (`email.rs`,
+  `converts_domains_as_the_reference_measured` ; corpus : `refusedAddress`).
 - Bun ne construit `request.url` depuis l'en-tête Host que si chaque octet en est un octet
   d'hôte RFC 3986 ; sinon `new URL(request.url)` lève et la référence répond 500 (`http.rs`,
-  `builds_the_request_url_as_the_reference_measured`).
+  `builds_the_request_url_as_the_reference_measured`). Un hôte à label `xn--` invalide
+  (`xn--a.fr`) : 1.4.0-canary.1 construit l'URL et répond 421 (hôte inconnu), 1.4.4 lève et
+  répond 500. **Le port suit 1.4.4 (500)**, divergence admise et vérifiée de la même façon
+  (scénario « hosts with an invalid punycode label »).
+- Un octet non ASCII d'en-tête est lu par Bun comme un code point (Latin-1 : `C3 A9` donne
+  `Ã©`), sous les deux versions ; le port fait de même au lieu de vider la valeur (scénario
+  « header values with non-ASCII bytes »).
 - `Bun.serve` garde la connexion ouverte après la réponse à un POST malgré `Connection: close` :
   le client du test délimite lui-même la réponse.
+
+## Exploitation du binaire
+
+Décisions de la revue du 2026-11-23, chacune tenue par un test :
+
+- **Envoi hors du chemin de la requête.** Le transport SMTP est construit une fois au
+  démarrage ; une réponse n'attend jamais l'envoi, ni sa préparation : le message part dans
+  une file bornée (1024) qu'une tâche dépile, l'envoi tournant hors des fils du serveur. File
+  pleine : la demande reste enregistrée, le message n'est pas envoyé, `mail.dropped` est
+  journalisé ; une nouvelle demande renvoie le message (ADR 0006 §4).
+- **Délais.** Lecture des en-têtes et inactivité d'une connexion bornées à 10 s, comme
+  `Bun.serve`. À SIGTERM, le binaire cesse d'accepter, laisse 10 s aux connexions ouvertes puis
+  les abandonne (`server.connections_abandoned`), puis laisse 30 s aux envois en cours ; un
+  client lent ne retient donc jamais le processus au-delà de ces deux bornes.
+- **PostgreSQL chiffré et vérifié.** Le binaire refuse de démarrer si la connexion ne demande
+  pas `sslmode=verify-full` (dans l'URI ou par `PGSSLMODE`) : sans elle, sqlx retombe en clair
+  et ne vérifie ni certificat ni nom d'hôte. Exception nommée, pour les tests et la
+  démonstration : `POSTGRESQL_ALLOW_INSECURE_LOCAL=1`, valable seulement vers une boucle locale
+  ou un socket. Les racines de confiance sont celles du système (`tls-rustls-ring-native-roots`).
+  **Hypothèse non mesurée** : que l'URI fournie par Clever Cloud (`POSTGRESQL_ADDON_URI`) porte
+  `sslmode=verify-full`, et que le certificat de l'addon soit signé par une autorité des
+  racines du système. Le jalon de déploiement la vérifie ; à défaut, il pose
+  `PGSSLMODE=verify-full` et, si l'autorité n'est pas dans les racines, `PGSSLROOTCERT`.
+- **Limiteur.** Un client IPv6 est compté par son /64 (une ligne d'abonné reçoit en général un
+  /64 entier ; compté par adresse, il pourrait changer de clé à chaque requête) ; une adresse
+  IPv4 projetée en IPv6 compte comme IPv4. Les fenêtres expirées sortent par une file ordonnée,
+  sans parcours de la table, et la table suit au plus 100 000 clients, au-delà desquels un
+  nouveau client est refusé jusqu'à expiration. **Reste ouvert avant le déploiement** : aucune
+  limite par adresse électronique ; une adresse en attente reçoit un message par demande
+  acceptée.
+- **Purge au démarrage**, avant d'écouter, puis toutes les heures.
+- **Jetons.** La parité vérifie que chaque jeton du port porte 32 octets, ne se répète pas dans
+  l'exécution et n'apparaît dans aucune exécution de la référence ; cela exclut un jeton
+  constant ou rejoué, pas un jeton prévisible. L'imprévisibilité n'est tenue que par
+  `tokens.rs` (générateur du système d'exploitation).
+- **Politique d'en-têtes.** Un en-tête de sécurité de `policy.json` qui ne peut pas être envoyé
+  (nom ou valeur invalide) fait échouer le démarrage, au lieu d'être omis en silence des
+  réponses.
+- **Aucun secret dans un journal** : `Debug` de la configuration masque l'URI de la base et le
+  mot de passe SMTP.
+- **Fraîcheur du binaire.** Le test de parité et les tests du processus refusent un binaire
+  plus ancien que ses sources (`.rs`, `policy.json`). Limite : la comparaison porte sur les
+  dates de modification, comme celle de cargo ; un fichier restauré avec une date ancienne
+  passe pour plus vieux que le binaire, et ni cargo ni ce contrôle ne le voient.
+- **Dépendances.** `url` reste en 2.5.8 : 2.5.9 a été publiée le 2026-11-20 à 23:03 UTC, moins
+  de trois jours avant la mesure (garde d'âge de la flotte).
 
 ## Non comparé
 
 Temps de réponse, mémoire, concurrence ; le transport SMTP (les deux côtés écrivent dans une
 boîte d'envoi ; le client SMTP Rust a ses tests contre un relais local) ; les pannes de base
 (test Rust) ; un corps de plus de 64 Kio et une requête HTTP/1.1 sans Host (chaque pile les
-refuse à sa façon) ; un hôte qui contient `%` et un label `xn--` ; les lignes de démarrage et
-d'arrêt du binaire, sans équivalent dans la référence.
+refuse à sa façon) ; pour un scénario à divergence admise, les en-têtes, corps et journaux
+(seuls statut, `Location`, lignes et messages le sont) ; ce que le binaire journalise avant
+`server.listening` (sa première purge) et sa ligne d'arrêt, sans équivalent dans la référence.
 
 ## Conséquences
 
 - Le dépôt porte un espace de travail Cargo (`Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`)
   et le `deny.toml` commun de la flotte ; `bun run check` exécute `check:dependency-policy`
   (cargo-deny : bans, licences, sources) et `check:rust` (fmt, clippy `-D warnings`, tests).
-- Le limiteur reste indexé sur l'adresse de la connexion, comme la référence. Derrière un
+- Le limiteur reste indexé sur l'adresse de la connexion (son /64 en IPv6). Derrière un
   proxy, toutes les requêtes partageraient une clé : le jalon de déploiement doit décider de
   l'en-tête d'origine à croire avant la mise en ligne.
 - Les requêtes sqlx sont non préparées (`persistent(false)`), pour PGlite et les poolers.
