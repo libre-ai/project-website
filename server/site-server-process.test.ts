@@ -225,7 +225,11 @@ describe("site-server child process", () => {
       // `.woff2` is served as it is, without a gzip copy to build at start.
       const size = 32 * 1024 * 1024;
       await writeFile(join(site, "large.woff2"), randomBytes(size));
-      const server = await startSiteServer(serving({ SITE_DIRECTORY: site }));
+      // The debug binary reads and digests 32 MiB before it listens: on a loaded machine that
+      // passed the 15 s default (a local run at load average 30), so the start gets 45 s.
+      const server = await startSiteServer(serving({ SITE_DIRECTORY: site }), {
+        startTimeoutMs: 45_000,
+      });
       const client = connect(server.port, "127.0.0.1");
       client.on("error", () => {});
       await new Promise<void>((resolve) => client.once("connect", () => resolve()));
@@ -257,6 +261,6 @@ describe("site-server child process", () => {
         seen.indexOf("server.stopped"),
       );
     },
-    PROCESS_BOUND_MS + 20_000,
+    PROCESS_BOUND_MS + 50_000,
   );
 });
