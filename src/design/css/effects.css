@@ -164,8 +164,9 @@
     }
   }
 
-  /* Every delayed animation fills backwards: without it, an element shows its static style during
-     its delay, then snaps to its first keyframe (measured by e2e/rehearsal.e2e.ts). */
+  /* Every delayed animation fills backwards (here for `.d-votes i`, which delays this one):
+     without it, an element shows its static style during its delay, then snaps to its first
+     keyframe (measured by e2e/rehearsal.e2e.ts). */
   .a-barre {
     animation: d-barre var(--cycle) var(--sortie) infinite both;
   }

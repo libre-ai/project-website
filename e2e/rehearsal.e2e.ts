@@ -114,7 +114,7 @@ function rehearse(args: Thresholds): DemoReport[] {
 
     const elements = [figure, ...figure.querySelectorAll<Element>("*:not(svg *)")];
     const describe = (element: Element): string => {
-      const classes = [...element.classList].filter((name) => !name.startsWith("h-")).join(".");
+      const classes = [...element.classList].join(".");
       const text = (element.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 32);
       return `${element.tagName.toLowerCase()}${classes ? `.${classes}` : ""}${text ? ` « ${text} »` : ""}`;
     };
@@ -306,7 +306,8 @@ test.describe("micro-demo rehearsal", () => {
       test.skip(scriptless(testInfo.project.name), "seeking animations needs script");
       await page.setViewportSize({ width, height: 900 });
       await open(page, "/applications/");
-      // The universes are tabs: each panel is shown in turn, and every demo must be met once.
+      // The universes are tabs: each panel is shown in turn, and every demo must be met at least
+      // once (the first rehearsal of a demo is kept).
       const tabs = page.getByRole("tab");
       const tabCount = await tabs.count();
       expect(tabCount).toBeGreaterThan(0);
