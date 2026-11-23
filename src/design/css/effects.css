@@ -65,7 +65,10 @@
     }
   }
 
-  /* Micro-demos of the applications (demos.css holds their static, readable first state). */
+  /* Micro-demos of the applications (demos.css holds their static, readable first state).
+     Every loop ends where it starts: a keyframe holds its final state until 95 % and returns by
+     100 % (or fades out at both ends), otherwise the element snaps back when the cycle restarts
+     (measured by e2e/rehearsal.e2e.ts). */
   .demo {
     --sortie: cubic-bezier(0.2, 0.8, 0.2, 1);
   }
@@ -249,8 +252,11 @@
       transform: rotateY(0);
     }
     45%,
-    100% {
+    95% {
       transform: rotateY(-180deg);
+    }
+    100% {
+      transform: rotateY(0);
     }
   }
 
@@ -264,8 +270,11 @@
       transform: rotateY(180deg);
     }
     45%,
-    100% {
+    95% {
       transform: rotateY(0);
+    }
+    100% {
+      transform: rotateY(180deg);
     }
   }
 
@@ -322,9 +331,20 @@
     animation: d-balayage var(--cycle) linear infinite;
   }
 
+  /* The scan line stays inside the page and fades at both ends, so its return is never seen. */
   @keyframes d-balayage {
-    to {
-      inset-block-start: 110%;
+    0% {
+      inset-block-start: 0;
+      opacity: 0;
+    }
+    10%,
+    85% {
+      opacity: 1;
+    }
+    95%,
+    100% {
+      inset-block-start: calc(100% - 1.4rem);
+      opacity: 0;
     }
   }
 
@@ -377,8 +397,11 @@
   }
 
   @keyframes d-tete {
-    to {
+    95% {
       left: 97%;
+    }
+    100% {
+      left: 2%;
     }
   }
 
@@ -392,8 +415,11 @@
       transform: rotate(0) scale(0.8);
     }
     45%,
-    100% {
+    95% {
       transform: rotate(720deg) scale(1);
+    }
+    100% {
+      transform: rotate(720deg) scale(0.8);
     }
   }
 
