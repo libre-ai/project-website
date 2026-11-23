@@ -126,12 +126,20 @@ Décisions de la revue du 2026-11-23, chacune tenue par un test :
   les abandonne (`server.connections_abandoned`, tenu par un test du processus avec un tel
   lecteur lent), puis laisse 30 s aux envois en cours ; un client lent ne retient donc jamais
   le processus au-delà de ces deux bornes.
-- **Plafonds de connexions.** Au plus 512 connexions ouvertes à la fois, et 16 par client
-  (même clé que le limiteur : l'adresse, son /64 en IPv6). Au-delà du plafond global, une
-  connexion attend une place dans la file d'écoute du système ; au-delà du plafond d'un
-  client, elle est fermée sans réponse. Un client lent occupe donc au plus 16 places, et la
-  borne de requête rend la sienne en 10 s. **Hypothèse non mesurée** : que la limite de
-  descripteurs du déploiement dépasse 512 plus les connexions à la base et au relais.
+- **Plafond de connexions.** Au plus 512 connexions ouvertes à la fois ; au-delà, une
+  connexion attend une place dans la file d'écoute du système, sans prendre de descripteur. La
+  borne de requête rend en 10 s la place d'une requête lente. **Pas de plafond par client** :
+  un premier essai à 16 connexions par adresse a fait échouer 4 pages Firefox de la suite e2e
+  (`NS_ERROR_NET_RESET`, run 45267348483), Chromium et WebKit restant verts. Cause inférée,
+  non mesurée : les connexions persistantes que Firefox garde ouvertes après chaque contexte
+  de test dépassent 16 en moins des 10 s d'inactivité. Des navigateurs derrière une même
+  adresse (NAT, CGNAT) feraient de même, et derrière un proxy tous les clients partagent une
+  adresse. **Risque
+  résiduel** : une seule adresse peut occuper les 512 places, par des requêtes lentes
+  renouvelées toutes les 10 s ou par des lectures lentes de grandes réponses. Le plafond par
+  client relève du proxy de tête, qui connaît le client ; le jalon de déploiement le pose.
+  **Hypothèse non mesurée** : que la limite de descripteurs du déploiement dépasse 512 plus les
+  connexions à la base et au relais.
 - **Corps illisible.** Une lecture du corps qui échoue (délai dépassé, connexion coupée) ne
   reçoit aucune réponse : la connexion est fermée, comme le fait `Bun.serve`. Seul un corps
   trop long reçoit 413.
@@ -193,11 +201,11 @@ refuse à sa façon) ; pour un scénario à divergence admise, les en-têtes, co
 - Le dépôt porte un espace de travail Cargo (`Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`)
   et le `deny.toml` commun de la flotte ; `bun run check` exécute `check:dependency-policy`
   (cargo-deny : bans, licences, sources) et `check:rust` (fmt, clippy `-D warnings`, tests).
-- Le limiteur et le plafond de connexions par client restent indexés sur l'adresse de la
-  connexion (son /64 en IPv6). Derrière un proxy, toutes les requêtes partageraient une clé :
-  le limiteur refuserait tout le monde après 5 demandes en 10 minutes, et le plafond fermerait
-  toute connexion au-delà de 16. **Bloquant pour le déploiement** : le jalon de déploiement
-  doit décider de l'adresse de client à croire avant la mise en ligne.
+- Le limiteur reste indexé sur l'adresse de la connexion (son /64 en IPv6). Derrière un
+  proxy, toutes les requêtes partageraient une clé : le limiteur refuserait tout le monde
+  après 5 demandes en 10 minutes. **Bloquant pour le déploiement** : le jalon de déploiement
+  doit décider de l'adresse de client à croire avant la mise en ligne, et poser au proxy de
+  tête le plafond de connexions par client.
 - Les requêtes sqlx sont non préparées (`persistent(false)`), pour PGlite et les poolers.
 - `tools/clever` est inchangé : il ne déploie qu'une cible statique ; le déploiement du binaire
   relève du jalon de déploiement.

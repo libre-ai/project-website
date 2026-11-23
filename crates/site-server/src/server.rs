@@ -9,23 +9,24 @@
 //! - a connection with no byte read or written for `idle` between requests, or while its answer
 //!   is written, is closed (Bun's `idleTimeout`);
 //! - request headers must arrive whole within `header_read`;
-//! - at most `connections` are served at once, and at most `connections_per_client` for one
-//!   client (its limiter key): a client holding slow requests cannot take every place. Past
-//!   `connections`, the next connection waits in the listen backlog until a place frees; past
-//!   its client's cap, it is closed unanswered. A slow request frees its place within
-//!   `request`; a slow reader of a large answer only within `idle` of each write, or at the stop;
+//! - at most `connections` are served at once: past them, the next connection waits in the
+//!   listen backlog until a place frees, instead of taking a descriptor. A slow request frees its
+//!   place within `request`; a slow reader of a large answer only within `idle` of each write, or
+//!   at the stop. There is no cap per client: keyed on the connection address, it closed the
+//!   lingering keep-alive connections of browsers sharing one (Firefox in the e2e run), and
+//!   behind a proxy every client shares one; a cap per client belongs to the front proxy, which
+//!   knows the client (ADR 0009);
 //! - a request whose body cannot be read (timed out, cut) gets no answer: the connection is
 //!   closed, as Bun closes it, instead of an answer that would blame the body's size;
 //! - a stop closes the listener, lets requests in progress finish, and gives up on the
 //!   connections still open after `stop`: the caller then drains the sends and exits, instead of
 //!   waiting on a slow client until the orchestrator kills the process.
 
-use std::collections::HashMap;
 use std::future::Future;
 use std::io;
 use std::net::SocketAddr;
 use std::pin::Pin;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::task::{Context, Poll};
 use std::time::Duration;
 
@@ -44,8 +45,6 @@ use tokio::net::TcpListener;
 use tokio::sync::Semaphore;
 use tokio::time::{Instant, Sleep};
 
-use crate::limiter::client_key;
-
 /// The bounds of one connection, of the connections at once, and of a stop.
 #[derive(Debug, Clone, Copy)]
 pub struct Limits {
@@ -55,21 +54,19 @@ pub struct Limits {
     pub request: Duration,
     pub stop: Duration,
     pub connections: usize,
-    pub connections_per_client: usize,
 }
 
 impl Limits {
     /// The served runtime: the 10 s `idleTimeout` default of `Bun.serve` for the timers; a stop
-    /// gives open connections as long, before the sends are drained. The connection caps are
-    /// this port's own: Bun has none. They assume the descriptor limit of the deployment leaves
-    /// room for 512 connections beside the database pool and the sends (not measured, ADR 0009).
+    /// gives open connections as long, before the sends are drained. The connection cap is this
+    /// port's own: Bun has none. It assumes the descriptor limit of the deployment leaves room
+    /// for 512 connections beside the database pool and the sends (not measured, ADR 0009).
     pub const SERVED: Self = Self {
         idle: Duration::from_secs(10),
         header_read: Duration::from_secs(10),
         request: Duration::from_secs(10),
         stop: Duration::from_secs(10),
         connections: 512,
-        connections_per_client: 16,
     };
 }
 
@@ -219,52 +216,6 @@ fn is_connection_error(error: &io::Error) -> bool {
     )
 }
 
-/// Connections open per client key.
-#[derive(Clone, Default)]
-struct Clients(Arc<Mutex<HashMap<String, usize>>>);
-
-/// One open connection of a client; its place is given back when it is dropped.
-struct ClientPlace {
-    clients: Clients,
-    key: String,
-}
-
-impl Clients {
-    fn counts(&self) -> std::sync::MutexGuard<'_, HashMap<String, usize>> {
-        // A poisoned lock only means a panic elsewhere while it was held; the counts stay valid.
-        match self.0.lock() {
-            Ok(guard) => guard,
-            Err(poisoned) => poisoned.into_inner(),
-        }
-    }
-
-    /// A place for one more connection of `key`, or `None` when it already holds `max`.
-    fn admit(&self, key: String, max: usize) -> Option<ClientPlace> {
-        let mut counts = self.counts();
-        let count = counts.entry(key.clone()).or_insert(0);
-        if *count >= max {
-            return None;
-        }
-        *count += 1;
-        Some(ClientPlace {
-            clients: self.clone(),
-            key,
-        })
-    }
-}
-
-impl Drop for ClientPlace {
-    fn drop(&mut self) {
-        let mut counts = self.clients.counts();
-        if let Some(count) = counts.get_mut(&self.key) {
-            *count = count.saturating_sub(1);
-            if *count == 0 {
-                counts.remove(&self.key);
-            }
-        }
-    }
-}
-
 /// Serves `router` on `listener` until `stop` resolves, then stops within `limits.stop`.
 /// Each request carries the client address as `ConnectInfo<SocketAddr>`.
 pub async fn serve(
@@ -275,7 +226,6 @@ pub async fn serve(
 ) -> Stopped {
     let graceful = GracefulShutdown::new();
     let places = Arc::new(Semaphore::new(limits.connections));
-    let clients = Clients::default();
     let mut stop = std::pin::pin!(stop);
     loop {
         // A place first: past the cap, connections wait in the listen backlog, not in memory.
@@ -297,12 +247,6 @@ pub async fn serve(
                 }
                 continue;
             }
-        };
-        let Some(client) = clients.admit(client_key(peer.ip()), limits.connections_per_client)
-        else {
-            // Closed at once, unanswered: the client already holds all its places.
-            drop(stream);
-            continue;
         };
         let tower = TowerToHyperService::new(router.clone());
         let service = service_fn(move |mut request: hyper::Request<Incoming>| {
@@ -331,7 +275,6 @@ pub async fn serve(
         tokio::spawn(async move {
             // A connection that fails (reset, timed out) concerns its client only.
             let _ = watched.await;
-            drop(client);
             drop(place);
         });
     }
@@ -596,34 +539,23 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn a_client_past_its_own_cap_is_closed_unanswered() {
-        let running = start(Limits {
-            connections_per_client: 1,
-            ..Limits::SERVED
-        })
-        .await;
-        let mut holder = TcpStream::connect(running.address).await.unwrap();
-        holder.write_all(b"GET / HTTP/1.1\r\n").await.unwrap();
+    async fn one_address_holding_many_open_connections_is_still_answered() {
+        // Browsers sharing an address keep idle connections open; a cap per address closed them
+        // (Firefox in the e2e run). 64 idle connections, then a request on each.
+        let running = start(Limits::SERVED).await;
+        let mut held = Vec::new();
+        for _ in 0..64 {
+            held.push(TcpStream::connect(running.address).await.unwrap());
+        }
         tokio::time::sleep(Duration::from_millis(100)).await;
-        let mut second = TcpStream::connect(running.address).await.unwrap();
-        let _ = second
-            .write_all(b"GET / HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n")
-            .await;
-        let mut answer = Vec::new();
-        let read = tokio::time::timeout(Duration::from_secs(2), second.read_to_end(&mut answer))
-            .await
-            .expect("the connection past the client's cap stayed open");
-        assert!(read.is_err() || answer.is_empty(), "answered: {answer:?}");
-        // Its place comes back with the first connection.
-        drop(holder);
-        tokio::time::sleep(Duration::from_millis(100)).await;
-        let mut third = TcpStream::connect(running.address).await.unwrap();
-        third
-            .write_all(b"GET / HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n")
-            .await
-            .unwrap();
-        let mut answer = String::new();
-        third.read_to_string(&mut answer).await.unwrap();
-        assert!(answer.starts_with("HTTP/1.1 200"), "{answer}");
+        for mut stream in held {
+            stream
+                .write_all(b"GET / HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n")
+                .await
+                .unwrap();
+            let mut answer = String::new();
+            stream.read_to_string(&mut answer).await.unwrap();
+            assert!(answer.starts_with("HTTP/1.1 200"), "{answer}");
+        }
     }
 }
