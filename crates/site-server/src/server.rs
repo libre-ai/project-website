@@ -3,6 +3,9 @@
 //! timer at all, so a client that never finishes its request held a connection — and a stop —
 //! for as long as it liked. Here:
 //!
+//! - a connection that sends no byte at all is closed after `first_byte` (3 s, where Bun waits
+//!   10): one address holding mute sockets must open three times as many per second to hold
+//!   every place;
 //! - a request must arrive whole, headers and body, within `request` of its first byte, however
 //!   slowly it trickles: `Bun.serve` closes a body sent one byte every 7 s after about 12 s
 //!   (measured on 2026-11-23), where an idle timer alone, restarted by each byte, never would;
@@ -48,6 +51,8 @@ use tokio::time::{Instant, Sleep};
 /// The bounds of one connection, of the connections at once, and of a stop.
 #[derive(Debug, Clone, Copy)]
 pub struct Limits {
+    /// From the accept until the connection's first byte: a connection that sends nothing.
+    pub first_byte: Duration,
     pub idle: Duration,
     pub header_read: Duration,
     /// From the first byte of a request until its answer starts: headers and body.
@@ -61,7 +66,11 @@ impl Limits {
     /// gives open connections as long, before the sends are drained. The connection cap is this
     /// port's own: Bun has none. It assumes the descriptor limit of the deployment leaves room
     /// for 512 connections beside the database pool and the sends (not measured, ADR 0009).
+    /// `first_byte` is this port's own too, 3 s where Bun waits 10: a mute connection holds a
+    /// place a third as long, so holding every place costs three times the connections per
+    /// second (third review of #25, ADR 0009).
     pub const SERVED: Self = Self {
+        first_byte: Duration::from_secs(3),
         idle: Duration::from_secs(10),
         header_read: Duration::from_secs(10),
         request: Duration::from_secs(10),
@@ -90,11 +99,11 @@ pub enum Stopped {
     Abandoned,
 }
 
-/// A connection that fails once its deadline passes while it waits to read or write. The first
-/// byte of a request sets the deadline `request` ahead, and further bytes of that request never
-/// move it; a write (the answer) ends the request and sets it `idle` ahead, as does each later
-/// write. A connection busy elsewhere (a handler awaiting the database) is not polled, so it is
-/// never cut for that.
+/// A connection that fails once its deadline passes while it waits to read or write. Accepted, it
+/// has `first_byte` to send anything. The first byte of a request sets the deadline `request`
+/// ahead, and further bytes of that request never move it; a write (the answer) ends the request
+/// and sets it `idle` ahead, as does each later write. A connection busy elsewhere (a handler
+/// awaiting the database) is not polled, so it is never cut for that.
 struct BoundedIo<T> {
     inner: T,
     idle: Duration,
@@ -104,13 +113,13 @@ struct BoundedIo<T> {
 }
 
 impl<T> BoundedIo<T> {
-    fn new(inner: T, idle: Duration, request: Duration) -> Self {
+    fn new(inner: T, first_byte: Duration, idle: Duration, request: Duration) -> Self {
         Self {
             inner,
             idle,
             request,
             in_request: false,
-            deadline: Box::pin(tokio::time::sleep(idle)),
+            deadline: Box::pin(tokio::time::sleep(first_byte)),
         }
     }
 
@@ -269,7 +278,7 @@ pub async fn serve(
         builder
             .timer(TokioTimer::new())
             .header_read_timeout(limits.header_read);
-        let io = BoundedIo::new(stream, limits.idle, limits.request);
+        let io = BoundedIo::new(stream, limits.first_byte, limits.idle, limits.request);
         let connection = builder.serve_connection(TokioIo::new(io), service);
         let watched = graceful.watch(connection);
         tokio::spawn(async move {
@@ -365,8 +374,9 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn closes_a_connection_that_never_sends_a_request() {
+    async fn closes_a_connection_left_idle_after_its_answer() {
         let running = start(Limits {
+            first_byte: LONG,
             idle: Duration::from_millis(300),
             header_read: LONG,
             request: LONG,
@@ -375,8 +385,35 @@ mod tests {
         })
         .await;
         let mut socket = TcpStream::connect(running.address).await.unwrap();
+        // Kept alive after its answer, then nothing more.
+        socket
+            .write_all(b"GET / HTTP/1.1\r\nHost: x\r\n\r\n")
+            .await
+            .unwrap();
         let closed = closed_within(&mut socket, Duration::from_secs(10)).await;
         assert!(closed.is_some(), "an idle connection was kept");
+    }
+
+    /// The probe of the third review: one address holding mute sockets. A connection that has sent
+    /// nothing is closed after `first_byte` (3 s), one that has started its request is not.
+    #[tokio::test]
+    async fn a_mute_connection_is_closed_sooner_than_one_that_started_its_request() {
+        let running = start(Limits::SERVED).await;
+        let mut mute = TcpStream::connect(running.address).await.unwrap();
+        let mut started = TcpStream::connect(running.address).await.unwrap();
+        started.write_all(b"GET / HTTP/1.1\r\n").await.unwrap();
+        let closed = closed_within(&mut mute, Duration::from_secs(6)).await;
+        let after = closed.expect("a mute connection was kept past 6 s");
+        assert!(
+            after >= Duration::from_millis(2500) && after <= Duration::from_millis(4500),
+            "closed after {after:?}"
+        );
+        // 3 s and more after it connected, the started request still holds its connection.
+        assert_eq!(
+            closed_within(&mut started, Duration::from_secs(2)).await,
+            None,
+            "a started request was cut by the first-byte bound"
+        );
     }
 
     #[tokio::test]

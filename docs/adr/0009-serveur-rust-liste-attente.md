@@ -120,6 +120,10 @@ Décisions de la revue du 2026-11-23, chacune tenue par un test :
   10 s (mesure de la revue du 2026-11-23 : `Bun.serve` coupe ce client à 11 993 ms ; le
   binaire d'avant ce lot le gardait au-delà de 35 s, chaque octet relançant l'inactivité).
   Entre deux requêtes et pendant l'écriture d'une réponse, l'inactivité est bornée à 10 s.
+  Une connexion qui n'a encore envoyé **aucun octet** est fermée après 3 s
+  (`Limits::first_byte`). **Écart avec Bun**, qui lui laisse 10 s : une connexion muette tient
+  une place trois fois moins longtemps, ce qui triple le débit de connexions nécessaire pour
+  tenir toutes les places (ci-dessous). Une requête commencée garde sa borne de 10 s.
   **Limite nommée** : un client qui lit lentement une grande réponse fait progresser
   l'écriture et n'est borné que par cette inactivité, à chaque écriture ; seul l'arrêt
   l'abandonne. À SIGTERM, le binaire cesse d'accepter, laisse 10 s aux connexions ouvertes puis
@@ -134,10 +138,26 @@ Décisions de la revue du 2026-11-23, chacune tenue par un test :
   non mesurée : les connexions persistantes que Firefox garde ouvertes après chaque contexte
   de test dépassent 16 en moins des 10 s d'inactivité. Des navigateurs derrière une même
   adresse (NAT, CGNAT) feraient de même, et derrière un proxy tous les clients partagent une
-  adresse. **Risque
-  résiduel** : une seule adresse peut occuper les 512 places, par des requêtes lentes
-  renouvelées toutes les 10 s ou par des lectures lentes de grandes réponses. Le plafond par
-  client relève du proxy de tête, qui connaît le client ; le jalon de déploiement le pose.
+  adresse. **Risque résiduel** : une seule adresse peut occuper les 512 places, par des
+  connexions muettes renouvelées toutes les 3 s, des requêtes lentes renouvelées toutes les
+  10 s ou des lectures lentes de grandes réponses. Une fois les 512 places et la file d'écoute
+  pleines, **tout nouveau client est refusé** (`ECONNRESET` sous macOS ; sous Linux, la demande
+  est ignorée et le client attend, hypothèse non mesurée). Mesures datées du 2026-11-23, macOS,
+  binaire de debug, boucle locale :
+  - revue 3 de #25, avant la borne de premier octet : vers 640 sockets muettes depuis une
+    adresse, toute requête légitime est refusée ; à 600, elle attend jusqu'à 9 s ; tenir les
+    places coûtait environ 51 nouvelles connexions par seconde ;
+  - après la borne de 3 s (sonde de ce lot : N sockets muettes, chacune rouverte dès que le
+    serveur la ferme, une requête légitime toutes les 2 s, 20 s par palier) : à 600 sockets,
+    3 672 connexions ouvertes en 20 s (184 par seconde), requêtes légitimes servies en 1 à
+    2 s ; à 640 et à 700 sockets, 5 requêtes légitimes sur 8 et 8 sur 10 refusées
+    (`ECONNRESET`). Le seuil en sockets ne bouge pas ; le débit de connexions qu'il exige passe
+    d'environ 51 à 184 par seconde.
+  Le plafond par client relève du proxy de tête, qui connaît le client ; le jalon de
+  déploiement le pose. **Bloquant pour le déploiement** : avant toute mise en ligne, le jalon
+  de déploiement **rejoue cette mesure à travers le proxy de tête réel** (sockets muettes
+  depuis une adresse, requêtes légitimes depuis une autre) ; sans cette preuve, pas de
+  lancement.
   **Hypothèse non mesurée** : que la limite de descripteurs du déploiement dépasse 512 plus les
   connexions à la base et au relais.
 - **Corps illisible.** Une lecture du corps qui échoue (délai dépassé, connexion coupée) ne
@@ -173,14 +193,19 @@ Décisions de la revue du 2026-11-23, chacune tenue par un test :
   mot de passe SMTP.
 - **Expiration à 48 h.** Le test de parité vieillit les demandes à la seconde : un scénario
   purge et confirme à 48 h moins 30 s, puis à 48 h plus 30 s. Un `PENDING_TTL` décalé de deux
-  minutes, dans un sens ou dans l'autre, le fait rougir.
+  minutes, dans un sens ou dans l'autre, le fait rougir. La résolution tenue est donc
+  d'environ ±30 s, pas plus fine : un décalage de +20 s passe (mesure de la revue 3 de #25).
 - **Fraîcheur du binaire.** Le test de parité et les tests du processus refusent un binaire
   plus ancien que ses sources (`.rs`, `policy.json`). Pour les manifestes (`Cargo.toml` de la
   crate et de l'espace de travail, `Cargo.lock`), la date ne suffit pas : cargo compare leur
   contenu, et un manifeste réécrit sans changement qui le concerne laisse un binaire plus
   ancien que lui et pourtant à jour, qu'aucune construction ne rajeunit. Un manifeste plus
   récent que le binaire fait donc demander son verdict à cargo (`cargo build --offline
-  --message-format=json`, champ `fresh`), qui reconstruit au passage un binaire périmé. Limite :
+  --message-format=json`, champ `fresh`), qui reconstruit au passage un binaire périmé. Hors
+  ligne, ce verdict exige toutes les crates de `Cargo.lock` dans le cache cargo local
+  (`CARGO_HOME`, par défaut `~/.cargo`) : `bun run test` le remplit en construisant en ligne
+  d'abord ; sinon, `cargo fetch --locked`, ou `CARGO_HOME` pointé sur un cache complet. Faute de
+  quoi le test échoue sur `site_server.cargo_failed`, avec ce remède dans le message. Limite :
   pour les sources, la comparaison porte sur les dates, comme celle de cargo ; un fichier
   restauré avec une date ancienne passe pour plus vieux que le binaire, et ni cargo ni ce
   contrôle ne le voient.
@@ -204,8 +229,10 @@ refuse à sa façon) ; pour un scénario à divergence admise, les en-têtes, co
 - Le limiteur reste indexé sur l'adresse de la connexion (son /64 en IPv6). Derrière un
   proxy, toutes les requêtes partageraient une clé : le limiteur refuserait tout le monde
   après 5 demandes en 10 minutes. **Bloquant pour le déploiement** : le jalon de déploiement
-  doit décider de l'adresse de client à croire avant la mise en ligne, et poser au proxy de
-  tête le plafond de connexions par client.
+  doit décider de l'adresse de client à croire avant la mise en ligne, poser au proxy de tête
+  le plafond de connexions par client, et rejouer à travers ce proxy la mesure des sockets
+  muettes d'une seule adresse (« Plafond de connexions ») ; sans cette preuve, pas de
+  lancement.
 - Les requêtes sqlx sont non préparées (`persistent(false)`), pour PGlite et les poolers.
 - `tools/clever` est inchangé : il ne déploie qu'une cible statique ; le déploiement du binaire
   relève du jalon de déploiement.

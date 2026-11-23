@@ -144,6 +144,18 @@ describe("site-server child process", () => {
   );
 
   test(
+    "an offline build without the crates in the cargo cache names how to get them",
+    async () => {
+      const emptyCache = join(workspace, "empty-cargo-home");
+      await mkdir(emptyCache, { recursive: true });
+      expect(() => cargoSaysFresh({ ...process.env, CARGO_HOME: emptyCache })).toThrow(
+        "run `cargo fetch --locked` first, or point CARGO_HOME at a cache that holds them",
+      );
+    },
+    PROCESS_BOUND_MS,
+  );
+
+  test(
     "a binary that exits before listening fails the start with its log lines",
     async () => {
       // No configuration at all: the binary refuses to start and names the missing variable.

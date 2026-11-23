@@ -2,7 +2,9 @@
  * Starts the served runtime, the Rust binary `site-server` (ADR 0009), as a child process for the
  * local demo and the parity test. The binary is built by `cargo build --locked --bin
  * site-server` (`bun run test`, `bun run demo` and `bun run test:e2e` build it first); an absent
- * binary fails, it is never replaced by the Bun reference.
+ * binary fails, it is never replaced by the Bun reference. When a Cargo manifest is newer than the
+ * binary, `requireBinary` asks cargo, offline: the crates must then be in the local cargo cache
+ * (`cargo fetch --locked`, or `CARGO_HOME` pointed at a full cache), see `cargoSaysFresh`.
  */
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -51,16 +53,28 @@ function newestManifest(manifests: readonly string[]): number {
   return newest;
 }
 
+/** What makes the offline build of `cargoSaysFresh` possible, named in its failure. */
+export const CARGO_OFFLINE_REMEDY =
+  "cargo build --offline reads the crates from the local cargo cache: run `cargo fetch --locked` " +
+  "first, or point CARGO_HOME at a cache that holds them";
+
 /**
  * Cargo's own verdict on the binary: whether it is fresh against everything cargo fingerprints.
  * It runs the build, offline, so a binary that the manifests outdated is relinked on the way.
+ * Offline, the build needs every crate of `Cargo.lock` in the cargo cache (`CARGO_HOME`, by
+ * default `~/.cargo`): `bun run test` builds online first and fills it; a bare `bun test` on a
+ * machine whose cache lacks them fails here, with `CARGO_OFFLINE_REMEDY`.
  */
-export function cargoSaysFresh(): boolean {
+export function cargoSaysFresh(
+  env: Readonly<Record<string, string | undefined>> = process.env,
+): boolean {
   const run = Bun.spawnSync(
     ["cargo", "build", "--locked", "--offline", "--bin", "site-server", "--message-format=json"],
-    { cwd: ROOT, stdout: "pipe", stderr: "ignore" },
+    { cwd: ROOT, env: { ...env }, stdout: "pipe", stderr: "ignore" },
   );
-  if (run.exitCode !== 0) throw new Error(`site_server.cargo_failed:${run.exitCode}`);
+  if (run.exitCode !== 0) {
+    throw new Error(`site_server.cargo_failed:${run.exitCode} (${CARGO_OFFLINE_REMEDY})`);
+  }
   return binaryFreshIn(run.stdout.toString());
 }
 
