@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { typeset } from "./typography";
 
-const NBSP = " ";
+const NBSP = "\u00a0";
 
 describe("French no-break spaces (typeset)", () => {
   test("binds each high punctuation sign to the word before it", () => {
@@ -70,6 +70,45 @@ describe("French no-break spaces (typeset)", () => {
   test("counts what it replaced", () => {
     expect(typeset("<p>a : b ; « c »</p>").replaced).toBe(4);
     expect(typeset("<p>rien à faire</p>").replaced).toBe(0);
+  });
+
+  test("groups thousands with no-break spaces", () => {
+    expect(typeset("<p>1 200, 2 650, 1 234 567.</p>").html).toBe(
+      `<p>1${NBSP}200, 2${NBSP}650, 1${NBSP}234${NBSP}567.</p>`,
+    );
+  });
+
+  test("binds a number to the unit, sign or word that follows it", () => {
+    expect(typeset("<p>Payer 480 € pour 3 jours, 12 mars, 50 % et 4 personnes</p>").html).toBe(
+      `<p>Payer 480${NBSP}€ pour 3${NBSP}jours, 12${NBSP}mars, 50${NBSP}% et 4${NBSP}personnes</p>`,
+    );
+    expect(typeset("<p>Jeudi 14 h 30, 1 200 euros</p>").html).toBe(
+      `<p>Jeudi 14${NBSP}h${NBSP}30, 1${NBSP}200${NBSP}euros</p>`,
+    );
+  });
+
+  test("keeps « sur » with the total in a rank, so the line breaks before it", () => {
+    expect(typeset("<p>Étape 1 sur 7, 2 sur 6 personnes</p>").html).toBe(
+      `<p>Étape${NBSP}1 sur${NBSP}7, 2 sur${NBSP}6${NBSP}personnes</p>`,
+    );
+  });
+
+  test("binds a numbering word to its number", () => {
+    expect(typeset("<p>Étape 1, chapitre 4, Version 7, ADR 0005, n° 3</p>").html).toBe(
+      `<p>Étape${NBSP}1, chapitre${NBSP}4, Version${NBSP}7, ADR${NBSP}0005, n°${NBSP}3</p>`,
+    );
+    // Only the closed list of numbering words binds forward to a number.
+    expect(typeset("<p>avec 4, sur 6.</p>").html).toBe("<p>avec 4, sur 6.</p>");
+  });
+
+  test("leaves what is not a number of the text as written", () => {
+    const untouched = [
+      "<p>snapshot 65cba786 is pinned</p>",
+      "<p>la 0.2.0 de la bibliothèque</p>",
+      "<p>G2 fiches, S3.2 licences, #142 Export, Ed25519 —</p>",
+      "<p>à 12:40, 2026-10-07 et 4 · 6</p>",
+    ];
+    for (const html of untouched) expect(typeset(html).html).toBe(html);
   });
 
   test("is idempotent", () => {

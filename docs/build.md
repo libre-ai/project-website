@@ -28,11 +28,28 @@ copie versionnée est tout de même vérifiée.
 
 ## Typographie
 
-Chaque page terminée passe par `src/web/typography.ts`, qui pose une espace insécable avant
-`: ; ! ?` et `»`, et après `«`. La règle couvre le texte du dépôt, les démos et les fiches citées
-telles quelles, qui ne se corrigent pas ici. Le texte s'écrit donc avec des espaces ordinaires.
-Le code, les scripts, les styles, les commentaires et les attributs non lus (URL, classes)
-restent tels qu'écrits. `src/web/routes.test.ts` échoue sur toute espace ordinaire restante.
+Chaque page terminée passe par `src/web/typography.ts`. Ce module pose une espace insécable aux
+endroits suivants :
+
+- avant `: ; ! ?` et `»`, et après `«` ;
+- entre les tranches de milliers (« 1 200 ») ;
+- entre un nombre et l'unité ou le mot qui le suit (« 480 € », « 3 jours », « 14 h 30 ») ;
+- après un mot de numérotation (« étape 1 », « chapitre 4 », « ADR 0005 ») ;
+- dans un rang, entre « sur » et le total (« 1 sur 7 ») : la ligne se coupe avant « sur ».
+
+La règle couvre le texte du dépôt, les démos et les fiches citées telles quelles, qui ne se
+corrigent pas ici. Le texte s'écrit donc avec des espaces ordinaires.
+
+Restent tels qu'écrits :
+- le code, les scripts, les styles et les commentaires ;
+- les attributs non lus (URL, classes) ;
+- ce qui n'est pas un nombre du texte : empreinte, version, date, heure ou identifiant comme
+  « G2 ».
+
+Seul le texte écrit par le script client échappe à cette passe ; il applique la même règle
+(`src/client/dom/tour.ts`). `src/web/routes.test.ts` échoue sur toute espace ordinaire restante.
+Les gates de formulation et de revendications lisent une espace insécable, tapée ou écrite en
+entité, comme une espace.
 
 ## Commandes
 
