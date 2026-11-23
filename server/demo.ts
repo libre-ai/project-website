@@ -1,16 +1,13 @@
 /**
  * Local demo of the site with its waitlist (plan, Task 14): an in-memory PostgreSQL (PGlite on
- * the wire protocol), the schema, an outbox of .eml files and the production server, on
- * http://localhost:<port>. Nothing leaves the machine and nothing survives a stop.
- * Entry point: server/demo-main.ts.
+ * the wire protocol), an outbox of .eml files and the served runtime — the Rust binary
+ * `site-server` (ADR 0009) — on http://localhost:<port>, bound to the loopback address only.
+ * Nothing leaves the machine and nothing survives a stop. It serves no user: it is the local
+ * demo and the server of the end-to-end suite. Entry point: server/demo-main.ts.
  */
 import { parseArgs } from "node:util";
 
-import { createServer } from "./http";
-import { createLimiter } from "./limiter";
-import { createLogger, type Logger } from "./log";
-import { createOutboxMailer } from "./mailer";
-import { createPgStore, migrate, type WaitlistStore } from "./store";
+import { type SiteServerProcess, startSiteServer } from "./site-server-process";
 import { startTestDatabase } from "./test-database";
 
 export interface DemoOptions {
@@ -21,7 +18,8 @@ export interface DemoOptions {
 
 // The demo's sender is a reserved example domain: the real one is a deployment setting.
 const DEMO_SENDER = "Libre IA <liste@libre-ia.example>";
-const PURGE_INTERVAL_MS = 3600 * 1000;
+// The pool of the binary and the connections PGlite accepts: browsers load pages in parallel.
+const DATABASE_CONNECTIONS = 4;
 
 export function parseDemoArguments(args: readonly string[]): DemoOptions {
   const { values } = parseArgs({
@@ -38,47 +36,36 @@ export function parseDemoArguments(args: readonly string[]): DemoOptions {
   return { port, siteDirectory: values.site, outboxDirectory: values.outbox };
 }
 
-/** Deletes expired pending requests and logs how many, never which. */
-export async function purgeOnce(store: WaitlistStore, logger: Logger, now: Date): Promise<number> {
-  const purged = await store.purgeExpired(now);
-  logger.event("subscription.purge", { purged });
-  return purged;
-}
-
 export async function startDemo(
   options: DemoOptions,
-  runtime: { readonly purgeIntervalMs?: number; readonly write?: (line: string) => void } = {},
-): Promise<{ readonly url: string; stop(): Promise<void> }> {
-  const database = await startTestDatabase();
-  const sql = new Bun.SQL(database.url, { max: 1 });
-  await migrate(sql);
-  const store = createPgStore(sql);
-  const logger = createLogger(runtime.write ?? console.log);
+  runtime: { readonly binary?: string } = {},
+): Promise<{ readonly url: string; readonly server: SiteServerProcess; stop(): Promise<void> }> {
+  const database = await startTestDatabase({ maxConnections: DATABASE_CONNECTIONS });
   const url = `http://localhost:${options.port}`;
-  const server = await createServer({
-    siteDirectory: options.siteDirectory,
-    origin: url,
-    redirectHosts: [],
-    store,
-    mailer: createOutboxMailer(options.outboxDirectory),
-    from: DEMO_SENDER,
-    limiter: createLimiter({ limit: 5, windowMs: 10 * 60 * 1000 }),
-    logger,
-    port: options.port,
-    // The demo answers this machine only, never the local network.
-    hostname: "localhost",
-  });
-  const purge = setInterval(
-    () => purgeOnce(store, logger, new Date()),
-    runtime.purgeIntervalMs ?? PURGE_INTERVAL_MS,
-  );
-  purge.unref();
+  let server: SiteServerProcess;
+  try {
+    server = await startSiteServer(
+      {
+        SITE_DIRECTORY: options.siteDirectory,
+        SITE_ORIGIN: url,
+        // The demo answers this machine only, never the local network.
+        SITE_LISTEN: `127.0.0.1:${options.port}`,
+        POSTGRESQL_ADDON_URI: database.url,
+        POSTGRESQL_MAX_CONNECTIONS: String(DATABASE_CONNECTIONS),
+        WAITLIST_FROM: DEMO_SENDER,
+        WAITLIST_OUTBOX: options.outboxDirectory,
+      },
+      runtime.binary === undefined ? {} : { binary: runtime.binary },
+    );
+  } catch (error) {
+    await database.stop();
+    throw error;
+  }
   return {
     url,
+    server,
     async stop() {
-      clearInterval(purge);
-      server.stop(true);
-      await sql.close();
+      await server.stop();
       await database.stop();
     },
   };

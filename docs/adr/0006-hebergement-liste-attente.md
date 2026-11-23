@@ -1,7 +1,8 @@
 # ADR 0006 — Une app Bun sert le site et tient la liste d'attente
 
 - **Statut** : accepté par le propriétaire le 2026-11-09 (décisions 1 et 3 de la recette du
-  prototype v4 ; plan de mise en ligne v1, même jour).
+  prototype v4 ; plan de mise en ligne v1, même jour) ; amendé par l'ADR 0009 (le runtime est un
+  binaire Rust, axum et sqlx) le 2026-11-23. Le reste de la décision est inchangé.
 - **Portée** : site public `libre-ia.fr` ; le déploiement lui-même relève d'un jalon ultérieur.
 - **Amende** : `docs/apps/website.md` (§Data : « No personal data or runtime database is
   owned » ; §Non-goals ; runtime « Caddy statique »), ADR 0001 (aucun service déployé).

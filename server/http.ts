@@ -1,5 +1,9 @@
 /**
- * The one Bun process of the site (ADR 0006): it serves the generated files with the security
+ * Parity reference of the served runtime, never served itself (ADR 0009): the Rust binary
+ * `site-server` replaced it, and `server/parity.test.ts` holds that binary to what this file
+ * does. Not deployable; removed on the date ADR 0009 sets.
+ *
+ * The Bun process of the site as ADR 0006 decided it: it serves the generated files with the security
  * header policy and holds the waitlist's only dynamic routes. Mirror hosts are redirected to the
  * canonical origin, any other host is refused. A subscription answers the same way whether the
  * address is new, pending or confirmed, so the form reveals nothing about who is on the list.
