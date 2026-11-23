@@ -21,6 +21,7 @@ import {
   subscriptionMain,
 } from "./pages";
 import { applicationPath } from "./sections";
+import { typeset } from "./typography";
 
 export interface ForgeBrick {
   readonly project: string;
@@ -181,11 +182,13 @@ export function libreRoutes(forge: ForgeInput): readonly Route[] {
 }
 
 export function renderRoute(entry: Route): string {
-  return layout({
+  const page = layout({
     title: entry.title,
     description: entry.description,
     path: entry.path,
     main: entry.main(),
     noindex: entry.kind === "subscription" || entry.kind === "error",
   });
+  // On the finished page, so the copy, the authored demos and the quoted records share one rule.
+  return typeset(page).html;
 }
