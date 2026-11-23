@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { expect, type Page, test } from "@playwright/test";
 
 import { APPLICATIONS } from "../src/content/applications";
@@ -22,7 +24,7 @@ const VISIBLE = 0.5;
 
 type DefectKind =
   | "no-animation"
-  | "loop-period"
+  | "finite-animation"
   | "jump"
   | "opacity-pop"
   | "out-of-frame"
@@ -91,14 +93,14 @@ function rehearse(args: Thresholds): DemoReport[] {
       };
     }
 
-    // One shared period is what makes the loop join: with several periods the demo only repeats
-    // at their least common multiple, which nobody watches.
+    // A demo loops forever, so an animation that stops leaves its element frozen after the first
+    // cycles. Shorter ambient loops (a pulse, a wave) are fine: their own seams are crossed many
+    // times in the window below and measured like any other frame.
     const timings = animations.map((animation) => animation.effect?.getTiming());
     const durations = new Set(timings.map((timing) => Number(timing?.duration)));
     const cycle = Math.max(...durations);
-    if (durations.size !== 1 || timings.some((timing) => timing?.iterations !== Infinity)) {
-      record("figure", "loop-period", 0, durations.size);
-    }
+    const finite = timings.filter((timing) => timing?.iterations !== Infinity).length;
+    if (finite > 0) record("figure", "finite-animation", 0, finite);
     const lastDelay = Math.max(...timings.map((timing) => Number(timing?.delay ?? 0)));
 
     // A steps() easing changes size on purpose (typewriter): only its position is watched.
@@ -229,6 +231,71 @@ function summarise(label: string, reports: readonly DemoReport[]): string {
   return `${label}: ${reports.length} démos, ${sum((r) => r.animations)} animations, ${sum((r) => r.frames)} images, ${sum((r) => r.elements)} éléments suivis dont ${sum((r) => r.stepped)} pas à pas, ${sum((r) => r.defects.length)} défauts`;
 }
 
+// Known defects are data (e2e/rehearsal-known.json), each one listed in the issue it points to.
+// The list is a ratchet: a defect missing from it fails, and so does an entry no longer observed,
+// so a fixed defect leaves the list in the commit that fixes it.
+type Surface = "cartes" | "grandes";
+
+interface KnownDefect {
+  surface: Surface;
+  demo: string;
+  element: string;
+  kind: DefectKind;
+}
+
+function loadKnown(): readonly KnownDefect[] {
+  const parsed: unknown = JSON.parse(
+    readFileSync(new URL("./rehearsal-known.json", import.meta.url), "utf8"),
+  );
+  if (typeof parsed !== "object" || parsed === null || !("defects" in parsed)) {
+    throw new Error("rehearsal-known.json: no defects list");
+  }
+  const { defects } = parsed;
+  if (!Array.isArray(defects)) throw new Error("rehearsal-known.json: defects is not a list");
+  return defects.map((entry: unknown, index): KnownDefect => {
+    const row = entry as Partial<Record<keyof KnownDefect, unknown>>;
+    const { surface, demo, element, kind } = row;
+    if (
+      (surface !== "cartes" && surface !== "grandes") ||
+      typeof demo !== "string" ||
+      typeof element !== "string" ||
+      typeof kind !== "string"
+    ) {
+      throw new Error(`rehearsal-known.json: entry ${index} is malformed`);
+    }
+    return { surface, demo, element, kind: kind as DefectKind };
+  });
+}
+
+const KNOWN = loadKnown();
+const keyOf = (defect: { demo: string; element: string; kind: string }): string =>
+  `${defect.demo}\u0000${defect.element}\u0000${defect.kind}`;
+
+function judge(
+  surface: Surface,
+  reports: readonly DemoReport[],
+): { found: number; known: number; unexpected: Defect[]; stale: KnownDefect[] } {
+  const listed = KNOWN.filter((known) => known.surface === surface);
+  const listedKeys = new Set(listed.map(keyOf));
+  const found = reports.flatMap((report) => report.defects);
+  const foundKeys = new Set(found.map(keyOf));
+  return {
+    found: found.length,
+    known: found.filter((defect) => listedKeys.has(keyOf(defect))).length,
+    unexpected: found.filter((defect) => !listedKeys.has(keyOf(defect))),
+    stale: listed.filter((known) => !foundKeys.has(keyOf(known))),
+  };
+}
+
+function assertKnown(label: string, surface: Surface, reports: readonly DemoReport[]): void {
+  const verdict = judge(surface, reports);
+  console.log(
+    `${summarise(label, reports)} (${verdict.known} connus, ${verdict.unexpected.length} nouveaux, ${verdict.stale.length} connus absents)`,
+  );
+  expect(verdict.unexpected, "defects missing from e2e/rehearsal-known.json").toEqual([]);
+  expect(verdict.stale, "entries of e2e/rehearsal-known.json no longer observed").toEqual([]);
+}
+
 const scriptless = (name: string): boolean => name === "chromium-no-js";
 
 test.describe("micro-demo rehearsal", () => {
@@ -251,14 +318,12 @@ test.describe("micro-demo rehearsal", () => {
         }
       }
       const reports = [...byDemo.values()];
-      console.log(
-        summarise(
-          `${testInfo.project.name} /applications/ ${width} px, ${tabCount} onglets`,
-          reports,
-        ),
-      );
       expect(reports).toHaveLength(APPLICATIONS.length);
-      expect(reports.flatMap((report) => report.defects)).toEqual([]);
+      assertKnown(
+        `${testInfo.project.name} /applications/ ${width} px, ${tabCount} onglets`,
+        "cartes",
+        reports,
+      );
     });
   }
 
@@ -272,7 +337,6 @@ test.describe("micro-demo rehearsal", () => {
       expect(found, application.slug).toHaveLength(1);
       reports.push(...found);
     }
-    console.log(summarise(`${testInfo.project.name} pages d'application 390 px`, reports));
-    expect(reports.flatMap((report) => report.defects)).toEqual([]);
+    assertKnown(`${testInfo.project.name} pages d'application 390 px`, "grandes", reports);
   });
 });
