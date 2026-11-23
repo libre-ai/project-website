@@ -102,11 +102,15 @@ export interface HttpStep {
   readonly host?: string | null;
 }
 
-/** Moves every row's `requested_at` back by this many hours, in both databases. */
+/** Moves every row's `requested_at` back by `hours` and `seconds`, in both databases. */
 export interface AgeStep {
   readonly kind: "age";
   readonly hours: number;
+  readonly seconds?: number;
 }
+
+/** The whole seconds an ageing step moves `requested_at` back. */
+export const ageSeconds = (step: AgeStep): number => step.hours * 3600 + (step.seconds ?? 0);
 
 /** Runs the purge of expired requests once. */
 export interface PurgeStep {
@@ -450,6 +454,24 @@ export function corpus(etags: { readonly css: string; readonly cssGzip: string }
         { kind: "age", hours: 47 },
         get("/confirmer?jeton={confirm:0}"),
         { kind: "age", hours: 2 },
+        { kind: "purge" },
+      ],
+    },
+    {
+      // The 48 hours to the second's scale of the test: 30 s short of them a request is kept and
+      // confirmed, 30 s past them it is refused and purged. The steps take well under a second,
+      // so a change of the delay by a minute fails here, where 47 and 49 hours would not see it.
+      id: "the 48 hours hold within half a minute, for the purge and the confirmation",
+      source: "authored",
+      steps: [
+        subscribe("courriel=a%40example.org"),
+        subscribe("courriel=b%40example.org"),
+        subscribe("courriel=c%40example.org"),
+        { kind: "age", hours: 47, seconds: 3600 - 30 },
+        { kind: "purge" },
+        get("/confirmer?jeton={confirm:0}"),
+        { kind: "age", hours: 0, seconds: 60 },
+        get("/confirmer?jeton={confirm:2}"),
         { kind: "purge" },
       ],
     },

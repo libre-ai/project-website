@@ -27,6 +27,7 @@ import { createLogger } from "./log";
 import { createOutboxMailer, type Mailer } from "./mailer";
 import { exchange } from "./parity/client";
 import {
+  ageSeconds,
   CANONICAL_HOST,
   corpus,
   NOT_IN_CORPUS,
@@ -185,8 +186,9 @@ async function rows(sql: Bun.SQL): Promise<RowTrace[]> {
   `) as RowTrace[];
 }
 
-const age = (sql: Bun.SQL, hours: number) =>
-  sql`update subscribers set requested_at = requested_at - (${hours} * interval '1 hour')`;
+// Whole seconds, so the shift is exact in the database and in the `row-clock` arithmetic.
+const age = (sql: Bun.SQL, seconds: number) =>
+  sql`update subscribers set requested_at = requested_at - (${seconds} * interval '1 second')`;
 
 /** The start of a step, `STEP_GAP_MS` at least after the previous one ended (`row-clock`). */
 async function stepStart(steps: readonly StepTrace[]): Promise<number> {
@@ -198,7 +200,9 @@ async function stepStart(steps: readonly StepTrace[]): Promise<number> {
 const label = (step: Step) =>
   step.kind === "http"
     ? `${step.method} ${step.target}`
-    : `${step.kind}${"hours" in step ? ` ${step.hours}` : ""}`;
+    : step.kind === "age"
+      ? `age ${ageSeconds(step)} s`
+      : step.kind;
 
 async function runReference(scenario: Scenario): Promise<RunTrace> {
   runs += 1;
@@ -229,7 +233,7 @@ async function runReference(scenario: Scenario): Promise<RunTrace> {
     hostname: "127.0.0.1",
   });
   const steps: StepTrace[] = [];
-  let agedHours = 0;
+  let agedSeconds = 0;
   try {
     for (const step of scenario.steps) {
       const started = await stepStart(steps);
@@ -242,8 +246,8 @@ async function runReference(scenario: Scenario): Promise<RunTrace> {
         );
         await Promise.all(sending);
       } else if (step.kind === "age") {
-        await age(referenceSql, step.hours);
-        agedHours += step.hours;
+        await age(referenceSql, ageSeconds(step));
+        agedSeconds += ageSeconds(step);
       } else {
         await purgeOnce(
           store,
@@ -258,7 +262,7 @@ async function runReference(scenario: Scenario): Promise<RunTrace> {
         messageCount: (await readOutbox(outbox)).length,
         started,
         ended: Date.now(),
-        agedHours,
+        agedSeconds,
       });
     }
   } finally {
@@ -280,7 +284,7 @@ async function outboxReaching(directory: string, expected: number): Promise<Mess
 
 /** `expectedMessages[i]`: the messages to wait for after step i, since the port sends after answering. */
 async function runPort(scenario: Scenario, expectedMessages: readonly number[]): Promise<RunTrace> {
-  let agedHours = 0;
+  let agedSeconds = 0;
   runs += 1;
   const outbox = join(workspace, `outbox-${runs}`);
   const purgeLogs: string[] = [];
@@ -310,8 +314,8 @@ async function runPort(scenario: Scenario, expectedMessages: readonly number[]):
           requestBytes(step, await readOutbox(outbox)),
         );
       } else if (step.kind === "age") {
-        await age(portSql, step.hours);
-        agedHours += step.hours;
+        await age(portSql, ageSeconds(step));
+        agedSeconds += ageSeconds(step);
       } else {
         const purge = await purgeWithSiteServer(portDatabase.url);
         if (purge.code !== 0) throw new Error(`parity.purge_failed:${purge.lines.join(" | ")}`);
@@ -325,7 +329,7 @@ async function runPort(scenario: Scenario, expectedMessages: readonly number[]):
         messageCount: (await outboxReaching(outbox, expected)).length,
         started,
         ended: Date.now(),
-        agedHours,
+        agedSeconds,
       });
     }
   } finally {
@@ -348,12 +352,14 @@ async function referenceTests(): Promise<string[]> {
   const keys: string[] = [];
   for (const file of TEST_FILES) {
     const text = await readFile(join(ROOT, file), "utf8");
-    const names = [...text.matchAll(/\btest\(\s*"((?:[^"\\]|\\.)*)"/g)].map(
+    // `it` is Bun's other name for `test`: a test declared with it is a reference test too.
+    const names = [...text.matchAll(/\b(?:test|it)\(\s*"((?:[^"\\]|\\.)*)"/g)].map(
       (match) => JSON.parse(`"${match[1]}"`) as string,
     );
-    // Every `test(` must have been read as a name, and no `test.each`/`test.skip` may hide one.
-    expect([file, names.length]).toEqual([file, text.match(/\btest\(/g)?.length ?? 0]);
-    expect([file, text.match(/\btest\.\w+\(/g) ?? []]).toEqual([file, []]);
+    // Every `test(`/`it(` must have been read as a name, and no `test.each`, `it.skip` or
+    // `describe.skip` may hide one.
+    expect([file, names.length]).toEqual([file, text.match(/\b(?:test|it)\(/g)?.length ?? 0]);
+    expect([file, text.match(/\b(?:test|it|describe)\.\w+\(/g) ?? []]).toEqual([file, []]);
     keys.push(...names.map((test) => testKey({ file, test })));
   }
   return keys;

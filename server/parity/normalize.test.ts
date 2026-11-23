@@ -11,6 +11,7 @@ import {
 
 const HOUR = 3_600_000;
 
+/** A step trace; its ageing is given in hours for reading, kept in seconds as the runners do. */
 const step = (
   started: number,
   ended: number,
@@ -23,7 +24,7 @@ const step = (
   messageCount: 0,
   started,
   ended,
-  agedHours,
+  agedSeconds: agedHours * 3600,
 });
 
 describe("row-clock normaliser", () => {

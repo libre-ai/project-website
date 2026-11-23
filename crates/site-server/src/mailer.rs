@@ -10,7 +10,7 @@ use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::time::Duration;
 
 use time::OffsetDateTime;
-use tokio::sync::{Notify, mpsc};
+use tokio::sync::{Notify, Semaphore, mpsc};
 
 use crate::log::Logger;
 use crate::messages::{MailMessage, to_rfc5322};
@@ -118,6 +118,10 @@ impl InFlight {
 /// stays pending and a new subscription sends again.
 pub const MAIL_QUEUE_CAPACITY: usize = 1024;
 
+/// Sends under way at once. lettre is built without its `pool` feature, so each SMTP send opens
+/// its own connection to the relay (ADR 0009); this bounds those connections.
+pub const MAX_SENDS_UNDER_WAY: usize = 4;
+
 struct Queued {
     message: MailMessage,
     _guard: InFlightGuard,
@@ -135,11 +139,35 @@ pub struct MailQueue {
 }
 
 impl MailQueue {
-    /// Starts the dispatcher on the current runtime.
+    /// Starts the dispatcher on the current runtime, with the served bounds.
     pub fn start(mailer: Arc<dyn Mailer>, in_flight: InFlight, logger: Logger) -> Self {
-        let (sender, mut receiver) = mpsc::channel::<Queued>(MAIL_QUEUE_CAPACITY);
+        Self::with_limits(
+            mailer,
+            in_flight,
+            logger,
+            MAIL_QUEUE_CAPACITY,
+            MAX_SENDS_UNDER_WAY,
+        )
+    }
+
+    /// `capacity` messages may wait, and at most `max_sends` are under way at once: the
+    /// dispatcher takes the next message only once a send has a place, so a slow relay fills the
+    /// queue (then `mail.dropped`) instead of opening ever more connections.
+    pub fn with_limits(
+        mailer: Arc<dyn Mailer>,
+        in_flight: InFlight,
+        logger: Logger,
+        capacity: usize,
+        max_sends: usize,
+    ) -> Self {
+        let (sender, mut receiver) = mpsc::channel::<Queued>(capacity);
+        let places = Arc::new(Semaphore::new(max_sends));
         tokio::spawn(async move {
             while let Some(Queued { message, _guard }) = receiver.recv().await {
+                // The semaphore is never closed, so this only waits for a place.
+                let Ok(place) = places.clone().acquire_owned().await else {
+                    break;
+                };
                 let mailer = mailer.clone();
                 let logger = logger.clone();
                 match tokio::task::spawn_blocking(move || mailer.send(message)).await {
@@ -148,6 +176,7 @@ impl MailQueue {
                             if sending.await.is_err() {
                                 logger.event("mail.failed", &[]);
                             }
+                            drop(place);
                             drop(_guard);
                         });
                     }
@@ -271,6 +300,67 @@ mod tests {
     fn stamps_files_like_to_iso_string() {
         let date = OffsetDateTime::from_unix_timestamp_nanos(1_795_420_800_123_456_789).unwrap();
         assert_eq!(file_stamp(date), "2026-11-23T08-00-00.123Z");
+    }
+
+    /// A relay that holds each send until `gate` gives it a permit, and counts the sends under
+    /// way at once.
+    struct SlowRelay {
+        gate: Arc<Semaphore>,
+        under_way: Arc<AtomicUsize>,
+        most: Arc<AtomicUsize>,
+    }
+
+    impl Mailer for SlowRelay {
+        fn send(&self, _message: MailMessage) -> SendFuture {
+            let gate = self.gate.clone();
+            let under_way = self.under_way.clone();
+            let most = self.most.clone();
+            Box::pin(async move {
+                let now = under_way.fetch_add(1, Ordering::SeqCst) + 1;
+                most.fetch_max(now, Ordering::SeqCst);
+                gate.acquire().await.unwrap().forget();
+                under_way.fetch_sub(1, Ordering::SeqCst);
+                Ok(())
+            })
+        }
+    }
+
+    #[tokio::test]
+    async fn bounds_the_sends_under_way_at_once() {
+        let gate = Arc::new(Semaphore::new(0));
+        let under_way = Arc::new(AtomicUsize::new(0));
+        let most = Arc::new(AtomicUsize::new(0));
+        let relay = Arc::new(SlowRelay {
+            gate: gate.clone(),
+            under_way: under_way.clone(),
+            most: most.clone(),
+        });
+        let lines = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let queue = MailQueue::with_limits(
+            relay,
+            InFlight::default(),
+            Logger::Memory(lines.clone()),
+            16,
+            2,
+        );
+        let message =
+            crate::messages::confirmation_message("L <l@x.example>", "a@b.example", "c", "d");
+        for _ in 0..6 {
+            assert!(queue.enqueue(message.clone()));
+        }
+        // Two start, then nothing more however long the relay takes.
+        for _ in 0..100 {
+            if under_way.load(Ordering::SeqCst) == 2 {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+        tokio::time::sleep(Duration::from_millis(200)).await;
+        assert_eq!(most.load(Ordering::SeqCst), 2);
+        gate.add_permits(6);
+        assert!(queue.in_flight().settled(Duration::from_secs(5)).await);
+        assert_eq!(most.load(Ordering::SeqCst), 2);
+        assert!(lines.lock().unwrap().is_empty());
     }
 
     #[tokio::test]

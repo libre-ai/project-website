@@ -7,7 +7,9 @@
 //!   by full address, one line could rotate through 2^64 keys and never meet the limit;
 //! - expired windows leave through a queue ordered by start, so a request costs the windows that
 //!   expired since the previous one, not a scan of the whole table; and the table holds at most
-//!   `max_keys` clients, past which a new client is refused until windows expire.
+//!   `max_keys` clients: past that, the oldest window is evicted for the new client. Refusing the
+//!   new client instead would let `max_keys` keys close the form to everyone; evicting lets them
+//!   reset the windows of others, the residual risk ADR 0009 names.
 //!
 //! Not limited here, and still open before deployment: the messages sent to one address. A
 //! pending address receives a message for every accepted request.
@@ -100,7 +102,17 @@ impl Limiter {
             }
             existing => {
                 if existing.is_none() && by_key.len() >= self.max_keys {
-                    return false;
+                    // Full: the oldest window leaves, so a new client is never refused for want
+                    // of room. Its key starts again from nothing (ADR 0009, residual risk).
+                    while let Some((start, oldest)) = expiring.pop_front() {
+                        if by_key
+                            .get(&oldest)
+                            .is_some_and(|window| window.start == start)
+                        {
+                            by_key.remove(&oldest);
+                            break;
+                        }
+                    }
                 }
                 by_key.insert(
                     key.to_owned(),
@@ -162,10 +174,7 @@ mod tests {
         let limiter = Limiter::with_capacity(5, 1000, 2);
         assert!(limiter.allow("a", 0));
         assert!(limiter.allow("b", 10));
-        // Full: a new client waits, a known one goes on.
-        assert!(!limiter.allow("c", 20));
         assert!(limiter.allow("a", 30));
-        assert_eq!(limiter.tracked(), 2);
         // Once `a` has expired, its place is free again.
         assert!(limiter.allow("c", 1000));
         assert_eq!(limiter.tracked(), 2);
@@ -174,5 +183,29 @@ mod tests {
         assert!(limiter.allow("b", 1600));
         assert!(limiter.allow("b", 2601));
         assert_eq!(limiter.tracked(), 1);
+    }
+
+    #[test]
+    fn a_full_table_evicts_the_oldest_window_never_refuses_a_new_client() {
+        let limiter = Limiter::with_capacity(1, 1000, 2);
+        assert!(limiter.allow("a", 0));
+        assert!(limiter.allow("b", 10));
+        assert!(!limiter.allow("a", 20));
+        // Full: the new client is counted, and the oldest window (`a`) leaves for it.
+        assert!(limiter.allow("c", 30));
+        assert_eq!(limiter.tracked(), 2);
+        assert!(!limiter.allow("b", 40));
+        assert!(!limiter.allow("c", 50));
+        // `a` starts again from nothing: the residual risk ADR 0009 names.
+        assert!(limiter.allow("a", 60));
+        assert_eq!(limiter.tracked(), 2);
+        // Eviction follows the start of the current windows: `a`, renewed after `b`, outlives it.
+        let renewed = Limiter::with_capacity(1, 100, 2);
+        assert!(renewed.allow("a", 0));
+        assert!(renewed.allow("b", 150));
+        assert!(renewed.allow("a", 160));
+        assert!(renewed.allow("c", 170));
+        assert!(!renewed.allow("a", 180));
+        assert!(renewed.allow("b", 190));
     }
 }

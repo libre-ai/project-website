@@ -64,8 +64,8 @@ export interface StepTrace {
   /** Test clock, in milliseconds, when the step began and once its trace was read. */
   readonly started: number;
   readonly ended: number;
-  /** Hours every `requested_at` was moved back since the start of the run, this step included. */
-  readonly agedHours: number;
+  /** Seconds every `requested_at` was moved back since the start of the run, this step included. */
+  readonly agedSeconds: number;
 }
 
 export interface MessageTrace {
@@ -169,7 +169,7 @@ function normaliseResponse(
   return { status: response.status, headers, body: replaceTokens(bodyText(body), tokens, applied) };
 }
 
-const HOUR_MS = 3_600_000;
+const SECOND_MS = 1000;
 
 /**
  * Milliseconds a stored time may read past the end of its step: the port writes microseconds,
@@ -199,7 +199,8 @@ export function clockStep(
       throw new Error(`parity.clock_windows_touch:${k}`);
     }
     // Ageing moves `requested_at` back; undone here, what remains is the time it was written.
-    const shift = column === "requested_at" ? (reading.agedHours - step.agedHours) * HOUR_MS : 0;
+    const shift =
+      column === "requested_at" ? (reading.agedSeconds - step.agedSeconds) * SECOND_MS : 0;
     const time = value.getTime() + shift;
     if (time >= step.started && time <= step.ended + CLOCK_SLACK_MS) return k;
   }

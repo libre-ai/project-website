@@ -1,10 +1,13 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { randomBytes } from "node:crypto";
 import { mkdir, mkdtemp, rm, utimes, writeFile } from "node:fs/promises";
 import { connect } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import {
+  binaryFreshIn,
+  cargoSaysFresh,
   listeningPort,
   requireBinary,
   SITE_SERVER_BINARY,
@@ -64,13 +67,81 @@ describe("site-server child process", () => {
     await writeFile(binary, "");
     const past = new Date(Date.now() - 3_600_000);
     await utimes(binary, past, past);
-    expect(() => requireBinary(binary, sources)).toThrow("site_server.binary_stale");
+    const neverAsked = () => {
+      throw new Error("cargo asked with no manifest newer than the binary");
+    };
+    expect(() => requireBinary(binary, sources, [], neverAsked)).toThrow(
+      "site_server.binary_stale",
+    );
     const future = new Date(Date.now() + 3_600_000);
     await utimes(binary, future, future);
-    expect(requireBinary(binary, sources)).toBe(binary);
+    expect(requireBinary(binary, sources, [], neverAsked)).toBe(binary);
     // The real binary was just built from the real sources (`bun run test` builds first).
     expect(requireBinary()).toBe(SITE_SERVER_BINARY);
   });
+
+  test("a manifest newer than the binary makes it stale unless cargo finds it fresh", async () => {
+    const sources = join(workspace, "manifest-sources");
+    await mkdir(join(sources, "src"), { recursive: true });
+    await writeFile(join(sources, "src", "main.rs"), "fn main() {}");
+    const manifest = join(sources, "Cargo.toml");
+    await writeFile(manifest, "[package]");
+    const lock = join(workspace, "Cargo.lock");
+    await writeFile(lock, "version = 4");
+    const binary = join(workspace, "site-server-manifest-copy");
+    await writeFile(binary, "");
+    const older = new Date(Date.now() - 7_200_000);
+    const now = new Date();
+    const newer = new Date(Date.now() + 3_600_000);
+    for (const path of [join(sources, "src", "main.rs"), manifest, lock]) {
+      await utimes(path, older, older);
+    }
+    await utimes(binary, now, now);
+    let asked = 0;
+    const cargo = (fresh: boolean) => () => {
+      asked += 1;
+      return fresh;
+    };
+    expect(requireBinary(binary, sources, [manifest, lock], cargo(false))).toBe(binary);
+    expect(asked).toBe(0);
+    // The crate's own manifest, then the workspace lock file, rewritten after the build.
+    for (const changed of [manifest, lock]) {
+      await utimes(changed, newer, newer);
+      expect(() => requireBinary(binary, sources, [manifest, lock], cargo(false))).toThrow(
+        "site_server.binary_stale",
+      );
+      expect(requireBinary(binary, sources, [manifest, lock], cargo(true))).toBe(binary);
+      await utimes(changed, older, older);
+    }
+    expect(asked).toBe(4);
+    // A declared manifest that is absent fails, it is never read as old.
+    expect(() =>
+      requireBinary(binary, sources, [manifest, join(workspace, "absent.lock")], cargo(true)),
+    ).toThrow("site_server.sources_missing");
+  });
+
+  test("reads cargo's verdict on the site-server binary only", () => {
+    const artifact = (name: string, fresh: boolean) =>
+      JSON.stringify({ reason: "compiler-artifact", target: { name }, fresh });
+    const built = '{"reason":"build-finished","success":true}';
+    expect(
+      binaryFreshIn([artifact("serde", false), artifact("site-server", true), built].join("\n")),
+    ).toBe(true);
+    expect(
+      binaryFreshIn([artifact("serde", true), artifact("site-server", false), built].join("\n")),
+    ).toBe(false);
+    // No message about the binary: never read as fresh.
+    expect(binaryFreshIn([artifact("serde", true), built].join("\n"))).toBe(false);
+  });
+
+  test(
+    "cargo finds the binary just built fresh",
+    () => {
+      // `bun run test` built it; the real verdict, read from cargo's own messages.
+      expect(cargoSaysFresh()).toBe(true);
+    },
+    PROCESS_BOUND_MS,
+  );
 
   test(
     "a binary that exits before listening fails the start with its log lines",
@@ -129,5 +200,51 @@ describe("site-server child process", () => {
       expect(events(server.lines)).toContain("server.stopped");
     },
     PROCESS_BOUND_MS,
+  );
+
+  test(
+    "a stop abandons, within its bound, an answer that a slow reader keeps alive",
+    async () => {
+      // A large answer read a little at a time: each write makes progress, so no time bound of
+      // the connection ends it, and only the stop bound can (`server.connections_abandoned`).
+      const site = join(workspace, "large-site");
+      await mkdir(site, { recursive: true });
+      await writeFile(join(site, "index.html"), "<!doctype html><title>Libre IA</title>");
+      // `.woff2` is served as it is, without a gzip copy to build at start.
+      const size = 32 * 1024 * 1024;
+      await writeFile(join(site, "large.woff2"), randomBytes(size));
+      const server = await startSiteServer(serving({ SITE_DIRECTORY: site }));
+      const client = connect(server.port, "127.0.0.1");
+      client.on("error", () => {});
+      await new Promise<void>((resolve) => client.once("connect", () => resolve()));
+      let received = 0;
+      client.pause();
+      const reading = setInterval(() => {
+        client.once("data", (chunk: Buffer) => {
+          received += chunk.length;
+          client.pause();
+        });
+        client.resume();
+        // One chunk a second, far inside the 10 s idle bound; a chunk may reach half a megabyte.
+      }, 1_000);
+      client.write("GET /large.woff2 HTTP/1.1\r\nHost: localhost\r\n\r\n");
+      await Bun.sleep(1_000);
+      const started = Date.now();
+      const code = await server.stop();
+      const elapsed = Date.now() - started;
+      clearInterval(reading);
+      client.destroy();
+      expect(code).toBe(0);
+      // The answer was under way, and still unfinished when the process stopped.
+      expect(received).toBeGreaterThan(0);
+      expect(received).toBeLessThan(size);
+      expect(elapsed).toBeLessThan(20_000);
+      const seen = events(server.lines);
+      expect(seen).toContain("server.connections_abandoned");
+      expect(seen.indexOf("server.connections_abandoned")).toBeLessThan(
+        seen.indexOf("server.stopped"),
+      );
+    },
+    PROCESS_BOUND_MS + 20_000,
   );
 });

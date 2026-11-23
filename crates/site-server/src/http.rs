@@ -8,7 +8,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use axum::Router;
-use axum::body::{Body, to_bytes};
+use axum::body::Body;
 use axum::extract::{ConnectInfo, Request, State};
 use axum::http::{HeaderMap, HeaderName, HeaderValue, StatusCode};
 use axum::response::Response;
@@ -21,6 +21,7 @@ use crate::log::Logger;
 use crate::mailer::MailQueue;
 use crate::messages::confirmation_message;
 use crate::policy::Policy;
+use crate::server::close_without_answer;
 use crate::site::{HTML, Site, none_match_hits, resolve_path};
 use crate::store::{RequestOutcome, Store};
 use crate::subscription::{Refusal, parse_subscription};
@@ -30,6 +31,16 @@ use crate::web::{encode_uri_component, escape_html, js_trim};
 const MAX_FORM_BYTES: usize = 4096;
 /// The largest body read at all, the `maxRequestBodySize` of the reference.
 const MAX_REQUEST_BYTES: usize = 64 * 1024;
+
+/// A form body as read.
+enum FormBody {
+    Text(String),
+    /// Declared or read over the form limit: 413.
+    TooLong,
+    /// The read failed (timed out, connection cut): no answer.
+    Failed,
+}
+
 const ONE_CLICK: &str = "List-Unsubscribe=One-Click";
 /// The limit of the demo and of production: five waitlist requests per client in ten minutes.
 pub const RATE_LIMIT: u32 = 5;
@@ -143,6 +154,10 @@ impl App {
         self.respond(status, &all, body.as_bytes().to_vec())
     }
 
+    fn too_long(&self) -> Response {
+        self.text(StatusCode::PAYLOAD_TOO_LARGE, "Demande trop longue", &[])
+    }
+
     fn see_other(&self, location: &str) -> Response {
         self.respond(StatusCode::SEE_OTHER, &[("Location", location)], Vec::new())
     }
@@ -204,18 +219,40 @@ impl App {
         self.respond(status, &response_headers, body)
     }
 
-    /// The body as text, or `None` when it is over the form limit.
-    async fn read_limited(&self, headers: &HeaderMap, body: Body) -> Option<String> {
+    /// The body as text, over the form limit, or failed: a body that cannot be read (timed out,
+    /// cut) is not too long, and gets no answer at all, as in Bun.
+    async fn read_limited(&self, headers: &HeaderMap, body: Body) -> FormBody {
         // `Number(content-length ?? "0") > 4096`: an unreadable length is NaN, never over.
         let declared = header(headers, "content-length").unwrap_or_else(|| "0".to_owned());
         if js_trim(&declared)
             .parse::<f64>()
             .is_ok_and(|length| length > MAX_FORM_BYTES as f64)
         {
-            return None;
+            return FormBody::TooLong;
         }
-        let bytes = to_bytes(body, MAX_REQUEST_BYTES).await.ok()?;
-        (bytes.len() <= MAX_FORM_BYTES).then(|| decode_text(&bytes))
+        let mut body = std::pin::pin!(body);
+        let mut bytes = Vec::new();
+        loop {
+            let frame =
+                std::future::poll_fn(|cx| hyper::body::Body::poll_frame(body.as_mut(), cx)).await;
+            match frame {
+                None => break,
+                Some(Err(_)) => return FormBody::Failed,
+                Some(Ok(frame)) => {
+                    if let Ok(data) = frame.into_data() {
+                        bytes.extend_from_slice(&data);
+                    }
+                    if bytes.len() > MAX_REQUEST_BYTES {
+                        return FormBody::TooLong;
+                    }
+                }
+            }
+        }
+        if bytes.len() <= MAX_FORM_BYTES {
+            FormBody::Text(decode_text(&bytes))
+        } else {
+            FormBody::TooLong
+        }
     }
 
     async fn subscribe(
@@ -231,8 +268,10 @@ impl App {
         if header(headers, "sec-fetch-site").is_some_and(|site| site != "same-origin") {
             return Ok(self.text(StatusCode::FORBIDDEN, "Origine refusée", &[]));
         }
-        let Some(text) = self.read_limited(headers, body).await else {
-            return Ok(self.text(StatusCode::PAYLOAD_TOO_LARGE, "Demande trop longue", &[]));
+        let text = match self.read_limited(headers, body).await {
+            FormBody::Text(text) => text,
+            FormBody::TooLong => return Ok(self.too_long()),
+            FormBody::Failed => return Ok(close_without_answer()),
         };
         if !self.limiter.allow(peer, now_ms((self.clock)())) {
             self.logger.event("subscription.rate_limited", &[]);
@@ -313,8 +352,10 @@ impl App {
         body: Body,
         token: &str,
     ) -> Result<Response, Failure> {
-        let Some(text) = self.read_limited(headers, body).await else {
-            return Ok(self.text(StatusCode::PAYLOAD_TOO_LARGE, "Demande trop longue", &[]));
+        let text = match self.read_limited(headers, body).await {
+            FormBody::Text(text) => text,
+            FormBody::TooLong => return Ok(self.too_long()),
+            FormBody::Failed => return Ok(close_without_answer()),
         };
         let deleted = if token.is_empty() {
             false
@@ -560,15 +601,46 @@ mod tests {
     }
 
     async fn serve(app: Arc<App>) -> SocketAddr {
+        serve_with(app, crate::server::Limits::SERVED).await
+    }
+
+    async fn serve_with(app: Arc<App>, limits: crate::server::Limits) -> SocketAddr {
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
         tokio::spawn(crate::server::serve(
             listener,
             router(app),
-            crate::server::Limits::SERVED,
+            limits,
             std::future::pending(),
         ));
         address
+    }
+
+    #[tokio::test]
+    async fn a_body_that_cannot_be_read_gets_no_answer() {
+        let lines = Arc::new(Mutex::new(Vec::new()));
+        let held = Arc::new(HeldMailer(Arc::new(Notify::new()), Arc::new(Mutex::new(0))));
+        let limits = crate::server::Limits {
+            request: Duration::from_millis(300),
+            ..crate::server::Limits::SERVED
+        };
+        // A store reached would answer 500: the body read must end the request before.
+        let address = serve_with(app(Arc::new(FailingStore), held, lines.clone()), limits).await;
+        for target in ["/inscription", "/desinscrire?jeton=x"] {
+            let answer = tokio::time::timeout(
+                Duration::from_secs(5),
+                exchange(
+                    address,
+                    &format!(
+                        "POST {target} HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 100\r\n\r\ncourriel=a"
+                    ),
+                ),
+            )
+            .await
+            .expect("the connection stayed open");
+            assert_eq!(answer, "", "{target}");
+        }
+        assert!(lines.lock().unwrap().is_empty());
     }
 
     /// One HTTP/1.1 exchange on a fresh connection, answer read to the end.

@@ -17,8 +17,17 @@ export interface SiteServerProcess {
   stop(): Promise<number>;
 }
 
+const ROOT = join(import.meta.dir, "..");
+
 /** The crate's own sources: every file rustc reads for the binary (`policy.json` is embedded). */
-export const SITE_SERVER_SOURCES = join(import.meta.dir, "..", "crates", "site-server");
+export const SITE_SERVER_SOURCES = join(ROOT, "crates", "site-server");
+
+/** The manifests that fix the dependencies, features and profile the binary is built with. */
+export const SITE_SERVER_MANIFESTS: readonly string[] = [
+  join(SITE_SERVER_SOURCES, "Cargo.toml"),
+  join(ROOT, "Cargo.toml"),
+  join(ROOT, "Cargo.lock"),
+];
 
 /** The newest modification time among the `.rs` files and `policy.json` under `sources`. */
 function newestSource(sources: string): number {
@@ -32,17 +41,64 @@ function newestSource(sources: string): number {
   return newest;
 }
 
+/** The newest modification time among `manifests`; an absent one is a failure, never old. */
+function newestManifest(manifests: readonly string[]): number {
+  let newest = 0;
+  for (const manifest of manifests) {
+    if (!existsSync(manifest)) throw new Error(`site_server.sources_missing:${manifest}`);
+    newest = Math.max(newest, statSync(manifest).mtimeMs);
+  }
+  return newest;
+}
+
+/**
+ * Cargo's own verdict on the binary: whether it is fresh against everything cargo fingerprints.
+ * It runs the build, offline, so a binary that the manifests outdated is relinked on the way.
+ */
+export function cargoSaysFresh(): boolean {
+  const run = Bun.spawnSync(
+    ["cargo", "build", "--locked", "--offline", "--bin", "site-server", "--message-format=json"],
+    { cwd: ROOT, stdout: "pipe", stderr: "ignore" },
+  );
+  if (run.exitCode !== 0) throw new Error(`site_server.cargo_failed:${run.exitCode}`);
+  return binaryFreshIn(run.stdout.toString());
+}
+
+/** Whether cargo's JSON messages report the `site-server` binary as fresh (not rebuilt). */
+export function binaryFreshIn(messages: string): boolean {
+  return messages
+    .split("\n")
+    .filter((line) => line.startsWith("{"))
+    .map(
+      (line) =>
+        JSON.parse(line) as { reason?: string; target?: { name?: string }; fresh?: boolean },
+    )
+    .some(
+      (message) =>
+        message.reason === "compiler-artifact" &&
+        message.target?.name === "site-server" &&
+        message.fresh === true,
+    );
+}
+
 /**
  * The binary to run, refused when absent or older than its sources: a `bun test` run without
  * the build of `bun run test` would otherwise test a binary that no longer matches the code.
- * Cargo rewrites the binary whenever one of these files is newer than its last build.
+ * Cargo rewrites the binary whenever a crate source is newer than its last build, so their times
+ * decide. A manifest is different: cargo compares its content, and a manifest rewritten without
+ * a change cargo cares about leaves the binary older than it and still fresh. When a manifest is
+ * newer than the binary, cargo is asked; refusing on the time alone would refuse a fresh binary
+ * that no build can make newer.
  */
 export function requireBinary(
   binary: string = SITE_SERVER_BINARY,
   sources: string = SITE_SERVER_SOURCES,
+  manifests: readonly string[] = SITE_SERVER_MANIFESTS,
+  freshByCargo: () => boolean = cargoSaysFresh,
 ): string {
   if (!existsSync(binary)) throw new Error(`site_server.binary_missing:${binary}`);
-  if (statSync(binary).mtimeMs < newestSource(sources)) {
+  const built = statSync(binary).mtimeMs;
+  if (built < newestSource(sources) || (built < newestManifest(manifests) && !freshByCargo())) {
     throw new Error(
       `site_server.binary_stale:${binary} (run cargo build --locked --bin site-server)`,
     );

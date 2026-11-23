@@ -108,11 +108,33 @@ Décisions de la revue du 2026-11-23, chacune tenue par un test :
   démarrage ; une réponse n'attend jamais l'envoi, ni sa préparation : le message part dans
   une file bornée (1024) qu'une tâche dépile, l'envoi tournant hors des fils du serveur. File
   pleine : la demande reste enregistrée, le message n'est pas envoyé, `mail.dropped` est
-  journalisé ; une nouvelle demande renvoie le message (ADR 0006 §4).
-- **Délais.** Lecture des en-têtes et inactivité d'une connexion bornées à 10 s, comme
-  `Bun.serve`. À SIGTERM, le binaire cesse d'accepter, laisse 10 s aux connexions ouvertes puis
-  les abandonne (`server.connections_abandoned`), puis laisse 30 s aux envois en cours ; un
-  client lent ne retient donc jamais le processus au-delà de ces deux bornes.
+  journalisé ; une nouvelle demande renvoie le message (ADR 0006 §4). Au plus 4 envois sont en
+  cours à la fois (`MAX_SENDS_UNDER_WAY`), les suivants attendent dans la file. Le transport
+  est construit sans la fonctionnalité `pool` de lettre : chaque envoi ouvre sa propre
+  connexion au relais et la ferme (`async_transport.rs` de lettre, `conn.abort()` hors
+  `pool`) ; la borne de 4 limite donc aussi les connexions ouvertes vers le relais. Choix
+  retenu contre le `pool` : une connexion par message, sans état partagé entre deux envois,
+  au débit d'une liste d'attente.
+- **Délais.** Une requête, en-têtes et corps, doit être lue en 10 s à compter de son premier
+  octet, quel que soit le débit : un client qui envoie un octet toutes les 7 s est coupé à
+  10 s (mesure de la revue du 2026-11-23 : `Bun.serve` coupe ce client à 11 993 ms ; le
+  binaire d'avant ce lot le gardait au-delà de 35 s, chaque octet relançant l'inactivité).
+  Entre deux requêtes et pendant l'écriture d'une réponse, l'inactivité est bornée à 10 s.
+  **Limite nommée** : un client qui lit lentement une grande réponse fait progresser
+  l'écriture et n'est borné que par cette inactivité, à chaque écriture ; seul l'arrêt
+  l'abandonne. À SIGTERM, le binaire cesse d'accepter, laisse 10 s aux connexions ouvertes puis
+  les abandonne (`server.connections_abandoned`, tenu par un test du processus avec un tel
+  lecteur lent), puis laisse 30 s aux envois en cours ; un client lent ne retient donc jamais
+  le processus au-delà de ces deux bornes.
+- **Plafonds de connexions.** Au plus 512 connexions ouvertes à la fois, et 16 par client
+  (même clé que le limiteur : l'adresse, son /64 en IPv6). Au-delà du plafond global, une
+  connexion attend une place dans la file d'écoute du système ; au-delà du plafond d'un
+  client, elle est fermée sans réponse. Un client lent occupe donc au plus 16 places, et la
+  borne de requête rend la sienne en 10 s. **Hypothèse non mesurée** : que la limite de
+  descripteurs du déploiement dépasse 512 plus les connexions à la base et au relais.
+- **Corps illisible.** Une lecture du corps qui échoue (délai dépassé, connexion coupée) ne
+  reçoit aucune réponse : la connexion est fermée, comme le fait `Bun.serve`. Seul un corps
+  trop long reçoit 413.
 - **PostgreSQL chiffré et vérifié.** Le binaire refuse de démarrer si la connexion ne demande
   pas `sslmode=verify-full` (dans l'URI ou par `PGSSLMODE`) : sans elle, sqlx retombe en clair
   et ne vérifie ni certificat ni nom d'hôte. Exception nommée, pour les tests et la
@@ -125,8 +147,10 @@ Décisions de la revue du 2026-11-23, chacune tenue par un test :
 - **Limiteur.** Un client IPv6 est compté par son /64 (une ligne d'abonné reçoit en général un
   /64 entier ; compté par adresse, il pourrait changer de clé à chaque requête) ; une adresse
   IPv4 projetée en IPv6 compte comme IPv4. Les fenêtres expirées sortent par une file ordonnée,
-  sans parcours de la table, et la table suit au plus 100 000 clients, au-delà desquels un
-  nouveau client est refusé jusqu'à expiration. **Reste ouvert avant le déploiement** : aucune
+  sans parcours de la table, et la table suit au plus 100 000 clients. Table pleine, la fenêtre
+  la plus ancienne sort pour faire place au nouveau client, qui n'est jamais refusé faute de
+  place. **Risque résiduel** : un attaquant à 100 000 clés réinitialise les fenêtres des
+  autres. **Reste ouvert avant le déploiement** : aucune
   limite par adresse électronique ; une adresse en attente reçoit un message par demande
   acceptée.
 - **Purge au démarrage**, avant d'écouter, puis toutes les heures.
@@ -139,10 +163,19 @@ Décisions de la revue du 2026-11-23, chacune tenue par un test :
   réponses.
 - **Aucun secret dans un journal** : `Debug` de la configuration masque l'URI de la base et le
   mot de passe SMTP.
+- **Expiration à 48 h.** Le test de parité vieillit les demandes à la seconde : un scénario
+  purge et confirme à 48 h moins 30 s, puis à 48 h plus 30 s. Un `PENDING_TTL` décalé de deux
+  minutes, dans un sens ou dans l'autre, le fait rougir.
 - **Fraîcheur du binaire.** Le test de parité et les tests du processus refusent un binaire
-  plus ancien que ses sources (`.rs`, `policy.json`). Limite : la comparaison porte sur les
-  dates de modification, comme celle de cargo ; un fichier restauré avec une date ancienne
-  passe pour plus vieux que le binaire, et ni cargo ni ce contrôle ne le voient.
+  plus ancien que ses sources (`.rs`, `policy.json`). Pour les manifestes (`Cargo.toml` de la
+  crate et de l'espace de travail, `Cargo.lock`), la date ne suffit pas : cargo compare leur
+  contenu, et un manifeste réécrit sans changement qui le concerne laisse un binaire plus
+  ancien que lui et pourtant à jour, qu'aucune construction ne rajeunit. Un manifeste plus
+  récent que le binaire fait donc demander son verdict à cargo (`cargo build --offline
+  --message-format=json`, champ `fresh`), qui reconstruit au passage un binaire périmé. Limite :
+  pour les sources, la comparaison porte sur les dates, comme celle de cargo ; un fichier
+  restauré avec une date ancienne passe pour plus vieux que le binaire, et ni cargo ni ce
+  contrôle ne le voient.
 - **Dépendances.** `url` reste en 2.5.8 : 2.5.9 a été publiée le 2026-11-20 à 23:03 UTC, moins
   de trois jours avant la mesure (garde d'âge de la flotte).
 
@@ -160,9 +193,11 @@ refuse à sa façon) ; pour un scénario à divergence admise, les en-têtes, co
 - Le dépôt porte un espace de travail Cargo (`Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`)
   et le `deny.toml` commun de la flotte ; `bun run check` exécute `check:dependency-policy`
   (cargo-deny : bans, licences, sources) et `check:rust` (fmt, clippy `-D warnings`, tests).
-- Le limiteur reste indexé sur l'adresse de la connexion (son /64 en IPv6). Derrière un
-  proxy, toutes les requêtes partageraient une clé : le jalon de déploiement doit décider de
-  l'en-tête d'origine à croire avant la mise en ligne.
+- Le limiteur et le plafond de connexions par client restent indexés sur l'adresse de la
+  connexion (son /64 en IPv6). Derrière un proxy, toutes les requêtes partageraient une clé :
+  le limiteur refuserait tout le monde après 5 demandes en 10 minutes, et le plafond fermerait
+  toute connexion au-delà de 16. **Bloquant pour le déploiement** : le jalon de déploiement
+  doit décider de l'adresse de client à croire avant la mise en ligne.
 - Les requêtes sqlx sont non préparées (`persistent(false)`), pour PGlite et les poolers.
 - `tools/clever` est inchangé : il ne déploie qu'une cible statique ; le déploiement du binaire
   relève du jalon de déploiement.
