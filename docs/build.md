@@ -26,6 +26,14 @@ Pour changer de commit, éditer `sha` dans `card-sources.json` puis relancer la 
 `LIBRE_AI_CARDS_DIR=<dossier>` remplace la copie par un autre dossier pour un essai local ; la
 copie versionnée est tout de même vérifiée.
 
+## Typographie
+
+Chaque page terminée passe par `src/web/typography.ts`, qui pose une espace insécable avant
+`: ; ! ?` et `»`, et après `«`. La règle couvre le texte du dépôt, les démos et les fiches citées
+telles quelles, qui ne se corrigent pas ici. Le texte s'écrit donc avec des espaces ordinaires.
+Le code, les scripts, les styles, les commentaires et les attributs non lus (URL, classes)
+restent tels qu'écrits. `src/web/routes.test.ts` échoue sur toute espace ordinaire restante.
+
 ## Commandes
 
 ```sh

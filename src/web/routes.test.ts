@@ -10,7 +10,7 @@ const forge: ForgeInput = {
       project: "project-governance",
       title: "Gouvernance",
       lead: "Les décisions écrites.",
-      body: "<h1>Gouvernance</h1><p>Corps.</p>",
+      body: "<h1>Gouvernance</h1><p>Corps cité tel quel : sans retouche.</p>",
     },
   ],
   proofs: "<h1>Preuves</h1>",
@@ -98,6 +98,30 @@ describe("rendered pages", () => {
     const report = checkInternalLinks(files);
     expect(report.examined).toBeGreaterThan(routes.length);
     expect(report.broken).toEqual([]);
+  });
+
+  test("binds every high punctuation sign and guillemet with a no-break space", () => {
+    // Prose only: verbatim elements and comments out, inline elements joined to their words,
+    // every other element a line break, so the start of a block is never read as a gap.
+    const inline = /<\/?(a|abbr|b|cite|em|i|small|span|strong|time)\b[^>]*>/g;
+    const prose = (html: string): string =>
+      html
+        .replace(/<!--[\s\S]*?-->|<(script|style|pre|code|kbd|samp|textarea)\b[\s\S]*?<\/\1>/g, "")
+        .replace(inline, "")
+        .replace(/<[^>]+>/g, "\n");
+    let bound = 0;
+    for (const { entry, html } of pages) {
+      const text = prose(html);
+      const gaps = text.match(/\S[ \t\r]+[:;!?»]|«[ \t\r]+\S/g) ?? [];
+      expect([entry.path, gaps]).toEqual([entry.path, []]);
+      bound += text.match(/\S [:;!?»]|« \S/g)?.length ?? 0;
+    }
+    // Volume: the home title, the authored demos and the quoted record of the fixture all count.
+    expect(bound).toBeGreaterThan(routes.length);
+    const home = pages.find(({ entry }) => entry.path === "/")?.html ?? "";
+    expect(home).toContain("ensemble</span> ?</h1>");
+    const brick = pages.find(({ entry }) => entry.path === "/fabrique/briques/project-governance/");
+    expect(brick?.html).toContain("tel quel : sans retouche.");
   });
 
   test("an application page offers the waitlist for that application", () => {
