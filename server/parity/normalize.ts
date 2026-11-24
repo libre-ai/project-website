@@ -90,6 +90,10 @@ export const noneApplied = (): Applied =>
 
 const TOKEN = /[A-Za-z0-9_-]{43}/;
 const LINK = (path: string) => new RegExp(`/${path}\\?jeton=(${TOKEN.source})(?![A-Za-z0-9_-])`);
+// Typed `RegExp` so the fleet SQL-construction gate (project-governance
+// ecosystem/sql-construction-scanner.ts) can tell their `.exec` from a database's.
+const CONFIRM_LINK: RegExp = LINK("confirmer");
+const UNSUBSCRIBE_LINK: RegExp = LINK("desinscrire");
 const RFC5322_DATE =
   /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} \+0000$/;
 const MESSAGE_ID =
@@ -101,8 +105,8 @@ export function messageTokens(
   messages: readonly MessageTrace[],
 ): { readonly confirm: string | null; readonly unsubscribe: string | null }[] {
   return messages.map(({ raw }) => ({
-    confirm: LINK("confirmer").exec(raw)?.[1] ?? null,
-    unsubscribe: LINK("desinscrire").exec(raw)?.[1] ?? null,
+    confirm: CONFIRM_LINK.exec(raw)?.[1] ?? null,
+    unsubscribe: UNSUBSCRIBE_LINK.exec(raw)?.[1] ?? null,
   }));
 }
 
