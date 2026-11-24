@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { FONTS, renderFontFaces, renderFontTokens } from "../font";
+import { FONT_FILES, renderFontFaces, renderFontTokens } from "../font";
 import { readStaticSheets, renderStylesheet } from "./stylesheet";
 import { renderTokens } from "./tokens";
 
@@ -40,7 +40,7 @@ describe("site stylesheet (ADR 0004, ADR 0005, ADR 0010)", () => {
   test("loads nothing remote and imports nothing: its only URLs are the self-hosted fonts", () => {
     expect(css).not.toContain("@import");
     const urls = [...css.matchAll(/url\(\s*"?([^")]+)"?\s*\)/g)].map((match) => match[1]);
-    expect(urls.sort()).toEqual(FONTS.map((font) => `/assets/fonts/${font.file}`).sort());
+    expect(urls.sort()).toEqual(FONT_FILES.map(({ file }) => `/assets/fonts/${file}`).sort());
   });
 
   // ADR 0010 §2: Literata for headings, Atkinson Hyperlegible Next for text.

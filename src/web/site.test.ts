@@ -27,7 +27,7 @@ async function snapshotCards(): Promise<ProjectCard[]> {
 // Stand-ins for the font files, named after the families the stylesheet declares.
 const fonts = new Map<string, Uint8Array>(
   FONTS.flatMap((font) => [
-    [`assets/fonts/${font.file}`, new Uint8Array(1000)] as const,
+    ...font.faces.map((face) => [`assets/fonts/${face.file}`, new Uint8Array(1000)] as const),
     [font.licenseFile, new Uint8Array(10)] as const,
   ]),
 );

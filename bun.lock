@@ -10,9 +10,8 @@
         "@clevercloud/client": "12.0.0",
         "@electric-sql/pglite": "0.5.15",
         "@electric-sql/pglite-socket": "0.2.18",
-        "@fontsource-variable/atkinson-hyperlegible-next": "5.3.0",
-        "@fontsource-variable/caveat": "5.3.0",
-        "@fontsource-variable/literata": "5.3.0",
+        "@fontsource/atkinson-hyperlegible-next": "5.3.0",
+        "@fontsource/literata": "5.3.0",
         "@libre-ai/contracts-authority": "file:../schemas-and-contracts",
         "@libre-ai/governance": "file:../project-governance",
         "@libre-ai/ui": "file:../application-development-toolkit/packages/ui",
@@ -82,11 +81,9 @@
 
     "@electric-sql/pglite-socket": ["@electric-sql/pglite-socket@0.2.18", "", { "peerDependencies": { "@electric-sql/pglite": "0.5.15", "@electric-sql/pglite-age": "0.0.16", "@electric-sql/pglite-pg_hashids": "0.0.16", "@electric-sql/pglite-pg_ivm": "0.0.16", "@electric-sql/pglite-pg_textsearch": "0.0.17", "@electric-sql/pglite-pg_uuidv7": "0.0.16", "@electric-sql/pglite-pgtap": "0.0.16", "@electric-sql/pglite-pgvector": "0.0.16" }, "bin": { "pglite-server": "dist/scripts/server.js" } }, "sha512-Cin2T1pO0RkQDpgdPRsxCCny7ZKZEEciKoF3xl0/GCxmXVyOJe1g/FKm5G5eSCKCG3pPvEvN0C+txu7kOKYSjQ=="],
 
-    "@fontsource-variable/atkinson-hyperlegible-next": ["@fontsource-variable/atkinson-hyperlegible-next@5.3.0", "", {}, "sha512-UnLzNUy1RWoLDfydAatP4NaRm99X/WbQEph7q/PymJnCFIOOwKOx3pBmp5ys8trO0dM+CKGuJgeZP9fAR4mQpA=="],
+    "@fontsource/atkinson-hyperlegible-next": ["@fontsource/atkinson-hyperlegible-next@5.3.0", "", {}, "sha512-8p1tHVoPDo6oYwSO3sMw5snGwFwSf3TmeSF9Gcj792GXdsg6oqvhoItbj6Hj/XZIk0Xs+Cwu6pkLBAl3Q5HrwA=="],
 
-    "@fontsource-variable/caveat": ["@fontsource-variable/caveat@5.3.0", "", {}, "sha512-Q3mjghoYIlXgwqBPJKZ4q6f3zu921Gq7UU76r9Z+NAmhapHfX130GIFpOCYf8vt2SIcgCi9RHDT7anfJKg/kiA=="],
-
-    "@fontsource-variable/literata": ["@fontsource-variable/literata@5.3.0", "", {}, "sha512-1Jw7xvOcoGyB83lxB2nG4bfNbqtX2/TTbdh9sHAOmU064SvmSdulDtA5RBu5JYWf64fdaKX7xU+z3GO1T2bCHA=="],
+    "@fontsource/literata": ["@fontsource/literata@5.3.0", "", {}, "sha512-9JGMT5+YfBK49thoMq9ASaMRJErHT4V4QuMhAEwKHRLreOsIMP2xP6ZRLhPJ0e6YlET+kjWTJuN7LAxt9/gWGQ=="],
 
     "@inquirer/ansi": ["@inquirer/ansi@2.1.0", "", {}, "sha512-63GU5AD9KhNbWM0jlhHoMJTEFck2upFOPxHlnCKf3xYTV3rjTUUQfodihmTnfYQzMLS29oy8lK/gA1eJgu4bhA=="],
 
