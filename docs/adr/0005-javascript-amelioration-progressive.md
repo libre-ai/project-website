@@ -1,7 +1,8 @@
 # ADR 0005 — JavaScript léger auto-hébergé, en amélioration progressive
 
 - **Statut** : accepté par le propriétaire le 2026-11-09 (décision 12 de la recette du prototype
-  v4 ; effets retenus en fin de session, même jour).
+  v4 ; effets retenus en fin de session, même jour) ; décision 5 (effets retenus) amendée par
+  l'ADR 0010, proposé le 2026-11-24. Le reste est inchangé.
 - **Portée** : site public `libre-ia.fr`.
 - **Amende** : ADR 0001 (« aucun JavaScript client sur les pages de contenu ») ; la règle
   « No ... client JavaScript » de `AGENTS.md`.
