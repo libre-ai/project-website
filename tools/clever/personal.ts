@@ -1104,10 +1104,61 @@ async function verifyRollbackCommit(
   return null;
 }
 
+const systemGitFeature = "system-git";
+
+// Why: with the `system-git` feature on (the default since clever-tools 5.0.0), `clever deploy`
+// puts the token and the secret in the remote URL it hands to `git push`, where the process list
+// shows them for the duration of the push. The JS backend passes them through an in-memory
+// callback. The feature is turned off in the isolated features file, then read back from the CLI
+// itself: an absent or unreadable features file silently means "on".
+async function pinInMemoryGitBackend(
+  dependencies: PersonalCleverDependencies,
+  environment: Record<string, string>,
+): Promise<ContextError | null> {
+  const failure = contextFailure(
+    "COMMAND_ERROR",
+    "The in-memory git backend of Clever Tools could not be selected.",
+  );
+  const options = { cwd: dependencies.cwd, environment, maxOutputBytes: 64 * 1024 };
+  const disabled = await runCleverCaptured(
+    dependencies,
+    ["--no-update-notifier", "features", "disable", systemGitFeature],
+    options,
+  );
+  if (capturedCommandFailed(disabled)) return failure;
+  const listed = parseCapturedJson(
+    await runCleverCaptured(
+      dependencies,
+      ["--no-update-notifier", "features", "list", "--format", "json"],
+      options,
+    ),
+  );
+  if (!listed.ok || !Array.isArray(listed.value)) return failure;
+  const entries = listed.value.filter(
+    (entry: unknown) =>
+      typeof entry === "object" && entry !== null && Reflect.get(entry, "id") === systemGitFeature,
+  );
+  if (entries.length !== 1 || Reflect.get(entries[0], "enabled") !== false) return failure;
+  return null;
+}
+
 async function deployFromTemporaryClone(
   dependencies: PersonalCleverDependencies,
   environment: Record<string, string>,
 ): Promise<{ error: ContextError | null; remoteMutationAttempted: boolean }> {
+  try {
+    const backendError = await pinInMemoryGitBackend(dependencies, environment);
+    if (backendError !== null) return { error: backendError, remoteMutationAttempted: false };
+  } catch {
+    return {
+      error: contextFailure(
+        "COMMAND_ERROR",
+        "The in-memory git backend of Clever Tools could not be selected.",
+      ),
+      remoteMutationAttempted: false,
+    };
+  }
+
   let temporaryRoot: string;
   try {
     temporaryRoot = await mkdtemp(join(tmpdir(), "libre-ai-clever-deploy-"));
