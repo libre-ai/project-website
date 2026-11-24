@@ -161,9 +161,13 @@
   color: var(--encre-attenuee);
 }
 
+/* Literata's ascent and descent span 1.485 em (hhea 1177 + 308 units of 1000): under the 1.3 of
+   the demos, Firefox counts the part that sticks out of the line box as overflow of the title
+   (e2e rehearsal, never-fits). 1.5 holds the whole box. */
 .demo b {
   font-family: var(--police-titre);
   font-size: 0.82rem;
+  line-height: 1.5;
 }
 
 .demo small {
