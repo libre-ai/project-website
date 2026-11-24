@@ -126,8 +126,10 @@ export const ROLES: Readonly<Record<Theme, Readonly<Record<Role, RoleColour>>>> 
 
 /**
  * The martinet keeps its colours (ADR 0010 keeps the bird): the three stops of the gradient the
- * sprite draws, and the ink of its wing and of the emblems' outlines. They mark the brand only and
- * are never a text or background colour of the page.
+ * sprite draws, and the ink of the emblems' outlines and of the favicon's wing. They mark the brand
+ * only and are never a text or background colour of the page. The wing of the bird drawn in the
+ * page reads the page ink (`--encre`), as on the base, so it shows on paper and on night: in light
+ * it moves with that ink from #0a2a1e to #15213b.
  */
 export const MARTINET = {
   encre: "#0a2a1e",

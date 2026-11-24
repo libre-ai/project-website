@@ -49,7 +49,7 @@ export function renderPlanche(): string {
       // A transformed group rather than a nested <svg>: some renderers ignore nested positions.
       `<g transform="translate(${x + offset},${y + 8}) scale(${EMBLEM_SIZE / EMBLEM_BOX})">${facetPaths(facets)}</g>`,
       `<text x="${x + CELL_WIDTH / 2}" y="${y + 146}" text-anchor="middle" font-size="12" font-weight="700" fill="${PAPIER_NUIT.clair.encre}">${escapeHtml(label)}</text>`,
-      `<text x="${x + CELL_WIDTH / 2}" y="${y + 164}" text-anchor="middle" font-size="11" fill="#4d6a5e">${escapeHtml(objectOf(ref))}</text>`,
+      `<text x="${x + CELL_WIDTH / 2}" y="${y + 164}" text-anchor="middle" font-size="11" fill="${PAPIER_NUIT.clair.encreAttenuee}">${escapeHtml(objectOf(ref))}</text>`,
     ].join("");
   });
   return [

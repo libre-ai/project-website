@@ -53,7 +53,7 @@ describe("site stylesheet (ADR 0004, ADR 0005, ADR 0010)", () => {
   test("no static sheet spells a font family: every family goes through a --police token", () => {
     for (const sheet of sheets) {
       for (const [, value] of sheet.text.matchAll(/font-family:\s*([^;]+);/g)) {
-        expect(value).toMatch(/^(var\(--police-(titre|texte|main)\)|inherit)$/);
+        expect(value).toMatch(/^(var\(--police-(titre|texte)\)|inherit)$/);
       }
     }
   });

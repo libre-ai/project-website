@@ -1,9 +1,12 @@
 import { describe, expect, test } from "bun:test";
+import { readdir, readFile } from "node:fs/promises";
+import { join } from "node:path";
 
 import { UNIVERSE_HUES } from "./palette";
-import { renderTokens, TOKEN_PAIRS } from "./tokens";
+import { mixSrgb, renderTokens, TOKEN_PAIRS } from "./tokens";
 
 const css = renderTokens();
+const SHEETS = join(import.meta.dir, "css");
 
 /** The declarations of the first rule whose selector is exactly `selector`. */
 function block(selector: string): string {
@@ -18,7 +21,12 @@ function value(rule: string, property: string): string | undefined {
 
 // sRGB hex → OKLCH (Björn Ottosson, 2020), written independently of palette.ts, which only goes
 // the other way: the test reads back what the stylesheet actually serves after 8-bit rounding.
-function oklch(hex: string): { readonly l: number; readonly c: number } {
+function oklch(hex: string): {
+  readonly l: number;
+  readonly c: number;
+  readonly a: number;
+  readonly b: number;
+} {
   const [r, g, b] = [1, 3, 5].map((offset) => {
     const v = Number.parseInt(hex.slice(offset, offset + 2), 16) / 255;
     return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
@@ -28,7 +36,19 @@ function oklch(hex: string): { readonly l: number; readonly c: number } {
   const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
   const a = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s;
   const bb = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
-  return { l: 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s, c: Math.hypot(a, bb) };
+  return {
+    l: 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
+    c: Math.hypot(a, bb),
+    a,
+    b: bb,
+  };
+}
+
+/** Euclidean distance in OKLab: how far apart two colours look. */
+function distance(first: string, second: string): number {
+  const x = oklch(first);
+  const y = oklch(second);
+  return Math.hypot(x.l - y.l, x.a - y.a, x.b - y.b);
 }
 
 describe("token contrast (ADR 0004 §3, unchanged by ADR 0010)", () => {
@@ -57,8 +77,26 @@ describe("token contrast (ADR 0004 §3, unchanged by ADR 0010)", () => {
   test("every pair is one the stylesheet serves", () => {
     for (const pair of TOKEN_PAIRS) {
       expect(css).toContain(pair.foreground);
-      expect(css).toContain(pair.background);
+      if (pair.mix === undefined) expect(css).toContain(pair.background);
     }
+  });
+
+  // A mixed background is checked only while a sheet still mixes it that way: a changed weight or
+  // token in the sheet must fail here rather than leave the pair measuring a colour nobody serves.
+  test("every mixed background is one a sheet serves, with the same tokens and weight", async () => {
+    const sheets = await Promise.all(
+      (await readdir(SHEETS)).map((name) => readFile(join(SHEETS, name), "utf8")),
+    );
+    const served = sheets.join("\n");
+    const mixes = TOKEN_PAIRS.flatMap((pair) => (pair.mix === undefined ? [] : [pair.mix]));
+    expect(mixes.length).toBeGreaterThan(0);
+    for (const mix of new Set(mixes)) expect([mix, served.includes(mix)]).toEqual([mix, true]);
+  });
+
+  test("mixes like CSS color-mix in srgb, with 8-bit rounding", () => {
+    // Halfway between white and black is 127.5 per channel, which browsers round to 128 (#80).
+    expect(mixSrgb("#ffffff", "#000000", 0.5)).toBe("#808080");
+    expect(mixSrgb("#ff0000", "#0000ff", 0.25)).toBe("#4000bf");
   });
 });
 
@@ -92,6 +130,42 @@ describe("renderTokens (ADR 0010 §1)", () => {
     }
     // The site's own theme names, never the prototype's light/dark attribute values.
     expect(css).not.toMatch(/data-theme="(light|dark)"/);
+  });
+
+  test("dark values are those of the prototype judged in version 17", () => {
+    // Copied from the dark block of the judged prototype (redesign workspace, tools/recap.ts), whose
+    // --papier is the site's --fond and whose --alerte is the incident role.
+    const prototype = {
+      fond: "#121b31",
+      surface: "#162038",
+      encre: "#e9eef6",
+      "encre-attenuee": "#aab5c9",
+      nuit: "#0a1020",
+      "nuit-texte": "#e9eef6",
+      "nuit-doux": "#aab5c9",
+      personne: "#f3bf63",
+      "personne-fond": "#3b2b0b",
+      agent: "#8db6ff",
+      "agent-fond": "#15294c",
+      controle: "#73d4a3",
+      "controle-fond": "#0f3321",
+      incident: "#ff9184",
+      "incident-fond": "#42140f",
+    };
+    const dark = block(':root[data-theme="sombre"]');
+    for (const [property, expected] of Object.entries(prototype)) {
+      expect([property, value(dark, property)]).toEqual([property, expected]);
+    }
+  });
+
+  test("links stay apart from the agent blue, which names who acts (ADR 0010 §1)", () => {
+    // 0.06 in OKLab is about three just-noticeable differences (0.02).
+    for (const rule of [block(":root"), block(':root[data-theme="sombre"]')]) {
+      const link = value(rule, "lien");
+      const agent = value(rule, "agent");
+      if (link === undefined || agent === undefined) throw new Error("missing --lien or --agent");
+      expect(distance(link, agent)).toBeGreaterThan(0.06);
+    }
   });
 
   test("declares one class per universe with its colour, tint, text colour and five facets", () => {
