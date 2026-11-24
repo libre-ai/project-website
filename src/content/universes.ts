@@ -1,7 +1,7 @@
 /**
  * The eight universes, named by a verb (ADR 0007 §6), and the universe of each application.
  * Distribution validated by the owner on 2026-11-11 (Libre Fenêtres, P40, in « Piloter l'IA »);
- * Libre Tickets, P41, joined « Travailler ensemble » with ADR 0010.
+ * Libre Tickets, P41 (ADR 0010), joined « Travailler ensemble » as in the redesign prototype.
  */
 import type { UniverseHueId } from "../design/palette";
 
