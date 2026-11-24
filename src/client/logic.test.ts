@@ -1,6 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
-import { clampStep, nextTabIndex, resolveTheme, THEME_STORAGE_KEY } from "./logic";
+import {
+  clampStep,
+  defaultFacts,
+  nextTabIndex,
+  resolveTheme,
+  THEME_STORAGE_KEY,
+  trippedRules,
+} from "./logic";
 
 describe("resolveTheme (ADR 0005 §4)", () => {
   test("a valid saved choice wins over the system", () => {
@@ -40,6 +47,50 @@ describe("nextTabIndex (WAI-ARIA tabs pattern)", () => {
 
   test("no tab, no move", () => {
     expect(nextTabIndex(0, "ArrowRight", 0)).toBeNull();
+  });
+});
+
+describe("the rule engine (ADR 0010 §4)", () => {
+  // Hand-written fields and rules, so these cases test the engine and not the site's data.
+  const fields = [
+    { field: "destination", values: ["appareil", "europe", "hors-ue"] },
+    { field: "relu", values: [true, false] },
+  ] as const;
+  const rules = [
+    { id: "europe", when: { destination: "hors-ue" } },
+    { id: "relecture", when: { relu: false } },
+    { id: "les-deux", when: { destination: "hors-ue", relu: false } },
+  ] as const;
+  const defaults = defaultFacts(fields);
+  const ids = (facts: Record<string, string | boolean>) =>
+    trippedRules(rules, facts, defaults).map((rule) => rule.id);
+
+  test("an action that states nothing keeps every default and trips nothing", () => {
+    expect(defaults).toEqual({ destination: "appareil", relu: true });
+    expect(ids({})).toEqual([]);
+  });
+
+  test("a rule trips only when every fact it lists holds", () => {
+    expect(ids({ destination: "hors-ue" })).toEqual(["europe"]);
+    expect(ids({ relu: false })).toEqual(["relecture"]);
+    expect(ids({ destination: "europe", relu: false })).toEqual(["relecture"]);
+  });
+
+  test("several rules trip together, in rule order", () => {
+    expect(ids({ relu: false, destination: "hors-ue" })).toEqual([
+      "europe",
+      "relecture",
+      "les-deux",
+    ]);
+  });
+
+  test("a stated fact overrides its default, including a stated default value", () => {
+    expect(ids({ destination: "appareil", relu: true })).toEqual([]);
+    expect(trippedRules(rules, {}, { destination: "hors-ue", relu: true })).toEqual([rules[0]]);
+  });
+
+  test("a field without values gives no default", () => {
+    expect(defaultFacts([{ field: "vide", values: [] }])).toEqual({});
   });
 });
 
