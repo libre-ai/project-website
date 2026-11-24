@@ -1,6 +1,7 @@
 /**
  * The eight universes, named by a verb (ADR 0007 §6), and the universe of each application.
- * Distribution validated by the owner on 2026-11-11 (Libre Fenêtres, P40, in « Piloter l'IA »).
+ * Distribution validated by the owner on 2026-11-11 (Libre Fenêtres, P40, in « Piloter l'IA »);
+ * Libre Tickets, P41 (ADR 0010), joined « Travailler ensemble » as in the redesign prototype.
  */
 import type { UniverseHueId } from "../design/palette";
 
@@ -26,7 +27,19 @@ export const UNIVERSES: readonly Universe[] = [
 const DISTRIBUTION: Readonly<Record<UniverseId, readonly string[]>> = {
   "s-informer": ["P01", "P02", "P03", "P06"],
   "ecrire-calculer": ["P04", "P08", "P09", "P10", "P12", "P13"],
-  "travailler-ensemble": ["P05", "P11", "P14", "P15", "P16", "P17", "P18", "P19", "P20", "P21"],
+  "travailler-ensemble": [
+    "P05",
+    "P11",
+    "P14",
+    "P15",
+    "P16",
+    "P17",
+    "P18",
+    "P19",
+    "P20",
+    "P21",
+    "P41",
+  ],
   "creer-publier": ["P22", "P23", "P24", "P25", "P26", "P27"],
   apprendre: ["P07", "P39"],
   "se-divertir": ["P28", "P29", "P30", "P31", "P32"],

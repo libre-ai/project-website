@@ -1,5 +1,6 @@
 /**
- * The internal keys of the v4 prototype accepted on 2026-11-09, by application reference. The
+ * The internal keys of the v4 prototype accepted on 2026-11-09, by application reference (P41 and
+ * the P15 key "signalement" were added with the redesign of ADR 0010). The
  * showcases and journeys ported from it are keyed by these words; they are not public slugs and
  * do not change when the owner renames an application (the slugs will follow the new names).
  */
@@ -19,7 +20,9 @@ export const PROTOTYPE_KEY_OF: Readonly<Record<string, string>> = {
   P12: "pdf",
   P13: "formulaires",
   P14: "canevas",
-  P15: "tickets",
+  // P15 was drafted as a ticketing app; the product sheets made it the relay of reports
+  // (Remontées) and gave ticketing to P41, which takes over the "tickets" showcase and journey.
+  P15: "signalement",
   P16: "taches",
   P17: "mail",
   P18: "visio",
@@ -45,6 +48,7 @@ export const PROTOTYPE_KEY_OF: Readonly<Record<string, string>> = {
   P38: "sauvegarde",
   P39: "cours",
   P40: "fenetres",
+  P41: "tickets",
 };
 
 const REF_OF_KEY: ReadonlyMap<string, string> = new Map(

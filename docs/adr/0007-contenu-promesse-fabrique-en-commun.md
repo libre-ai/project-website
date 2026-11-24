@@ -1,7 +1,9 @@
 # ADR 0007 — Contenu : la promesse d'abord, rien présenté comme disponible
 
 - **Statut** : accepté par le propriétaire le 2026-11-09 (décisions 2, 4, 6, 8 à 11 et 13 de la
-  recette du prototype v4 ; brief du socle validé le même jour).
+  recette du prototype v4 ; brief du socle validé le même jour) ; décisions 1, 3, 5, 7, 8 et 10
+  amendées par l'ADR 0010 (promesse, état réel calculé, 41 applications, accueil, trois pages),
+  proposé le 2026-11-24. Le §2 (rien présenté comme disponible) est inchangé.
 - **Portée** : site public `libre-ia.fr`.
 - **Remplace** : ADR 0003 (produits présentés comme existants).
 

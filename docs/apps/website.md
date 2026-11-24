@@ -13,7 +13,7 @@ Website is the public, citable projection of reviewed Libre AI knowledge, produc
 
 ## Journeys
 
-1. **Understand:** reader opens a static/SSR route, sees current product state, limits, source date and evidence links, then follows a stable canonical URL.
+1. **Understand:** reader opens a static/SSR route, sees current product state (computed at build from the pinned governance fiches, ADR 0010), limits, source date and evidence links, then follows a stable canonical URL.
 2. **Verify:** reader opens a claim or corpus item, inspects authorship, assistance, sources, review date and corrections, then exports/cites it.
 3. **Contribute:** contributor follows versioned contribution rules to a GitHub proposal; Website itself accepts no anonymous content mutation.
 4. **Discover:** standards-compliant crawlers receive sitemap, robots, Atom/RSS and machine-readable metadata generated from the same selected corpus.
