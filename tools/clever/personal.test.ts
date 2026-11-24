@@ -34,6 +34,8 @@ interface FakeState {
   domains: unknown;
   environmentResponse: unknown | null;
   failDeploy: boolean;
+  failFeatureDisable: boolean;
+  featuresResponse: unknown | null;
   stoppedStatus: string;
   deploymentInProgress: boolean;
   rollbackCommitAllowed: boolean;
@@ -200,7 +202,7 @@ function createDependencies(
     failingInteractive: null,
     failingCaptured: null,
     smokeFailurePath: null,
-    cleverVersion: "4.11.0",
+    cleverVersion: "5.5.0",
     candidateBinding: validBinding(),
     candidateRawText: null,
     candidateModeAfterCreate: null,
@@ -225,6 +227,8 @@ function createDependencies(
     ],
     environmentResponse: null,
     failDeploy: false,
+    failFeatureDisable: false,
+    featuresResponse: null,
     stoppedStatus: "stopped",
     deploymentInProgress: false,
     rollbackCommitAllowed: true,
@@ -316,6 +320,19 @@ function createDependencies(
     if (command === "clever" && arguments_.includes("delete")) {
       if (!state.deleteKeepsApplication) state.applications = [];
       return commandResult();
+    }
+    if (command === "clever" && arguments_.includes("features")) {
+      if (arguments_.includes("disable")) {
+        return commandResult("", state.failFeatureDisable ? 1 : 0);
+      }
+      return commandResult(
+        `${JSON.stringify(
+          state.featuresResponse ?? [
+            { id: "system-git", status: "stable", description: "fixture", enabled: false },
+            { id: "k8s", status: "beta", description: "fixture", enabled: false },
+          ],
+        )}\n`,
+      );
     }
     if (command === "clever" && arguments_.includes("deploy")) {
       return state.failDeploy
@@ -612,7 +629,7 @@ describe("personal Clever doctor", () => {
   test("refuses an unavailable pinned Clever version", async () => {
     const home = await createTemporaryHome();
     await writeProtectedContext(home);
-    const { dependencies, errors } = createDependencies(home, { cleverVersion: "4.12.0" });
+    const { dependencies, errors } = createDependencies(home, { cleverVersion: "5.5.1" });
 
     expect(await runPersonalClever(["doctor"], dependencies)).toBe(1);
     expect(errors.join("\n")).toContain("COMMAND_ERROR");
@@ -1125,6 +1142,57 @@ describe("personal Clever staging operations", () => {
     expect(errors.join("\n")).toContain("COMMAND_ERROR");
     expect(calls.some((call) => call.arguments.includes("stop"))).toBe(false);
   });
+
+  test("turns the system git backend off and reads it back before the deployment", async () => {
+    const home = await createTemporaryHome();
+    await writeProtectedContext(home, true);
+    const { dependencies, calls } = createDependencies(home, {
+      applications: [validApplication()],
+    });
+
+    expect(await runPersonalClever(["deploy-staging"], dependencies)).toBe(0);
+    const cleverCalls = calls
+      .filter((call) => call.command === "clever")
+      .map((call) => call.arguments.join(" "));
+    const disable = cleverCalls.indexOf("--no-update-notifier features disable system-git");
+    const list = cleverCalls.indexOf("--no-update-notifier features list --format json");
+    const deploy = cleverCalls.findIndex((call) => call.includes(" deploy "));
+    expect(disable).toBeGreaterThanOrEqual(0);
+    expect(list).toBeGreaterThan(disable);
+    expect(deploy).toBeGreaterThan(list);
+  });
+
+  for (const [label, override] of [
+    [
+      "the feature still reads as enabled",
+      { featuresResponse: [{ id: "system-git", enabled: true }] },
+    ],
+    [
+      "the feature is absent from the listing",
+      { featuresResponse: [{ id: "k8s", enabled: false }] },
+    ],
+    ["the listing is not an array", { featuresResponse: { "system-git": false } }],
+    ["the feature cannot be turned off", { failFeatureDisable: true }],
+  ] as const) {
+    test(`refuses deployment when ${label}`, async () => {
+      const home = await createTemporaryHome();
+      await writeProtectedContext(home, true);
+      const { dependencies, calls, errors } = createDependencies(home, {
+        applications: [validApplication()],
+        ...override,
+      });
+
+      expect(await runPersonalClever(["deploy-staging"], dependencies)).toBe(1);
+      expect(errors.join("\n")).toContain("COMMAND_ERROR");
+      expect(
+        calls.some((call) => call.command === "clever" && call.arguments.includes("deploy")),
+      ).toBe(false);
+      expect(calls.some((call) => call.command === "git" && call.arguments[0] === "clone")).toBe(
+        false,
+      );
+      expect(calls.some((call) => call.arguments.includes("stop"))).toBe(false);
+    });
+  }
 
   test("catches unexpected subprocess failures without leaking details", async () => {
     const home = await createTemporaryHome();

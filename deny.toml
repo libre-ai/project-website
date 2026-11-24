@@ -21,6 +21,9 @@ all-features = true
 
 [advisories]
 yanked = "deny"
+# Explicit: cargo-deny 0.22.0 changes the default of this key from `all` to
+# `workspace`; the fleet keeps `all` (transitive unmaintained crates stay reported).
+unmaintained = "all"
 
 [licenses]
 confidence-threshold = 0.9
