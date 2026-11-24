@@ -1,7 +1,8 @@
 # ADR 0004 — Identité : martinet affiné, palette Aube, une volée d'oiseaux origami
 
 - **Statut** : accepté par le propriétaire le 2026-11-09 (décisions 5, 7 et 14 de la recette du
-  prototype v4, chat du 2026-11-09).
+  prototype v4, chat du 2026-11-09) ; décisions 2, 4 et 5 amendées par l'ADR 0010 (palette papier
+  et nuit, polices, 41 logos), proposé le 2026-11-24. Le reste est inchangé.
 - **Portée** : site public `libre-ia.fr`.
 - **Remplace** : ADR 0002 (direction visuelle hybride, aucun élément figuratif).
 
