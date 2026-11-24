@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!site"]
+    "includes": ["**", "!site", "!crates/site-server/policy.json"]
   },
   "formatter": {
     "enabled": true,

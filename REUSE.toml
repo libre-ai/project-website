@@ -32,6 +32,14 @@ precedence = "closest"
 SPDX-FileCopyrightText = "2026 Libre AI contributors"
 SPDX-License-Identifier = "EUPL-1.2"
 
+# The served runtime of the waitlist, a Rust binary (ADR 0009), and its
+# dependency policy — code EUPL-1.2 like the rest of the software.
+[[annotations]]
+path = ["crates/**", "Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "deny.toml"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Libre AI contributors"
+SPDX-License-Identifier = "EUPL-1.2"
+
 # CDC migrated from the hub (γ 3.6) — documentation grant.
 [[annotations]]
 path = ["docs/**"]

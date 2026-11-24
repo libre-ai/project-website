@@ -11,9 +11,20 @@ export interface TestDatabase {
   stop(): Promise<void>;
 }
 
-export async function startTestDatabase(): Promise<TestDatabase> {
+/**
+ * `maxConnections` is 1 by default; the Rust server keeps a pool and the parity test reads the
+ * table beside it, so both open more than one connection.
+ */
+export async function startTestDatabase(
+  options: { readonly maxConnections?: number } = {},
+): Promise<TestDatabase> {
   const db = await PGlite.create();
-  const server = new PGLiteSocketServer({ db, port: 0, host: "127.0.0.1" });
+  const server = new PGLiteSocketServer({
+    db,
+    port: 0,
+    host: "127.0.0.1",
+    maxConnections: options.maxConnections ?? 1,
+  });
   await server.start();
   return {
     url: `postgres://postgres@${server.getServerConn()}/postgres`,

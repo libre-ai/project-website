@@ -13,7 +13,7 @@ Le site prévu s'adresse aux personnes qui découvrent Libre AI et souhaitent :
 
 ## Où commencer ?
 
-Le générateur de site statique et ses tests sont présents. Le catalogue local couvre les vingt projets ; ce n’est pas un service déployé. Consultez le [guide de développement](docs/DEVELOPMENT.md).
+Le générateur de site statique et ses tests sont présents. Le catalogue local couvre les vingt projets ; ce n’est pas un service déployé. Le site et sa liste d’attente sont servis par un binaire Rust, `site-server` (`crates/site-server`, ADR 0009), pas encore déployé. Consultez le [guide de développement](docs/DEVELOPMENT.md).
 
 Pour découvrir les projets dès maintenant, consultez le [catalogue Libre AI](https://github.com/libre-ai/.github/blob/main/profile/README.fr.md).
 

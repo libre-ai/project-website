@@ -1,6 +1,8 @@
 /**
- * The site's single security header policy (ADR 0006 §2). The Bun server sends it on every
- * response and the Caddyfile of the static target must declare it unchanged (caddy-headers.ts).
+ * The site's single security header policy (ADR 0006 §2). The served binary sends it on every
+ * response from `crates/site-server/policy.json`, rendered from this list
+ * (server/server-policy.ts, ADR 0009); the Bun parity reference sends it too, and the Caddyfile
+ * of the static target must declare it unchanged (caddy-headers.ts).
  * Scripts and styles come from the site only (ADR 0005), the page opens no connection, and forms
  * post to the site only (the waitlist). HSTS starts at one day without subdomains, to be raised
  * after a green week in production.

@@ -2,8 +2,9 @@
 
 - **Path:** `apps/website`
 - **Owner:** Experiences / Website
-- **Runtime:** deterministic static publisher (TypeScript, no React, ADR 0001) and one
-  `Bun.serve` process serving the generated files and the waitlist (ADR 0006)
+- **Runtime:** deterministic static publisher (TypeScript, no React, ADR 0001) and one Rust
+  binary, `site-server` (axum, sqlx, PostgreSQL), serving the generated files and the waitlist
+  (ADR 0006, amended by ADR 0009)
 - **Tenant model:** public, no account
 
 ## Purpose and actors
@@ -65,7 +66,7 @@ Public reads require no session. Publication runs under a GitHub release identit
 
 ## Runtime boundaries
 
-Bun owns HTTP, static generation, the waitlist routes (PostgreSQL through `Bun.sql`) and feed/search adapters. No Rust runtime is justified in v1. Website reads only compiled contracts; it never queries product tables. Pagefind runs as an offline self-hosted indexer.
+The Rust binary `site-server` (`crates/site-server`) owns HTTP: the static files with the security header policy and the waitlist routes (PostgreSQL through sqlx), the purge of expired requests and the SMTP relay client (ADR 0009). No Bun process serves a user request. Bun owns the tooling: static generation, feed/search adapters, tests, gates, the local demo launcher and the parity test; `server/http.ts` remains only as the parity reference of the binary, not deployable, until its removal date in ADR 0009. Website reads only compiled contracts; it never queries product tables. Pagefind runs as an offline self-hosted indexer.
 
 ## Accessibility and degraded mode
 
