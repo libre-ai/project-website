@@ -1,6 +1,16 @@
 import { describe, expect, test } from "bun:test";
 
-import { AUBE, contrastRatio, facetShades, oklchToHex, UNIVERSE_HUES } from "./palette";
+import { renderSprite } from "../brand/sprite";
+import {
+  contrastRatio,
+  facetShades,
+  MARTINET,
+  oklchToHex,
+  PAPIER_NUIT,
+  ROLES,
+  THEMES,
+  UNIVERSE_HUES,
+} from "./palette";
 
 describe("oklchToHex", () => {
   test("reproduces the achromatic end points", () => {
@@ -34,16 +44,48 @@ describe("contrastRatio (WCAG 2.2)", () => {
   });
 });
 
-describe("Aube palette", () => {
-  test("keeps the arbitrated base colours (ADR 0004)", () => {
-    expect(AUBE).toMatchObject({
-      fond: "#f4f8f6",
-      encre: "#0a2a1e",
-      emeraude: "#0ba360",
-      ciel: "#3cb9e8",
+// The expected values are copied from ADR 0010 §1, not from the code under test.
+describe("paper and night palette (ADR 0010 §1)", () => {
+  test("light, the default theme, is paper #fbfaf7 with ink and night #15213b", () => {
+    expect(THEMES).toEqual(["clair", "sombre"]);
+    expect(PAPIER_NUIT.clair).toMatchObject({
+      fond: "#fbfaf7",
+      encre: "#15213b",
+      nuit: "#15213b",
     });
   });
 
+  test("the four role colours of the light theme are amber, blue, green and brick", () => {
+    expect(ROLES.clair.personne.couleur).toBe("#875000");
+    expect(ROLES.clair.agent.couleur).toBe("#1f5bb5");
+    expect(ROLES.clair.controle.couleur).toBe("#1b6e45");
+    expect(ROLES.clair.incident.couleur).toBe("#a8291f");
+  });
+
+  test("light reads dark ink on light paper, its dark variant the reverse", () => {
+    const luminance = (hex: string) => contrastRatio(hex, "#000000");
+    expect(luminance(PAPIER_NUIT.clair.fond)).toBeGreaterThan(luminance(PAPIER_NUIT.clair.encre));
+    expect(luminance(PAPIER_NUIT.sombre.fond)).toBeLessThan(luminance(PAPIER_NUIT.sombre.encre));
+  });
+
+  test("the four roles are told apart in each theme", () => {
+    for (const theme of THEMES) {
+      const colours = Object.values(ROLES[theme]).map((role) => role.couleur);
+      expect(new Set(colours).size).toBe(4);
+    }
+  });
+});
+
+describe("martinet colours (ADR 0010: the martinet is kept)", () => {
+  test("are the stops of the gradient the sprite draws, so the mark cannot drift from it", () => {
+    const sprite = renderSprite();
+    for (const stop of [MARTINET.queue, MARTINET.milieu, MARTINET.tete]) {
+      expect(sprite).toContain(`stop-color="${stop}"`);
+    }
+  });
+});
+
+describe("universe hues and facets (ADR 0004, unchanged by ADR 0010)", () => {
   test("declares eight universe hues at least 40 degrees apart", () => {
     const hues = Object.values(UNIVERSE_HUES).sort((a, b) => a - b);
     expect(hues).toHaveLength(8);

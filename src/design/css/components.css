@@ -6,13 +6,13 @@
 }
 
 .logotype {
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--police-titre);
   font-weight: 800;
   font-size: 1.35rem;
-  letter-spacing: -0.03em;
 }
 
-/* The dots of the two i are the martinet's pixels: a dotless i under an emerald square. */
+/* The dots of the two i are the martinet's pixels: a dotless i under a square of its tail colour.
+   Brand marks keep the martinet's own colours whatever the theme (palette.ts, MARTINET). */
 .logotype .i {
   position: relative;
 }
@@ -25,12 +25,12 @@
   width: 0.2em;
   height: 0.2em;
   translate: -50% 0;
-  background: var(--emeraude);
+  background: var(--martinet-queue);
 }
 
 .logotype .point-median::before {
   content: "·";
-  color: var(--ciel);
+  color: var(--martinet-tete);
 }
 
 .bascule-theme {
@@ -170,7 +170,7 @@
   height: 0.2rem;
   border-radius: 0.1rem;
   translate: var(--indicateur-x, 0) 0;
-  background: var(--emeraude);
+  background: var(--encre);
 }
 
 [data-onglets-actifs] a[aria-selected="true"] {

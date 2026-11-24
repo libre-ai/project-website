@@ -1,12 +1,25 @@
 /**
- * Design tokens as CSS custom properties (ADR 0004). Light is the default theme; dark applies when
- * the visitor chose it (`data-theme="sombre"`) or when the system prefers it and no explicit light
- * choice was made. Text colours are derived by `readableOn`, then every pair is listed in
+ * Design tokens as CSS custom properties (ADR 0004, palette amended by ADR 0010 §1). Light is the
+ * default theme; dark applies when the visitor chose it (`data-theme="sombre"`) or when the system
+ * prefers it and no explicit light choice was made. Fixed colours come from palette.ts; the few
+ * derived ones (link, universe text) are found by `readableOn`. Every pair of tokens a page sets
+ * text on, and the mixed backgrounds of the sheets that carry text (pairsFor), are listed in
  * TOKEN_PAIRS so the test can hold each one to its WCAG minimum.
  */
-import { AUBE, contrastRatio, facetShades, oklchToHex, UNIVERSE_HUES } from "./palette";
+import {
+  contrastRatio,
+  facetShades,
+  MARTINET,
+  oklchToHex,
+  PAPIER_NUIT,
+  ROLES,
+  type Role,
+  type Theme,
+  UNIVERSE_HUES,
+  UNIVERSE_TONES,
+} from "./palette";
 
-export type Theme = "clair" | "sombre";
+export type { Theme } from "./palette";
 
 export interface TokenPair {
   readonly name: string;
@@ -15,6 +28,8 @@ export interface TokenPair {
   /** 4.5 for body text, 3 for large text and interface boundaries (WCAG 1.4.3, 1.4.11). */
   readonly minimum: 3 | 4.5;
   readonly ratio: number;
+  /** For a background the sheets mix from tokens: the `color-mix(...)` expression they serve. */
+  readonly mix?: string;
 }
 
 // A small margin keeps a colour above its threshold once browsers round it to 8 bits per channel.
@@ -42,7 +57,12 @@ export function readableOn(
   throw new Error(`tokens.unreachable_contrast:${background}:${hue}:${minimum}`);
 }
 
-const BASE_HUE = 160;
+// The hue of the night ink (#15213b is about 265° in OKLCH): links stay in the ink's family
+// instead of borrowing a role colour, which names who acts and nothing else. The agent blue sits
+// at nearly the same hue, so the link keeps a low chroma to stay apart from it (tokens.test.ts
+// holds the distance).
+const INK_HUE = 265;
+const LINK_CHROMA: Readonly<Record<Theme, number>> = { clair: 0.08, sombre: 0.05 };
 
 interface ThemeColours {
   readonly fond: string;
@@ -52,30 +72,31 @@ interface ThemeColours {
   readonly lien: string;
   readonly bordure: string;
   readonly focus: string;
+  readonly nuit: string;
+  readonly nuitTexte: string;
+  readonly nuitDoux: string;
 }
 
 function themeColours(theme: Theme): ThemeColours {
-  if (theme === "clair") {
-    return {
-      fond: AUBE.fond,
-      surface: AUBE.surface,
-      encre: AUBE.encre,
-      attenuee: readableOn(AUBE.fond, BASE_HUE, 0.03, 4.5, 0.6),
-      lien: readableOn(AUBE.fond, 155, 0.13, 4.5, 0.6),
-      bordure: readableOn(AUBE.surface, BASE_HUE, 0.02, 3, 0.75),
-      focus: readableOn(AUBE.fond, 235, 0.14, 3, 0.65),
-    };
-  }
-  const fond = oklchToHex(0.2, 0.025, 165);
-  const surface = oklchToHex(0.25, 0.03, 165);
+  const base = PAPIER_NUIT[theme];
+  // The surface is the lighter of the two backgrounds in both themes, hence the harder one for a
+  // dark link and the easier one for a light link; TOKEN_PAIRS checks the link on both anyway.
+  const harder = base.surface;
   return {
-    fond,
-    surface,
-    encre: oklchToHex(0.95, 0.015, BASE_HUE),
-    attenuee: readableOn(surface, BASE_HUE, 0.03, 4.5, 0.7),
-    lien: readableOn(surface, 155, 0.14, 4.5, 0.75),
-    bordure: readableOn(surface, BASE_HUE, 0.02, 3, 0.45),
-    focus: readableOn(fond, 235, 0.12, 3, 0.7),
+    fond: base.fond,
+    surface: base.surface,
+    encre: base.encre,
+    attenuee: base.encreAttenuee,
+    lien:
+      theme === "clair"
+        ? readableOn(harder, INK_HUE, LINK_CHROMA.clair, 4.5, 0.55)
+        : readableOn(harder, INK_HUE, LINK_CHROMA.sombre, 4.5, 0.75),
+    bordure: base.bordure,
+    // The prototype outlines focus in the agent blue; it is held to 3:1 like any boundary.
+    focus: ROLES[theme].agent.couleur,
+    nuit: base.nuit,
+    nuitTexte: base.nuitTexte,
+    nuitDoux: base.nuitDoux,
   };
 }
 
@@ -86,19 +107,15 @@ interface UniverseColours {
 }
 
 function universeColours(hue: number, theme: Theme): UniverseColours {
-  if (theme === "clair") {
-    const teinte = oklchToHex(0.96, 0.03, hue);
-    return {
-      couleur: oklchToHex(0.66, 0.15, hue),
-      teinte,
-      texte: readableOn(teinte, hue, 0.12, 4.5, 0.6),
-    };
-  }
-  const teinte = oklchToHex(0.3, 0.05, hue);
+  const tones = UNIVERSE_TONES[theme];
+  const teinte = oklchToHex(tones.teinte.lightness, tones.teinte.chroma, hue);
   return {
-    couleur: oklchToHex(0.72, 0.14, hue),
+    couleur: oklchToHex(tones.couleur.lightness, tones.couleur.chroma, hue),
     teinte,
-    texte: readableOn(teinte, hue, 0.1, 4.5, 0.72),
+    texte:
+      theme === "clair"
+        ? readableOn(teinte, hue, 0.12, 4.5, 0.6)
+        : readableOn(teinte, hue, 0.1, 4.5, 0.72),
   };
 }
 
@@ -115,8 +132,49 @@ const pair = (
   ratio: contrastRatio(foreground, background),
 });
 
+const ROLE_NAMES = Object.keys(ROLES.clair) as Role[];
+
+/**
+ * `color-mix(in srgb, first weight, second)`: CSS interpolates the gamma-encoded channels, then
+ * the browser rounds each to 8 bits.
+ */
+export function mixSrgb(first: string, second: string, weight: number): string {
+  const channel = (hex: string, offset: number): number =>
+    Number.parseInt(hex.slice(offset, offset + 2), 16);
+  return `#${[1, 3, 5]
+    .map((offset) =>
+      Math.round(channel(first, offset) * weight + channel(second, offset) * (1 - weight))
+        .toString(16)
+        .padStart(2, "0"),
+    )
+    .join("")}`;
+}
+
+interface MixSource {
+  /** The custom property, as the sheet names it. */
+  readonly token: string;
+  readonly hex: string;
+}
+
+/** Text on a background a sheet mixes from two tokens; `mix` is the expression it serves. */
+function mixedPair(
+  name: string,
+  foreground: string,
+  first: MixSource,
+  percent: number,
+  second: MixSource,
+): TokenPair {
+  return {
+    ...pair(name, foreground, mixSrgb(first.hex, second.hex, percent / 100), 4.5),
+    mix: `color-mix(in srgb, var(--${first.token}) ${percent}%, var(--${second.token}))`,
+  };
+}
+
 function pairsFor(theme: Theme): TokenPair[] {
   const c = themeColours(theme);
+  const surface = { token: "surface", hex: c.surface };
+  const controle = { token: "controle", hex: ROLES[theme].controle.couleur };
+  const surface2 = { token: "surface-2", hex: mixSrgb(c.surface, c.fond, 0.55) };
   const pairs = [
     pair(`${theme}:encre/fond`, c.encre, c.fond, 4.5),
     pair(`${theme}:encre/surface`, c.encre, c.surface, 4.5),
@@ -124,13 +182,54 @@ function pairsFor(theme: Theme): TokenPair[] {
     pair(`${theme}:attenuee/surface`, c.attenuee, c.surface, 4.5),
     pair(`${theme}:lien/fond`, c.lien, c.fond, 4.5),
     pair(`${theme}:lien/surface`, c.lien, c.surface, 4.5),
+    pair(`${theme}:bordure/fond`, c.bordure, c.fond, 3),
     pair(`${theme}:bordure/surface`, c.bordure, c.surface, 3),
     pair(`${theme}:focus/fond`, c.focus, c.fond, 3),
     pair(`${theme}:focus/surface`, c.focus, c.surface, 3),
+    pair(`${theme}:nuit-texte/nuit`, c.nuitTexte, c.nuit, 4.5),
+    pair(`${theme}:nuit-doux/nuit`, c.nuitDoux, c.nuit, 4.5),
+    // The second surface of the demos (demos.css), the checked node of a demo graph (demos.css,
+    // .d-noeud.ok) and the highlighted line of a demo (effects.css, .a-surligne).
+    mixedPair(`${theme}:encre/surface-2`, c.encre, surface, 55, { token: "fond", hex: c.fond }),
+    mixedPair(`${theme}:attenuee/surface-2`, c.attenuee, surface, 55, {
+      token: "fond",
+      hex: c.fond,
+    }),
+    mixedPair(`${theme}:encre/noeud-ok`, c.encre, controle, 25, surface),
+    mixedPair(`${theme}:encre/surligne`, c.encre, controle, 16, surface),
   ];
+  for (const role of ROLE_NAMES) {
+    const r = ROLES[theme][role];
+    pairs.push(
+      pair(`${theme}:${role}/fond`, r.couleur, c.fond, 4.5),
+      pair(`${theme}:${role}/surface`, r.couleur, c.surface, 4.5),
+      pair(`${theme}:${role}/${role}-fond`, r.couleur, r.fond, 4.5),
+      pair(`${theme}:encre/${role}-fond`, c.encre, r.fond, 4.5),
+    );
+  }
   for (const [id, hue] of Object.entries(UNIVERSE_HUES)) {
     const u = universeColours(hue, theme);
-    pairs.push(pair(`${theme}:univers-${id}:texte/teinte`, u.texte, u.teinte, 4.5));
+    pairs.push(
+      pair(`${theme}:univers-${id}:texte/teinte`, u.texte, u.teinte, 4.5),
+      // A universe's text colour is also set outside its tint (pages.css: page titles, labels).
+      pair(`${theme}:univers-${id}:texte/fond`, u.texte, c.fond, 4.5),
+      pair(`${theme}:univers-${id}:texte/surface`, u.texte, c.surface, 4.5),
+      // The far end of the demo background (demos.css, .demo), where the demo text sits.
+      mixedPair(
+        `${theme}:univers-${id}:encre/demo`,
+        c.encre,
+        { token: "couleur", hex: u.couleur },
+        10,
+        surface2,
+      ),
+      mixedPair(
+        `${theme}:univers-${id}:attenuee/demo`,
+        c.attenuee,
+        { token: "couleur", hex: u.couleur },
+        10,
+        surface2,
+      ),
+    );
   }
   return pairs;
 }
@@ -139,6 +238,10 @@ export const TOKEN_PAIRS: readonly TokenPair[] = [...pairsFor("clair"), ...pairs
 
 function themeDeclarations(theme: Theme): string[] {
   const c = themeColours(theme);
+  const roles = ROLE_NAMES.flatMap((role) => [
+    `  --${role}: ${ROLES[theme][role].couleur};`,
+    `  --${role}-fond: ${ROLES[theme][role].fond};`,
+  ]);
   return [
     `  color-scheme: ${theme === "clair" ? "light" : "dark"};`,
     `  --fond: ${c.fond};`,
@@ -148,6 +251,10 @@ function themeDeclarations(theme: Theme): string[] {
     `  --lien: ${c.lien};`,
     `  --bordure: ${c.bordure};`,
     `  --focus: ${c.focus};`,
+    `  --nuit: ${c.nuit};`,
+    `  --nuit-texte: ${c.nuitTexte};`,
+    `  --nuit-doux: ${c.nuitDoux};`,
+    ...roles,
   ];
 }
 
@@ -170,17 +277,18 @@ function universeRules(theme: Theme, prefix: string): string[] {
 const indent = (lines: readonly string[]): string[] => lines.map((line) => `  ${line}`);
 
 export function renderTokens(): string {
-  const brand = [
-    `  --emeraude: ${AUBE.emeraude};`,
-    `  --lagon: ${AUBE.lagon};`,
-    `  --ciel: ${AUBE.ciel};`,
-    `  --encre-marque: ${AUBE.encre};`,
+  // The martinet's gradient and the emblems' ink do not follow the theme (ADR 0004 §6); the wing
+  // of the martinet reads --encre and follows it (palette.ts, MARTINET).
+  const martinet = [
+    `  --encre-marque: ${MARTINET.encre};`,
+    `  --martinet-queue: ${MARTINET.queue};`,
+    `  --martinet-tete: ${MARTINET.tete};`,
   ];
   const darkTheme = themeDeclarations("sombre");
   const darkUniverses = (prefix: string) => universeRules("sombre", prefix);
   return [
     ":root {",
-    ...brand,
+    ...martinet,
     ...themeDeclarations("clair"),
     "}",
     ':root[data-theme="sombre"] {',

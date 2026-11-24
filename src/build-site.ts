@@ -126,10 +126,12 @@ if (universe.violations.length > 0) {
 const fonts = new Map<string, Uint8Array>();
 for (const font of FONTS) {
   const packageRoot = join(process.cwd(), "node_modules", font.packageDir);
-  fonts.set(
-    `assets/fonts/${font.file}`,
-    new Uint8Array(await Bun.file(join(packageRoot, "files", font.file)).arrayBuffer()),
-  );
+  for (const face of font.faces) {
+    fonts.set(
+      `assets/fonts/${face.file}`,
+      new Uint8Array(await Bun.file(join(packageRoot, "files", face.file)).arrayBuffer()),
+    );
+  }
   fonts.set(
     font.licenseFile,
     new Uint8Array(await Bun.file(join(packageRoot, "LICENSE")).arrayBuffer()),

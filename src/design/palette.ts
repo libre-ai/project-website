@@ -1,7 +1,9 @@
 /**
- * Aube palette (ADR 0004). Universe colours share one lightness and one chroma in OKLCH so no
- * universe reads louder than another; only the hue differs. Contrast is computed, never asserted:
- * tokens.ts declares every text/background pair and its test holds each one to its WCAG minimum.
+ * Paper and night palette (ADR 0010 §1, amending ADR 0004 §2). The exact values of every token,
+ * light and dark, live here; tokens.ts turns them into CSS custom properties and declares each
+ * text/background pair so its test holds the pair to its WCAG minimum (ADR 0004 §3, unchanged).
+ * Universe colours share one lightness and one chroma in OKLCH so no universe reads louder than
+ * another; only the hue differs.
  */
 
 // Matrices from Björn Ottosson's OKLab definition (2020), OKLab → linear sRGB.
@@ -50,14 +52,90 @@ export function contrastRatio(foreground: string, background: string): number {
   return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 }
 
-/** The arbitrated base colours (ADR 0004 §2); `lagon` is the midpoint of the Aube gradient. */
-export const AUBE = {
-  fond: "#f4f8f6",
-  surface: "#ffffff",
+/** Light is the default theme, dark its variant (ADR 0010 §1); the order is the cascade order. */
+export const THEMES = ["clair", "sombre"] as const;
+
+export type Theme = (typeof THEMES)[number];
+
+interface BaseColours {
+  /** Page background: the paper. */
+  readonly fond: string;
+  readonly surface: string;
+  readonly encre: string;
+  readonly encreAttenuee: string;
+  /** Interface boundaries (WCAG 1.4.11): held to 3:1 against the surface and the paper. */
+  readonly bordure: string;
+  /** The night of the opening sections, and the text set on it. */
+  readonly nuit: string;
+  readonly nuitTexte: string;
+  readonly nuitDoux: string;
+}
+
+/**
+ * Light values are the ADR's; the dark ones are those of the prototype judged in version 17
+ * (`tools/recap.ts` of the redesign workspace), where the paper becomes a night-blue sheet and the
+ * opening a deeper night.
+ */
+export const PAPIER_NUIT: Readonly<Record<Theme, BaseColours>> = {
+  clair: {
+    fond: "#fbfaf7",
+    surface: "#ffffff",
+    encre: "#15213b",
+    encreAttenuee: "#46536d",
+    bordure: "#7a879c",
+    nuit: "#15213b",
+    nuitTexte: "#f4f7fa",
+    nuitDoux: "#b9c4d8",
+  },
+  sombre: {
+    fond: "#121b31",
+    surface: "#162038",
+    encre: "#e9eef6",
+    encreAttenuee: "#aab5c9",
+    bordure: "#7d8aa3",
+    nuit: "#0a1020",
+    nuitTexte: "#e9eef6",
+    nuitDoux: "#aab5c9",
+  },
+};
+
+export type Role = "personne" | "agent" | "controle" | "incident";
+
+interface RoleColour {
+  /** The role's colour, readable as text on the paper, the surface and its own tint. */
+  readonly couleur: string;
+  /** A pale (or, in dark, deep) tint of the role, for the background of what it marks. */
+  readonly fond: string;
+}
+
+/** Who acts, from the home page down to the detail (ADR 0010 §1). */
+export const ROLES: Readonly<Record<Theme, Readonly<Record<Role, RoleColour>>>> = {
+  clair: {
+    personne: { couleur: "#875000", fond: "#ffe4a8" },
+    agent: { couleur: "#1f5bb5", fond: "#d6e4fb" },
+    controle: { couleur: "#1b6e45", fond: "#d2eedd" },
+    incident: { couleur: "#a8291f", fond: "#fadad5" },
+  },
+  sombre: {
+    personne: { couleur: "#f3bf63", fond: "#3b2b0b" },
+    agent: { couleur: "#8db6ff", fond: "#15294c" },
+    controle: { couleur: "#73d4a3", fond: "#0f3321" },
+    incident: { couleur: "#ff9184", fond: "#42140f" },
+  },
+};
+
+/**
+ * The martinet keeps its colours (ADR 0010 keeps the bird): the three stops of the gradient the
+ * sprite draws, and the ink of the emblems' outlines and of the favicon's wing. They mark the brand
+ * only and are never a text or background colour of the page. The wing of the bird drawn in the
+ * page reads the page ink (`--encre`), as on the base, so it shows on paper and on night: in light
+ * it moves with that ink from #0a2a1e to #15213b.
+ */
+export const MARTINET = {
   encre: "#0a2a1e",
-  emeraude: "#0ba360",
-  lagon: "#19b0a0",
-  ciel: "#3cb9e8",
+  queue: "#0ba360",
+  milieu: "#19b0a0",
+  tete: "#3cb9e8",
 } as const;
 
 /** One hue per universe, about 45 degrees apart, keyed by the universe id of src/content. */
@@ -73,6 +151,23 @@ export const UNIVERSE_HUES = {
 } as const satisfies Readonly<Record<string, number>>;
 
 export type UniverseHueId = keyof typeof UNIVERSE_HUES;
+
+interface OklchTone {
+  readonly lightness: number;
+  readonly chroma: number;
+}
+
+/**
+ * Common lightness and chroma of the universe colour and of its tint, per theme. Each chroma is the
+ * largest one that keeps all eight hues inside sRGB at that lightness: above it, clamping would
+ * desaturate some hues (cyan first) and break the common chroma the ADR requires.
+ */
+export const UNIVERSE_TONES: Readonly<
+  Record<Theme, { readonly couleur: OklchTone; readonly teinte: OklchTone }>
+> = {
+  clair: { couleur: { lightness: 0.66, chroma: 0.11 }, teinte: { lightness: 0.96, chroma: 0.018 } },
+  sombre: { couleur: { lightness: 0.72, chroma: 0.12 }, teinte: { lightness: 0.3, chroma: 0.05 } },
+};
 
 /** Five facet tones for origami drawings, from the lit facet to the shadowed one. */
 export function facetShades(hue: number): readonly string[] {

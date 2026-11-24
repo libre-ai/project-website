@@ -1,11 +1,11 @@
 /**
- * The site's single stylesheet (`/assets/site.css`): self-hosted font faces, the Aube tokens,
- * then the static sheets in cascade order. Only `effects.css` animates, and only without a
- * reduced-motion preference (ADR 0005 §6).
+ * The site's single stylesheet (`/assets/site.css`): self-hosted font faces and their family
+ * tokens, the paper and night colour tokens, then the static sheets in cascade order. Only
+ * `effects.css` animates, and only without a reduced-motion preference (ADR 0005 §6).
  */
 import { readFile } from "node:fs/promises";
 
-import { renderFontFaces } from "../font";
+import { renderFontFaces, renderFontTokens } from "../font";
 import { renderTokens } from "./tokens";
 
 const SHEETS = [
@@ -33,7 +33,11 @@ export async function readStaticSheets(): Promise<readonly StaticSheet[]> {
 
 export async function renderStylesheet(): Promise<string> {
   const sheets = await readStaticSheets();
-  return [renderFontFaces(), renderTokens(), ...sheets.map((sheet) => sheet.text.trim()), ""].join(
-    "\n",
-  );
+  return [
+    renderFontFaces(),
+    renderFontTokens(),
+    renderTokens(),
+    ...sheets.map((sheet) => sheet.text.trim()),
+    "",
+  ].join("\n");
 }

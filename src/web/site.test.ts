@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { APPLICATIONS } from "../content/applications";
 import { parseDeployFacts } from "../deploy";
 import { diffOutputs } from "../determinism";
+import { FONTS } from "../font";
 import { parseLicences } from "../licences";
 import { loadPresentations } from "../presentation";
 import { type ProjectCard, parseProjectCard } from "../project-card";
@@ -23,12 +24,13 @@ async function snapshotCards(): Promise<ProjectCard[]> {
   );
 }
 
-const fonts = new Map<string, Uint8Array>([
-  ["assets/fonts/bricolage-grotesque-latin-wght-normal.woff2", new Uint8Array(1000)],
-  ["assets/fonts/source-sans-3-latin-wght-normal.woff2", new Uint8Array(1000)],
-  ["assets/fonts/LICENSE-bricolage-grotesque.txt", new Uint8Array(10)],
-  ["assets/fonts/LICENSE-source-sans-3.txt", new Uint8Array(10)],
-]);
+// Stand-ins for the font files, named after the families the stylesheet declares.
+const fonts = new Map<string, Uint8Array>(
+  FONTS.flatMap((font) => [
+    ...font.faces.map((face) => [`assets/fonts/${face.file}`, new Uint8Array(1000)] as const),
+    [font.licenseFile, new Uint8Array(10)] as const,
+  ]),
+);
 
 let input: LibreSiteInput;
 let built: Awaited<ReturnType<typeof buildLibreSite>>;
@@ -70,6 +72,16 @@ describe("buildLibreSite (plan, Task 9)", () => {
     const css = String(built.files.get("assets/site.css"));
     expect(css).not.toContain("\n  ");
     expect(css).toMatch(/\.s-p01-1\{/);
+  });
+
+  // A renamed or removed token must not leave a sheet pointing at nothing: a custom property read
+  // without a fallback and never declared silently drops the declaration that reads it.
+  test("every custom property the stylesheet reads without a fallback is declared in it", () => {
+    const css = String(built.files.get("assets/site.css"));
+    const declared = new Set([...css.matchAll(/(--[\w-]+)\s*:/g)].map((match) => match[1]));
+    const read = new Set([...css.matchAll(/var\(\s*(--[\w-]+)\s*\)/g)].map((match) => match[1]));
+    expect(read.size).toBeGreaterThan(0);
+    expect([...read].filter((name) => !declared.has(name)).sort()).toEqual([]);
   });
 
   test("the sitemap lists pages and forge pages at the canonical origin, never subscription pages", () => {
