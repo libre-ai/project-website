@@ -158,6 +158,28 @@ test.describe("progressive enhancement (ADR 0005 §5)", () => {
     await expect(page.getByRole("tabpanel")).toHaveCount(1);
   });
 
+  // The fonts swap in after the script ran: the indicator has to follow a tab that changes size,
+  // or it keeps the width of the fallback font (a race that made a visual capture unstable).
+  test("the tab indicator follows the selected tab when it changes size", async ({
+    page,
+  }, testInfo) => {
+    test.skip(scriptless(testInfo.project.name), "needs the module");
+    await page.goto("/applications/");
+    const tab = page.getByRole("tab").first();
+    await expect(tab).toHaveAttribute("aria-selected", "true");
+    await tab.evaluate((link) => {
+      link.style.paddingInline = "3rem";
+    });
+    const measure = (): Promise<[string, string]> =>
+      tab.evaluate((link) => [
+        `${(link as HTMLElement).offsetWidth}px`,
+        (link.closest("[data-onglets-liste]") as HTMLElement).style.getPropertyValue(
+          "--indicateur-largeur",
+        ),
+      ]);
+    await expect.poll(async () => new Set(await measure()).size).toBe(1);
+  });
+
   test("the guided tour shows one step at a time", async ({ page }, testInfo) => {
     test.skip(scriptless(testInfo.project.name), "needs the module");
     await page.goto("/fabrique/");

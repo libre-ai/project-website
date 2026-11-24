@@ -19,8 +19,8 @@ describe("universes (ADR 0007 §6)", () => {
     expect(ids.sort()).toEqual(Object.keys(UNIVERSE_HUES).sort());
   });
 
-  test("every application P01 to P40 belongs to exactly one universe", () => {
-    const refs = Array.from({ length: 40 }, (_, i) => `P${String(i + 1).padStart(2, "0")}`);
+  test("every application P01 to P41 belongs to exactly one universe", () => {
+    const refs = Array.from({ length: 41 }, (_, i) => `P${String(i + 1).padStart(2, "0")}`);
     expect(Object.keys(UNIVERSE_OF).sort()).toEqual(refs);
   });
 
@@ -32,7 +32,10 @@ describe("universes (ADR 0007 §6)", () => {
   test("keeps the owner's distribution of 2026-11-11", () => {
     expect(universeOf("P40")).toBe("piloter-ia");
     expect(universeOf("P07")).toBe("apprendre");
-    expect(() => universeOf("P41")).toThrow("content.universe_unknown");
+    // Tickets joins the collaboration universe of its former number, as in the redesign
+    // prototype judged in its version 17 (ADR 0010 adds P41 but names no universe for it).
+    expect(universeOf("P41")).toBe("travailler-ensemble");
+    expect(() => universeOf("P42")).toThrow("content.universe_unknown");
   });
 
   test("an inherited property name is not a reference", () => {

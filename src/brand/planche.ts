@@ -1,5 +1,5 @@
 /**
- * Review sheet of the 40 emblems (plan, Task 5b), for the owner's visual acceptance. It is a
+ * Review sheet of the 41 emblems (plan, Task 5b), for the owner's visual acceptance. It is a
  * standalone SVG with every colour resolved, so any SVG renderer shows it without CSS; it is
  * never part of the published site. Usage: `bun src/brand/planche.ts <output.svg>`.
  * Licence: LicenseRef-Libre-AI-Brand-1.0 (all rights reserved, owner decision of 2026-11-11);

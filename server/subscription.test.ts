@@ -124,7 +124,7 @@ describe("parseSubscription", () => {
       parseSubscription(
         form([
           ["courriel", "a@example.org"],
-          ["suivre", "P41"],
+          ["suivre", "P42"],
         ]),
       ),
     ).toEqual({

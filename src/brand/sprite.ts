@@ -16,7 +16,7 @@ export const SPRITE_PATH = "assets/volee.svg";
 export const SPRITE_BUDGET_BYTES = 80 * 1024;
 
 export const EMBLEM_REFS: readonly string[] = Array.from(
-  { length: 40 },
+  { length: 41 },
   (_, i) => `p${String(i + 1).padStart(2, "0")}`,
 );
 

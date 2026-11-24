@@ -100,6 +100,14 @@ export const showcases: Readonly<Record<string, Showcase>> = {
     demo: `<div class="d-toile"><svg viewBox="0 0 200 110"><path class="a-trace" d="M50 30 C 90 30, 90 70, 130 70 M50 30 C 80 80, 60 90, 60 90"/></svg><span class="d-postit a-in" style="--i:0;left:10%;top:12%">Idée : marché local</span><span class="d-postit b a-in" style="--i:1;left:55%;top:52%">Qui s'en charge ?</span><span class="d-postit c a-in" style="--i:2;left:12%;top:68%">Budget</span><span class="d-puce a-in ok" style="--i:4;position:absolute;right:6%;top:12%">→ Tâche créée</span></div>`,
   },
   // Collaboration
+  // Remontées (P15), written with the redesign of ADR 0010 from the function and labels of its
+  // product sheet in project-governance (`fonction`, `etiquettes`); no prototype demo existed.
+  signalement: {
+    category: "Capture et relais de signalements",
+    tags: ["Signalement capturé", "Relais vers vos outils", "Reçu vérifiable"],
+    demo: `${row("Formulaire · Lien cassé, page Tarifs", "Capturé avec l'adresse de la page", 0)}${row("Relayé vers l'outil de l'équipe", "Selon la règle de votre organisation", 1, "a-surligne")}<div class="d-etiquettes">${chip("Reçu envoyé à l'émetteur", 2, "ok")}</div>`,
+  },
+  // Tickets (P41 since ADR 0010; drafted for P15 in the v4 prototype).
   tickets: {
     category: "Tickets et support",
     tags: ["Doublons détectés", "Responsable désigné", "Résolution vérifiée"],

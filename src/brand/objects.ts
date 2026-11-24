@@ -58,7 +58,8 @@ export type ObjectKind =
   | "coffre-fort"
   | "bouee"
   | "tableau-noir"
-  | "fenetres";
+  | "fenetres"
+  | "pique-notes";
 
 /** The object of each application, keyed by reference like the species. */
 export const OBJECT_OF: Readonly<Record<string, ObjectKind>> = {
@@ -102,6 +103,7 @@ export const OBJECT_OF: Readonly<Record<string, ObjectKind>> = {
   P38: "bouee",
   P39: "tableau-noir",
   P40: "fenetres",
+  P41: "pique-notes",
 };
 
 const f = (tone: Tone, ...points: Point[]): ObjectFacet => ({ tone, points });
@@ -463,6 +465,20 @@ const DRAWINGS: Readonly<Record<ObjectKind, () => readonly ObjectFacet[]>> = {
     rect(52, 64, 76, 67, 4),
     rect(24, 82, 48, 85, 4),
     rect(52, 82, 76, 85, 4),
+  ],
+  // A note spike: three requests threaded on one rod, the top one ticked as resolved. The rod
+  // shows above the top slip only, so the slips read as pierced; the bird perches on its tip.
+  "pique-notes": () => [
+    rect(28, 92, 72, 96, 4),
+    rect(30, 90, 70, 92, 2),
+    rect(49, 64, 51, 90, 5),
+    f(3, [30, 80], [68, 77], [70, 87], [32, 89]),
+    f(2, [32, 73], [66, 71.5], [67, 80], [33, 81.5]),
+    f(1, [34, 67], [65, 67.5], [64.5, 75.5], [34, 75]),
+    rect(49, 64, 51, 67.2, "encre"),
+    rect(38, 70, 46, 71.2, 4),
+    rect(38, 72.6, 44, 73.8, 4),
+    f("encre", [53.5, 71], [55.5, 73], [59.5, 68.5], [60.8, 69.6], [55.5, 75.2], [52.3, 72.1]),
   ],
 };
 

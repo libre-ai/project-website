@@ -1,6 +1,6 @@
 /**
  * Parametric origami birds (ADR 0004 §5), ported from the v4 prototype accepted on 2026-11-09.
- * One faceted model draws every species so the 40 birds read as one family. Facet tones are CSS
+ * One faceted model draws every species so the 41 birds read as one family. Facet tones are CSS
  * variables set by the universe class of the page (`--facette-1` lit … `--facette-5` shadowed);
  * only a species' own accent, a pale belly and the eye keep fixed colours.
  * Licence: LicenseRef-Libre-AI-Brand-1.0 (all rights reserved, owner decision of 2026-11-11);
