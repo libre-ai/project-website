@@ -4,18 +4,18 @@ import { checkCopy } from "../web/gates";
 import { APPLICATIONS, applicationOf, slugify } from "./applications";
 import { universeOf } from "./universes";
 
-describe("applications (ADR 0007 §5)", () => {
-  test("40 applications, P01 to P40 exactly once, in reference order", () => {
+describe("applications (ADR 0007 §5, amended by ADR 0010 §7)", () => {
+  test("41 applications, P01 to P41 exactly once, in reference order", () => {
     expect(APPLICATIONS.map((application) => application.ref)).toEqual(
-      Array.from({ length: 40 }, (_, i) => `P${String(i + 1).padStart(2, "0")}`),
+      Array.from({ length: 41 }, (_, i) => `P${String(i + 1).padStart(2, "0")}`),
     );
   });
 
-  test("the six names arbitrated on 2026-11-09 are tranché, every other one provisoire", () => {
+  test("the six arbitrated names are tranché, every other one provisoire", () => {
     const decided = APPLICATIONS.filter((application) => application.nameStatus === "tranché");
     expect(decided.map((application) => `${application.ref} ${application.name}`)).toEqual([
       "P01 Sources",
-      "P03 Corpus",
+      "P03 Biblio",
       "P14 Canevas",
       "P28 Tempo",
       "P29 Antenne",
@@ -23,7 +23,12 @@ describe("applications (ADR 0007 §5)", () => {
     ]);
     expect(
       APPLICATIONS.filter((application) => application.nameStatus === "provisoire"),
-    ).toHaveLength(34);
+    ).toHaveLength(35);
+  });
+
+  test("P15 is Remontées and P41 Tickets, both provisoire (ADR 0010 §7)", () => {
+    expect(applicationOf("P15")).toMatchObject({ name: "Remontées", nameStatus: "provisoire" });
+    expect(applicationOf("P41")).toMatchObject({ name: "Tickets", nameStatus: "provisoire" });
   });
 
   test("each application takes its universe from the owner's distribution", () => {
@@ -33,7 +38,7 @@ describe("applications (ADR 0007 §5)", () => {
 
   test("slugs derive from names, are unique and url-safe", () => {
     const slugs = APPLICATIONS.map((application) => application.slug);
-    expect(new Set(slugs).size).toBe(40);
+    expect(new Set(slugs).size).toBe(41);
     for (const slug of slugs) expect(slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
     expect(applicationOf("P07").slug).toBe(slugify(applicationOf("P07").name));
   });
@@ -49,11 +54,11 @@ describe("applications (ADR 0007 §5)", () => {
     const report = checkCopy(
       APPLICATIONS.map((application) => ({ page: application.ref, html: application.promise })),
     );
-    expect(report.examined).toBe(40);
+    expect(report.examined).toBe(41);
     expect(report.violations).toEqual([]);
   });
 
   test("an unknown reference is refused", () => {
-    expect(() => applicationOf("P41")).toThrow("content.application_unknown");
+    expect(() => applicationOf("P42")).toThrow("content.application_unknown");
   });
 });

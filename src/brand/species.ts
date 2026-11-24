@@ -703,4 +703,24 @@ export const SPECIES: Readonly<Record<string, Species>> = {
     legs: 36,
     tilt: 0,
   },
+  // Tickets (owner decision of 2026-11-24: draw it a bird). A blue tit: the accent paints its cap
+  // and cheek, the only cold accent among the orange birds of its universe; a longer tail than
+  // the sparrow of P13 so the two small birds read apart.
+  P41: {
+    name: "Mésange",
+    len: 30,
+    h: 24,
+    neck: 2,
+    neckAngle: 45,
+    head: 11,
+    beak: "short",
+    beakLen: 4,
+    wing: "folded",
+    tail: "long",
+    tailLen: 15,
+    crest: "cap",
+    legs: 5,
+    tilt: -10,
+    accent: 245,
+  },
 };

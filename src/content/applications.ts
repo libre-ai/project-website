@@ -1,9 +1,11 @@
 /**
- * The 40 Libre applications (ADR 0007 §5), displayed « Libre <name> ». Six names were arbitrated
- * on 2026-11-09; the 34 others are the prototype's, marked `provisoire`: the owner renames them
- * (decision of 2026-11-11) and replacing a name here changes nothing else, because emblems,
- * showcases and waitlist interests are keyed by reference, and the slug follows the name.
- * Promises are those of the prototype accepted on 2026-11-09.
+ * The 41 Libre applications (ADR 0007 §5 as amended by ADR 0010 §7), displayed « Libre <name> ».
+ * Six names are arbitrated (2026-11-09; Biblio replaced Corpus for P03 on 2026-11-24); the 35
+ * others are marked `provisoire`: the owner renames them (decision of 2026-11-11) and replacing a
+ * name here changes nothing else, because emblems, showcases and waitlist interests are keyed by
+ * reference, and the slug follows the name. Names follow the product sheets of
+ * `libre-ai/project-governance`. Promises are those of the redesign prototype judged in its
+ * version 17 (2026-11-24): an intention, never a claim that the application exists.
  */
 import { UNIVERSE_OF, type UniverseId } from "./universes";
 
@@ -29,54 +31,67 @@ export function slugify(name: string): string {
 const DECIDED = new Set(["P01", "P03", "P14", "P28", "P29", "P39"]);
 
 const ENTRIES: readonly (readonly [string, string, string])[] = [
-  ["P01", "Sources", "Explorez le web et repartez avec des sources attribuées et vérifiables."],
-  ["P02", "Veille", "Une veille reliée à vos questions, qui dit pourquoi chaque article compte."],
-  ["P03", "Corpus", "Explorez, qualifiez et entretenez votre bibliothèque Zotero."],
-  ["P04", "Notes", "Capturez vos idées avec leur contexte, éditables et exportables."],
-  ["P05", "Wiki", "Procédures, glossaires et décisions, attribués et tenus à jour."],
+  ["P01", "Sources", "Cherchez sur le web. Chaque information arrive avec sa source."],
+  ["P02", "Veille", "Votre veille faite pour vous, avec la raison de chaque article retenu."],
+  ["P03", "Biblio", "Votre bibliothèque Zotero rangée et à jour, sans y passer vos soirées."],
+  ["P04", "Notes", "Vos idées, avec leur contexte, partout où vous allez."],
+  ["P05", "Wiki", "Les procédures et décisions de l'équipe, toujours à jour, toujours signées."],
   [
     "P06",
     "Recherche",
-    "Retrouvez n'importe quoi dans vos applications, sans mélanger les données.",
+    "Retrouvez n'importe quoi, dans toutes vos applications, en une seule recherche.",
   ],
-  ["P07", "Révision", "Transformez vos sources en apprentissage qui dure."],
-  ["P08", "Docs", "Rédigez, relisez à plusieurs, exportez un fichier qui s'ouvre partout."],
-  ["P09", "Tableur", "Des calculs exacts, explicables et reproductibles."],
-  ["P10", "Diapos", "D'un message à une présentation cohérente, éditable et exportable."],
-  ["P11", "Fichiers", "Synchronisez et partagez vos fichiers avec des droits que vous comprenez."],
-  ["P12", "PDF", "Rendez lisibles, recherchables et annotables les documents reçus."],
-  ["P13", "Formulaires", "Collectez des réponses et exploitez-les dans des tables cohérentes."],
-  ["P14", "Canevas", "Réfléchissez en visuel, puis transformez vos décisions en tâches."],
-  ["P15", "Tickets", "D'une demande à sa résolution vérifiée, sans rien perdre en route."],
-  ["P16", "Tâches", "Notez une action, retrouvez-la au bon moment."],
-  ["P17", "Mail", "Vos e-mails, une recherche fiable, des envois sans ambiguïté."],
-  ["P18", "Visio", "Discutez et réunissez-vous dans des espaces aux droits clairs."],
-  ["P19", "Agenda", "Coordonnez les disponibilités sans exposer votre vie privée."],
-  ["P20", "Relations", "Vos contacts et l'historique de vos échanges, au même endroit."],
-  ["P21", "Réunion", "Transformez une réunion en décisions et en actions vérifiables."],
-  ["P22", "Vidéo", "D'une intention à une vidéo montée, révisable et exportable."],
-  ["P23", "Prototype", "Essayez une évolution produit à partir de votre propre code."],
-  ["P24", "Audio", "Enregistrez, montez et publiez vos podcasts."],
-  ["P25", "Site", "Construisez un site dont vous gardez le contenu et la publication."],
+  ["P07", "Révision", "Retenez pour de bon ce que vous apprenez, à partir de vos propres sources."],
   [
-    "P26",
-    "Diffusion",
-    "Faites connaître vos contenus sur les bons canaux, sans perdre le contrôle.",
+    "P08",
+    "Docs",
+    "Écrivez à plusieurs en même temps, et exportez un fichier que tout le monde ouvre.",
   ],
-  ["P27", "Ressources", "Retrouvez le bon média et sachez comment le réutiliser."],
-  ["P28", "Tempo", "Retrouvez vos réglages de lecture sur les sites compatibles."],
-  ["P29", "Antenne", "Vos abonnements vidéo, sans pistage, avec votre propre historique."],
-  ["P30", "Lecture", "Lisez et rangez mangas, BD et livres dans des formats ouverts."],
-  ["P31", "Médiathèque", "Vos musiques et vidéos, sur les appareils que vous choisissez."],
-  ["P32", "JdR", "Préparez et jouez vos campagnes, le groupe garde la main."],
-  ["P33", "Routeur", "Le bon modèle d'IA pour chaque usage, selon des règles vérifiées."],
-  ["P34", "Assistant", "Un assistant qui montre ses sources et demande avant d'agir."],
-  ["P35", "Automates", "Automatisez des enchaînements explicites, testés avant d'être activés."],
-  ["P36", "VPN", "Reliez vos appareils et vos services privés avec des règles explicites."],
-  ["P37", "Coffre", "Vos mots de passe et secrets, partagés et révoqués sous contrôle."],
-  ["P38", "Sauvegarde", "Des sauvegardes réellement restaurées, pas seulement copiées."],
-  ["P39", "Cours", "Créez des activités depuis vos sources et animez vos séances en direct."],
+  ["P09", "Tableur", "Des calculs justes, et vous comprenez pourquoi."],
+  [
+    "P10",
+    "Diapos",
+    "D'une idée à une présentation soignée, que vous modifiez et exportez à volonté.",
+  ],
+  ["P11", "Fichiers", "Partagez vos fichiers, et sachez toujours qui voit quoi."],
+  ["P12", "PDF", "Lisez, cherchez et annotez tous vos PDF au même endroit."],
+  ["P13", "Formulaires", "Posez vos questions, recevez des réponses déjà rangées."],
+  ["P14", "Canevas", "Réfléchissez en dessinant, repartez avec des tâches claires."],
+  [
+    "P15",
+    "Remontées",
+    "Signalez un problème d'où vous êtes. L'équipe le reçoit aussitôt, là où elle travaille.",
+  ],
+  ["P16", "Tâches", "Ce qu'il faut faire, au bon moment, sans rien oublier."],
+  ["P17", "Mail", "Vos e-mails, avec enfin une recherche qui trouve."],
+  ["P18", "Visio", "Discutez et réunissez-vous chiffré, en sachant qui a accès à quoi."],
+  ["P19", "Agenda", "Trouvez une date commune sans dévoiler votre agenda."],
+  ["P20", "Relations", "Vos contacts et toute l'histoire de vos échanges, au même endroit."],
+  [
+    "P21",
+    "Réunion",
+    "Sortez de chaque réunion avec des décisions et des actions, pas des notes en vrac.",
+  ],
+  ["P22", "Vidéo", "De l'idée à la vidéo montée, retouchable jusqu'au bout."],
+  ["P23", "Prototype", "Essayez une nouvelle fonction sur votre propre code, sans rien casser."],
+  ["P24", "Audio", "Du micro à l'épisode publié : enregistrez, montez, diffusez votre podcast."],
+  ["P25", "Site", "Votre site, vos contenus, vos clés. Personne d'autre."],
+  ["P26", "Diffusion", "Publiez sur les bons réseaux sans leur céder vos contenus."],
+  ["P27", "Ressources", "La bonne image, le bon son, et le droit de vous en servir."],
+  ["P28", "Tempo", "Vos réglages de lecture vous suivent d'un site à l'autre."],
+  ["P29", "Antenne", "Vos vidéos préférées, sans pistage, avec votre propre historique."],
+  ["P30", "Lecture", "Mangas, BD, livres : lisez et rangez toute votre bibliothèque."],
+  ["P31", "Médiathèque", "Votre musique et vos vidéos, sur tous vos appareils."],
+  ["P32", "JdR", "Préparez et jouez vos parties de jeu de rôle, ensemble."],
+  ["P33", "Routeur", "La bonne IA pour chaque tâche, choisie selon vos règles."],
+  ["P34", "Assistant", "Un assistant qui cite ses sources et vous demande avant d'agir."],
+  ["P35", "Automates", "Automatisez vos tâches répétitives, testées avant de tourner seules."],
+  ["P36", "VPN", "Reliez vos appareils et vos services privés, selon vos règles."],
+  ["P37", "Coffre", "Vos mots de passe, partagés et retirés d'un geste."],
+  ["P38", "Sauvegarde", "Des sauvegardes dont on a vraiment testé la restauration."],
+  ["P39", "Cours", "Créez des activités à partir de vos documents et animez vos cours en direct."],
   ["P40", "Fenêtres", "Rangez vos fenêtres d'un geste, sur tous vos écrans."],
+  ["P41", "Tickets", "Chaque demande suivie jusqu'au bout. Rien ne se perd."],
 ];
 
 export const APPLICATIONS: readonly Application[] = ENTRIES.map(([ref, name, promise]) => {

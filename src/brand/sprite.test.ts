@@ -18,8 +18,8 @@ const sprite = renderSprite();
 const symbols = [...sprite.matchAll(/<symbol id="([^"]+)"/g)].map((match) => match[1]);
 
 describe("sprite (ADR 0004 §6)", () => {
-  test("holds the martinet and one emblem per application, P01 to P40", () => {
-    const expected = Array.from({ length: 40 }, (_, i) => `p${String(i + 1).padStart(2, "0")}`);
+  test("holds the martinet and one emblem per application, P01 to P41", () => {
+    const expected = Array.from({ length: 41 }, (_, i) => `p${String(i + 1).padStart(2, "0")}`);
     expect(EMBLEM_REFS).toEqual(expected);
     expect(symbols).toEqual(["martinet", ...expected.map((ref) => `embleme-${ref}`)]);
   });
@@ -89,7 +89,7 @@ describe("references to the sprite", () => {
 
   test("an emblem is referenced by application reference, escaped", () => {
     expect(emblemUse("P07")).toContain('href="/assets/volee.svg#embleme-p07"');
-    expect(() => emblemUse("P41")).toThrow("sprite.emblem_unknown");
+    expect(() => emblemUse("P42")).toThrow("sprite.emblem_unknown");
   });
 
   test("escapes the label of a martinet", () => {

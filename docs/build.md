@@ -58,7 +58,7 @@ bun run build                       # construit dist/, sans réseau ni variable
 bun run check                       # toolchain, build, secrets, données personnelles, licences, lint, typecheck, tests
 bun run test:e2e                    # build puis e2e Chromium, Firefox, WebKit et Chromium sans script, servis par la démo (navigateurs : bunx playwright install)
 bun run demo                        # construit dist/, puis sert le site et la liste d'attente sur http://localhost:8080
-bun src/brand/planche.ts <sortie>   # planche de recette des 40 emblèmes, couleurs résolues (hors site)
+bun src/brand/planche.ts <sortie>   # planche de recette des 41 emblèmes, couleurs résolues (hors site)
 ```
 
 ## Démo locale de la liste d'attente

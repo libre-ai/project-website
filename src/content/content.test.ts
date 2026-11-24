@@ -9,9 +9,9 @@ import { showcaseOf, showcases } from "./showcases";
 import { UNIVERSE_OF } from "./universes";
 
 describe("content ported from the accepted prototype (plan, Task 4)", () => {
-  test("every application P01 to P40 has a prototype key, each used once", () => {
+  test("every application P01 to P41 has a prototype key, each used once", () => {
     expect(Object.keys(PROTOTYPE_KEY_OF).sort()).toEqual(Object.keys(UNIVERSE_OF).sort());
-    expect(new Set(Object.values(PROTOTYPE_KEY_OF)).size).toBe(40);
+    expect(new Set(Object.values(PROTOTYPE_KEY_OF)).size).toBe(41);
     expect(() => refOfPrototypeKey("inconnu")).toThrow("content.prototype_key_unknown");
   });
 
@@ -23,7 +23,12 @@ describe("content ported from the accepted prototype (plan, Task 4)", () => {
       expect(showcase.tags).toHaveLength(3);
       expect(showcase.demo.length).toBeGreaterThan(0);
     }
-    expect(() => showcaseOf("P41")).toThrow("content.showcase_missing");
+    expect(() => showcaseOf("P42")).toThrow("content.showcase_missing");
+  });
+
+  test("ticketing belongs to Tickets (P41), report relaying to Remontées (P15)", () => {
+    expect(showcaseOf("P41").category).toBe("Tickets et support");
+    expect(showcaseOf("P15").category).toBe("Capture et relais de signalements");
   });
 
   test("every demo hoists cleanly: no inline style left, no refused declaration", () => {
