@@ -19,7 +19,7 @@ describe("pageWeights (S6.5)", () => {
     const files = new Map<string, string | Uint8Array>([
       ["index.html", html],
       ["assets/tokens.css", "a".repeat(100)],
-      // The quoted form is the one the real stylesheet uses (renderFontFace).
+      // The quoted form is the one the real stylesheet uses (renderFontFaces).
       ["assets/styles.css", '@font-face{src:url("/assets/fonts/f.woff2")}'],
       ["assets/fonts/f.woff2", new Uint8Array(1000)],
     ]);

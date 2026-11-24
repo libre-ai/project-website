@@ -1,4 +1,5 @@
-/* Base: Aube colours from the tokens, relative units throughout, visible focus. */
+/* Base: paper and night colours and font families from the tokens, relative units throughout,
+   visible focus. */
 *,
 *::before,
 *::after {
@@ -15,7 +16,7 @@ body {
   margin: 0;
   background: var(--fond);
   color: var(--encre);
-  font-family: "Source Sans 3", system-ui, sans-serif;
+  font-family: var(--police-texte);
   font-size: 1.0625rem;
   line-height: 1.55;
 }
@@ -23,8 +24,7 @@ body {
 h1,
 h2,
 h3 {
-  font-family: "Bricolage Grotesque", "Source Sans 3", system-ui, sans-serif;
-  letter-spacing: -0.02em;
+  font-family: var(--police-titre);
   line-height: 1.15;
   text-wrap: balance;
 }

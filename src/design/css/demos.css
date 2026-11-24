@@ -3,21 +3,23 @@
    Ported from the prototype accepted on 2026-11-09; colours go through the tokens below. */
 :root {
   --rayon: 0.8rem;
-  --ombre: 0 18px 40px -24px var(--encre-marque);
+  --ombre: 0 18px 40px -24px var(--nuit);
   --surface-2: color-mix(in srgb, var(--surface) 55%, var(--fond));
-  --aube: linear-gradient(135deg, var(--emeraude), var(--lagon) 55%, var(--ciel));
-  --sur-aube: #ffffff;
-  --ko-fond: #fde8e8;
-  --ko-texte: #9b2c2c;
+  /* Solid fills (bars, badges, dice): ink on paper turned over, readable in both themes. */
+  --aplat: var(--encre);
+  --sur-aplat: var(--fond);
+  /* What a rule refused, and what waits for a person: the incident and person roles. */
+  --ko-fond: var(--incident-fond);
+  --ko-texte: var(--incident);
   --postit-jaune: #fff3b0;
   --postit-jaune-texte: #3d3206;
   --postit-bleu: #cdeffd;
   --postit-bleu-texte: #08374a;
   --postit-rose: #ffd9d2;
   --postit-rose-texte: #4a120a;
-  --attente-fond: #fff4d6;
-  --attente-bord: #c08a1a;
-  --attente-texte: #3d2c06;
+  --attente-fond: var(--personne-fond);
+  --attente-bord: var(--personne);
+  --attente-texte: var(--encre);
   --ecran-chaud-1: #f2836f;
   --ecran-chaud-2: #8a2f3a;
   --ecran-froid-1: #8fd3f4;
@@ -160,7 +162,7 @@
 }
 
 .demo b {
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--police-titre);
   font-size: 0.82rem;
 }
 
@@ -180,7 +182,7 @@
 .a-barre {
   display: block;
   height: 100%;
-  background: var(--aube);
+  background: var(--aplat);
   transform-origin: left;
 }
 
@@ -199,7 +201,7 @@
 }
 
 .d-insere {
-  background: color-mix(in srgb, var(--emeraude) 45%, transparent);
+  background: color-mix(in srgb, var(--controle) 45%, transparent);
 }
 
 .d-puce {
@@ -212,8 +214,8 @@
 }
 
 .d-puce.ok {
-  background: color-mix(in srgb, var(--emeraude) 22%, var(--surface));
-  color: var(--lien);
+  background: var(--controle-fond);
+  color: var(--controle);
 }
 
 .d-puce.ko {
@@ -248,7 +250,7 @@
   width: 0.8rem;
   height: 0.8rem;
   border-radius: 50%;
-  background: var(--emeraude);
+  background: var(--controle);
   position: relative;
   flex: none;
 }
@@ -260,7 +262,7 @@
   inset-block-start: 0.12rem;
   width: 0.22rem;
   height: 0.4rem;
-  border: solid var(--sur-aube);
+  border: solid var(--fond);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
@@ -301,8 +303,8 @@
 
 .d-export {
   align-self: flex-end;
-  background: var(--aube);
-  color: var(--sur-aube);
+  background: var(--aplat);
+  color: var(--sur-aplat);
   padding: 0.25rem 0.6rem;
   border-radius: 999px;
   font-weight: 700;
@@ -344,7 +346,7 @@
   font-weight: 600;
   font-size: 0.64rem;
   white-space: nowrap;
-  box-shadow: 0 4px 10px -6px var(--encre-marque);
+  box-shadow: 0 4px 10px -6px var(--nuit);
 }
 
 .d-noeud.centre {
@@ -353,7 +355,7 @@
 }
 
 .d-noeud.ok {
-  background: color-mix(in srgb, var(--emeraude) 25%, var(--surface));
+  background: color-mix(in srgb, var(--controle) 25%, var(--surface));
 }
 
 .d-noeud.ko {
@@ -377,15 +379,15 @@
   border-radius: 0.7rem;
   background: var(--surface);
   font-weight: 700;
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--police-titre);
   font-size: 0.82rem;
   backface-visibility: hidden;
-  box-shadow: 0 10px 20px -14px var(--encre-marque);
+  box-shadow: 0 10px 20px -14px var(--nuit);
 }
 
 .d-flashcard .verso {
-  background: var(--aube);
-  color: var(--sur-aube);
+  background: var(--aplat);
+  color: var(--sur-aplat);
   transform: rotateY(180deg);
 }
 
@@ -411,7 +413,7 @@
 }
 
 .d-grille .cible {
-  background: color-mix(in srgb, var(--emeraude) 18%, var(--surface));
+  background: color-mix(in srgb, var(--controle) 18%, var(--surface));
 }
 
 .d-calcul {
@@ -466,7 +468,7 @@
 .d-barres span {
   flex: 1;
   height: var(--h);
-  background: var(--aube);
+  background: var(--aplat);
   border-radius: 0.2rem 0.2rem 0 0;
   transform-origin: bottom;
 }
@@ -485,7 +487,7 @@
   background: linear-gradient(
     to bottom,
     transparent,
-    color-mix(in srgb, var(--ciel) 45%, transparent),
+    color-mix(in srgb, var(--agent) 45%, transparent),
     transparent
   );
 }
@@ -531,7 +533,7 @@
   font-weight: 700;
   font-size: 0.64rem;
   border-radius: 0.2rem;
-  box-shadow: 0 6px 12px -8px var(--encre-marque);
+  box-shadow: 0 6px 12px -8px var(--nuit);
 }
 
 .d-postit.b {
@@ -607,14 +609,14 @@
   display: grid;
   place-items: center;
   border-radius: 0.5rem;
-  background: color-mix(in srgb, var(--encre-marque) 80%, var(--emeraude));
-  color: var(--sur-aube);
+  background: var(--nuit);
+  color: var(--nuit-texte);
   font-weight: 800;
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--police-titre);
 }
 
 .d-visio .parle {
-  box-shadow: inset 0 0 0 3px var(--emeraude);
+  box-shadow: inset 0 0 0 3px var(--personne);
 }
 
 .d-agenda {
@@ -634,7 +636,7 @@
 }
 
 .d-agenda .trouve {
-  background: var(--emeraude);
+  background: var(--controle);
 }
 
 .d-contact {
@@ -652,8 +654,8 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--aube);
-  color: var(--sur-aube);
+  background: var(--aplat);
+  color: var(--sur-aplat);
   font-weight: 800;
 }
 
@@ -673,7 +675,7 @@
   flex: 1;
   /* A pseudo-random bar height from the bar index; `%` is not a CSS operator, `mod()` is. */
   height: calc(20% + mod(var(--k) * 37, 70) * 1%);
-  background: var(--aube);
+  background: var(--aplat);
   border-radius: 2px;
 }
 
@@ -704,7 +706,7 @@
   position: absolute;
   left: 0.72rem;
   inset-block-start: 0.5rem;
-  border-inline-start: 0.55rem solid var(--encre-marque);
+  border-inline-start: 0.55rem solid var(--nuit);
   border-block: 0.4rem solid transparent;
 }
 
@@ -798,7 +800,7 @@
 
 .d-site .banniere {
   grid-column: 1 / -1;
-  background: var(--aube);
+  background: var(--aplat);
   border-radius: 0.3rem;
 }
 
@@ -833,7 +835,7 @@
 }
 
 .d-vitesse {
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--police-titre);
   font-weight: 800;
   font-size: 0.9rem;
   color: var(--lien);
@@ -886,11 +888,11 @@
   margin: 0.3rem auto;
   display: grid;
   place-items: center;
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--police-titre);
   font-weight: 800;
   font-size: 1.3rem;
-  color: var(--sur-aube);
-  background: var(--aube);
+  color: var(--sur-aplat);
+  background: var(--aplat);
   clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
 }
 
@@ -921,8 +923,8 @@
 }
 
 .d-choix .oui {
-  background: var(--emeraude);
-  color: var(--sur-aube);
+  background: var(--controle-fond);
+  color: var(--controle);
 }
 
 .d-flux {
@@ -1008,7 +1010,7 @@
   border-radius: 0.35rem;
   background: color-mix(in srgb, var(--couleur) 30%, var(--surface-2));
   border: 1px solid var(--bordure);
-  box-shadow: 0 6px 12px -8px var(--encre-marque);
+  box-shadow: 0 6px 12px -8px var(--nuit);
 }
 
 .d-fenetres .f1 {
@@ -1059,7 +1061,7 @@
 .d-tunnel .tube i {
   position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(90deg, var(--emeraude) 0 8px, transparent 8px 16px);
+  background: repeating-linear-gradient(90deg, var(--controle) 0 8px, transparent 8px 16px);
 }
 
 /* The large demo of an application page */

@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, spyOn, test } from "bun:test";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import { FONTS } from "../font";
 import { type ProjectCard, parseProjectCard } from "../project-card";
 import { ALLOWED_URL_SCHEMES, checkButtonTypes, checkUrlSchemes, urlScheme } from "./markup-gates";
 import { buildLibreSite } from "./site";
@@ -297,12 +298,13 @@ async function snapshotCards(): Promise<ProjectCard[]> {
   );
 }
 
-const fonts = new Map<string, Uint8Array>([
-  ["assets/fonts/bricolage-grotesque-latin-wght-normal.woff2", new Uint8Array(1000)],
-  ["assets/fonts/source-sans-3-latin-wght-normal.woff2", new Uint8Array(1000)],
-  ["assets/fonts/LICENSE-bricolage-grotesque.txt", new Uint8Array(10)],
-  ["assets/fonts/LICENSE-source-sans-3.txt", new Uint8Array(10)],
-]);
+// Stand-ins for the font files, named after the families the stylesheet declares.
+const fonts = new Map<string, Uint8Array>(
+  FONTS.flatMap((font) => [
+    [`assets/fonts/${font.file}`, new Uint8Array(1000)] as const,
+    [font.licenseFile, new Uint8Array(10)] as const,
+  ]),
+);
 
 /** Every .ts file under src/ and server/ but the tests; an unreadable file rejects. */
 async function readSources(): Promise<Map<string, string>> {

@@ -1,10 +1,9 @@
 /* Page sections: first screen, blocks, factory steps, journeys, tour, explorer, join, application
    pages. Static only; movement lives in effects.css. Ported from the accepted prototype. */
+/* The emphasised word of the first screen ("ensemble") names people acting together: it takes
+   the colour of the person role rather than a decorative gradient (ADR 0010 §1). */
 .degrade {
-  background: linear-gradient(120deg, var(--emeraude), var(--lagon) 55%, var(--ciel));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--personne);
 }
 
 .chapeau {
@@ -26,9 +25,10 @@
   text-decoration: none;
 }
 
+/* The main call to action: ink on paper turned over, like the header's call (components.css). */
 .bouton-aube {
-  background: linear-gradient(120deg, var(--emeraude), var(--lagon) 55%, var(--ciel));
-  color: var(--encre-marque);
+  background: var(--encre);
+  color: var(--fond);
 }
 
 .bouton-trait {
@@ -186,7 +186,7 @@
 
 .devise {
   margin-block: 1.5rem 0;
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--police-titre);
   font-size: clamp(1.3rem, 1rem + 1.2vw, 1.8rem);
   font-weight: 800;
 }
@@ -260,7 +260,7 @@
   gap: 1rem;
   padding: 1rem 0.25rem;
   cursor: pointer;
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--police-titre);
   font-size: clamp(1.1rem, 1rem + 0.6vw, 1.4rem);
   font-weight: 700;
   list-style: none;
@@ -280,8 +280,8 @@
 }
 
 .parcours-grille details[open] summary::before {
-  border-color: var(--emeraude);
-  background: var(--emeraude);
+  border-color: var(--encre);
+  background: var(--encre);
   rotate: 45deg;
 }
 
@@ -340,7 +340,7 @@
 }
 
 .gain .obtenu {
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--police-titre);
   font-size: 1.15rem;
   font-weight: 700;
 }
@@ -443,8 +443,8 @@
 }
 
 .explorateur details.est-reliee {
-  border-color: var(--emeraude);
-  box-shadow: inset 0.25rem 0 0 var(--emeraude);
+  border-color: var(--encre);
+  box-shadow: inset 0.25rem 0 0 var(--encre);
 }
 
 .explorateur summary {
