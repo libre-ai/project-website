@@ -40,9 +40,10 @@ export function setupTabs(root: Document): void {
     };
     // The tabs change size after setup: the self-hosted fonts swap in (`font-display: swap`) once
     // loaded, and the text can be zoomed. Measured once, the indicator would keep the width and
-    // position of the fallback font, so it is measured again whenever any tab changes size.
+    // position of the fallback font, so it is measured again whenever any tab changes size. The
+    // border box is the one offsetWidth measures; the default content box misses a padding change.
     const resized = new ResizeObserver(placeIndicator);
-    for (const link of links) resized.observe(link);
+    for (const link of links) resized.observe(link, { box: "border-box" });
 
     links.forEach((link, i) => {
       const panel = panels[i];
