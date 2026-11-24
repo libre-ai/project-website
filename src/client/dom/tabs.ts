@@ -19,20 +19,30 @@ export function setupTabs(root: Document): void {
     // each tab is a direct child of the tablist in the accessibility tree (axe, ARIA tabs).
     for (const item of list.children) item.setAttribute("role", "none");
     container.dataset.ongletsActifs = "";
+    let current = 0;
+    const placeIndicator = (): void => {
+      const link = links[current];
+      if (link === undefined) return;
+      list.style.setProperty("--indicateur-x", `${link.offsetLeft}px`);
+      list.style.setProperty("--indicateur-largeur", `${link.offsetWidth}px`);
+    };
     const select = (index: number, focus: boolean): void => {
+      current = index;
       links.forEach((link, i) => {
         const selected = i === index;
         link.setAttribute("aria-selected", selected ? "true" : "false");
         link.tabIndex = selected ? 0 : -1;
         const panel = panels[i];
         if (panel) panel.hidden = !selected;
-        if (selected) {
-          list.style.setProperty("--indicateur-x", `${link.offsetLeft}px`);
-          list.style.setProperty("--indicateur-largeur", `${link.offsetWidth}px`);
-          if (focus) link.focus();
-        }
+        if (selected && focus) link.focus();
       });
+      placeIndicator();
     };
+    // The tabs change size after setup: the self-hosted fonts swap in (`font-display: swap`) once
+    // loaded, and the text can be zoomed. Measured once, the indicator would keep the width and
+    // position of the fallback font, so it is measured again whenever any tab changes size.
+    const resized = new ResizeObserver(placeIndicator);
+    for (const link of links) resized.observe(link);
 
     links.forEach((link, i) => {
       const panel = panels[i];
