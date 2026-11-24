@@ -209,8 +209,10 @@ Décisions de la revue du 2026-11-23, chacune tenue par un test :
   pour les sources, la comparaison porte sur les dates, comme celle de cargo ; un fichier
   restauré avec une date ancienne passe pour plus vieux que le binaire, et ni cargo ni ce
   contrôle ne le voient.
-- **Dépendances.** `url` reste en 2.5.8 : 2.5.9 a été publiée le 2026-11-20 à 23:03 UTC, moins
-  de trois jours avant la mesure (garde d'âge de la flotte).
+- **Dépendances.** `url` est resté en 2.5.8 tant que 2.5.9, publiée le 2026-11-20 à 23:03 UTC,
+  avait moins de trois jours (garde d'âge de la flotte). Depuis le 2026-11-24 il est en 2.5.9
+  (avis RUSTSEC-2026-0592, corrigé à partir de 2.5.9), avec `form_urlencoded` 1.2.3 que cette
+  version exige (publiée le 2026-11-20 à 23:02 UTC).
 
 ## Non comparé
 
