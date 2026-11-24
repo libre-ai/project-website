@@ -34,7 +34,7 @@
     "@libre-ai/testing": "file:../application-development-toolkit/packages/testing",
     "@libre-ai/ui": "file:../application-development-toolkit/packages/ui",
     "@libre-ai/web-platform": "file:../application-development-toolkit/packages/web-platform",
-    "fast-uri": "4.1.5",
+    "fast-uri": "4.2.3",
     "lodash": "4.18.1",
     "simple-git": "4.0.2",
   },
@@ -289,7 +289,7 @@
 
     "fast-string-width": ["fast-string-width@3.0.2", "", { "dependencies": { "fast-string-truncated-width": "^3.0.2" } }, "sha512-gX8LrtNEI5hq8DVUfRQMbr5lpaS4nMIWV+7XEbXk2b8kiQIizgnlr12B4dA3ZEx3308ze0O4Q1R+cHts8kyUJg=="],
 
-    "fast-uri": ["fast-uri@4.1.5", "", {}, "sha512-vZeoMRB4epNr7QfdHxel7te/RcX16CxyXI07JCCTFWZA2s4v1azGNESRj+2EoaHSaWFL/Z3GmKT2jF6A202jLg=="],
+    "fast-uri": ["fast-uri@4.2.3", "", {}, "sha512-I1PXwP5eAhlNlcdpjt9CgB59op2ZvZfxw+BkqGFVIUOgNpCVTcTqp3HhTX7brxj5vsip+nSY4nTvff+eIA76hg=="],
 
     "fast-wrap-ansi": ["fast-wrap-ansi@0.2.2", "", { "dependencies": { "fast-string-width": "^3.0.2" } }, "sha512-7F2Fl+TjRSenLqlU3UjSH0iyqopqoZIu7eZVpEirP2g1GtWa2G/ecEmBdgz31+Mxr+ELclgg6sokpSFIQiZ02Q=="],
 
