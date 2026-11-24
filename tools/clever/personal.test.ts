@@ -200,7 +200,7 @@ function createDependencies(
     failingInteractive: null,
     failingCaptured: null,
     smokeFailurePath: null,
-    cleverVersion: "4.11.0",
+    cleverVersion: "5.5.0",
     candidateBinding: validBinding(),
     candidateRawText: null,
     candidateModeAfterCreate: null,
@@ -612,7 +612,7 @@ describe("personal Clever doctor", () => {
   test("refuses an unavailable pinned Clever version", async () => {
     const home = await createTemporaryHome();
     await writeProtectedContext(home);
-    const { dependencies, errors } = createDependencies(home, { cleverVersion: "4.12.0" });
+    const { dependencies, errors } = createDependencies(home, { cleverVersion: "5.5.1" });
 
     expect(await runPersonalClever(["doctor"], dependencies)).toBe(1);
     expect(errors.join("\n")).toContain("COMMAND_ERROR");

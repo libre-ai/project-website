@@ -77,7 +77,7 @@ const localCleverProgram = resolve(
   "../../node_modules/clever-tools/bin/clever.js",
 );
 const expectedOrigin = "https://github.com/libre-ai/project-website.git";
-const expectedCleverVersion = "4.11.0";
+const expectedCleverVersion = "5.5.0";
 const cleverApiUrl = "https://api.clever-cloud.com/v2/self/applications";
 const cleverOauthConsumerKey = "T5nFjKeHH4AIlEveuGhB5S3xg8T19e";
 const cleverOauthConsumerSecret = "MgVMqTr6fWlf2M0tkC2MXOnhfqBWDT";
