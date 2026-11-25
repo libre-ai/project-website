@@ -260,6 +260,294 @@
   color: var(--encre-attenuee);
 }
 
+.bouton-nuit-trait {
+  border-color: var(--nuit-doux);
+  color: var(--nuit-texte);
+}
+
+/* The trial (ADR 0010 §8): forms on paper. A fold shows by its dashed crease; at rest no face that
+   carries text is tilted. */
+.essai,
+.virement {
+  --marge: clamp(1rem, 0.6rem + 1.5vw, 1.8rem);
+}
+
+.titre-section {
+  max-width: 26ch;
+  margin: 0 0 1rem;
+  text-wrap: balance;
+}
+
+.essai-consigne,
+.virement-tete p {
+  max-width: 40rem;
+  color: var(--encre-attenuee);
+  font-size: 1.1rem;
+}
+
+.essai .fleche-main,
+.virement .fleche-main {
+  width: 2rem;
+  margin: 0;
+  transform: none;
+}
+
+.essai .note-main,
+.virement-note {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.2rem;
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.ordre-note-onglets {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
+
+.ordre {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 60rem;
+}
+
+.ordre [data-onglets-liste] {
+  margin: 0;
+}
+
+.ordre-feuille,
+.virement-demi {
+  display: grid;
+  align-content: start;
+  gap: 0.8rem;
+  padding: 1.2rem var(--marge);
+  border: 1px solid var(--bordure);
+  background: var(--fond);
+}
+
+.ordre-feuille {
+  padding-block-end: 0;
+  border-radius: 0.4rem;
+}
+
+/* Without script the five sheets follow one another; with it, the tabs module hides all but one. */
+.ordre-feuille + .ordre-feuille {
+  margin-block-start: 1.5rem;
+}
+
+[data-onglets-actifs] .ordre-feuille {
+  margin: 0;
+}
+
+.ordre-feuille[hidden] {
+  display: none;
+}
+
+.ordre-tete {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-block-end: 0.4rem;
+  border-block-end: 2px solid var(--encre);
+}
+
+.ordre-tete h3,
+.virement-type {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.ordre p,
+.virement-carte p {
+  margin: 0;
+}
+
+.ordre-heure,
+.ordre-sceau,
+.essai .illustration,
+.virement .illustration,
+.champs dt,
+.ordre-sous {
+  color: var(--encre-attenuee);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.champs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: 0.5rem 1.2rem;
+  margin: 0;
+}
+
+.champs .large {
+  grid-column: 1 / -1;
+}
+
+.champs dt,
+.ordre-sous {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.champs dd {
+  margin: 0;
+  border-block-end: 1px dotted var(--encre-attenuee);
+}
+
+.champs .alerte,
+.ordre-regle strong,
+.virement-grille .arret span,
+.virement-issue.non {
+  color: var(--incident);
+}
+
+.ordre-lignes,
+.virement-grille {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ordre-ligne,
+.ordre-regle,
+.virement-grille li {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.3rem 0;
+  border-block-end: 1px solid var(--bordure);
+}
+
+.ordre-ligne {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.ordre-verdict,
+.virement-etat,
+.virement-issue.oui {
+  color: var(--controle);
+  font-weight: 700;
+}
+
+/* A refused line lies flat on its back, below its dashed crease, its rules in the margin. */
+.ordre-ligne.refusee {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  align-items: start;
+  border: 0;
+}
+
+.ordre-pli {
+  padding-block-start: 0.5rem;
+  border-block-start: 2px dashed var(--agent);
+}
+
+.ordre-pli .ordre-action,
+.ordre-talon {
+  display: block;
+  padding: 0.5rem 0.7rem;
+  border-radius: 0 0 0.4rem 0.4rem;
+  background: var(--surface);
+}
+
+.ordre-marge {
+  display: grid;
+  gap: 0.4rem;
+  padding-inline-start: 0.7rem;
+  border-inline-start: 3px solid var(--incident);
+}
+
+.ordre-regle {
+  padding: 0;
+  border: 0;
+}
+
+.regle-pic svg {
+  display: block;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.ordre-rendu,
+.virement-issue {
+  font-family: var(--police-titre);
+  font-size: 1.08rem;
+}
+
+/* The stub: the signed log, ready to tear off along its dotted line. */
+.ordre-talon {
+  display: grid;
+  gap: 0.25rem;
+  margin-inline: calc(-1 * var(--marge));
+  padding: 0.9rem var(--marge);
+  border-block-start: 2px dashed var(--bordure);
+}
+
+.ordre-talon-titre {
+  font-weight: 700;
+}
+
+/* The transfer: two halves of one sheet, flat, side by side when there is room. */
+.virement-tete {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: 0 2rem;
+  align-items: end;
+  margin-block-end: 2rem;
+}
+
+.virement-figure {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  margin: 0;
+}
+
+.virement-carte {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  width: 100%;
+  max-width: 64rem;
+}
+
+/* The central crease: below the agent's half on a phone, beside it when there is room. */
+.virement-agent {
+  border-block-end: 0;
+}
+
+.virement-dirigeant {
+  border-style: dashed solid solid;
+  border-top-color: var(--agent);
+}
+
+@media (min-width: 48rem) {
+  .virement-agent {
+    border-block-end: 1px solid var(--bordure);
+    border-inline-end: 0;
+  }
+
+  .virement-dirigeant {
+    border-style: solid solid solid dashed;
+    border-color: var(--bordure) var(--bordure) var(--bordure) var(--agent);
+  }
+}
+
+.virement-regle {
+  font-weight: 700;
+}
+
+.virement-grille li {
+  font-size: 0.88rem;
+}
+
+.virement-grille .arret {
+  background: var(--incident-fond);
+}
+
 .bulle {
   max-width: 15rem;
   padding: 0.6rem 0.9rem;

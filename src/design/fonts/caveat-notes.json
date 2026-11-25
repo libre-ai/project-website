@@ -6,10 +6,10 @@
     "sha256": "d51e2283010e661d9f3dafdc9ff4b82b2ebcb2f7aa43ca48a105f5f68d46cc32"
   },
   "tool": "fonttools[woff]==4.60.1",
-  "characters": " ',.CPacehilnopqrstuvxyàé",
+  "characters": " ',.CMPabcdefhilmnopqrstuvxyzàéêô",
   "output": {
     "file": "src/design/fonts/caveat-notes-600-normal.woff2",
-    "sha256": "abc47c5f2302735c340e06bbed8db9bafc02602c254d7e26df24ce2cf20628dd",
-    "bytes": 9720
+    "sha256": "5a3fe0868a823d6c87e3c24015633b76e630f14080b8ea48befba235c678154b",
+    "bytes": 14488
   }
 }
