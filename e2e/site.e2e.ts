@@ -97,15 +97,17 @@ test.describe("zero serious or critical axe violation (WCAG 2.2 AA)", () => {
 });
 
 test.describe("the site is complete without script (ADR 0005 §1)", () => {
-  test("first screen, universes, tour and waitlist work with JavaScript disabled", async ({
+  test("opening, moments, universes, tour and waitlist work with JavaScript disabled", async ({
     page,
   }, testInfo) => {
     test.skip(!scriptless(testInfo.project.name), "the scriptless project proves it");
     await page.goto("/");
-    await expect(page.locator(".cote-seul")).toBeVisible();
-    await page.getByText("Ensemble", { exact: true }).click();
-    await expect(page.locator(".cote-ensemble")).toBeVisible();
-    await expect(page.locator(".cote-seul")).toBeHidden();
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Possédez la fabrique." }),
+    ).toBeVisible();
+    await expect(page.locator(".planche .embleme")).toBeVisible();
+    await expect(page.locator(".moment")).toHaveCount(4);
+    for (const moment of await page.locator(".moment").all()) await expect(moment).toBeVisible();
     await expect(page.locator(".titre-univers").first()).toBeVisible();
     await expect(page.locator("[data-etape]")).toHaveCount(7);
     for (const step of await page.locator("[data-etape]").all()) await expect(step).toBeVisible();

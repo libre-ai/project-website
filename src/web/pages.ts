@@ -1,15 +1,17 @@
 /**
  * Pages of the Libre IA site (ADR 0007). Copy comes from the prototype accepted on 2026-11-09.
- * The first screen is « Chacun seul / Ensemble » (owner decision 13), made of two radio buttons
- * so it works without script; the module plays it as a view transition (ADR 0005).
+ * The home page is being redrawn section by section to ADR 0010 §8: its opening and its four
+ * moments come from src/web/home.ts; the sections below them are the 2026-11-09 ones until their
+ * replacements land.
  */
-import { APPLICATIONS, type Application, applicationOf } from "../content/applications";
+import { APPLICATIONS, type Application } from "../content/applications";
 import { commons, journeys, pillars } from "../content/journeys";
 import { refOfPrototypeKey } from "../content/prototype-keys";
 import { showcaseOf } from "../content/showcases";
 import { SOCIAL_LABELS, SOCIALS, type SocialNetwork } from "../content/socials";
 import { UNIVERSES } from "../content/universes";
 import { waitlistForm } from "./components";
+import { moments, opening } from "./home";
 import { type Html, h, raw } from "./html";
 import {
   applicationPath,
@@ -32,155 +34,6 @@ const heading = (overline: string, title: string, lead: string | null, id?: stri
 
 const block = (id: string, ...children: Html[]): Html =>
   h("section", { class: "bloc", id }, h("div", { class: "largeur" }, children));
-
-// Each silo of « chacun seul » has its Libre counterpart in « ensemble », pairwise, so the view
-// transition can morph one into the other.
-const SILOS: readonly (readonly [string, string, string])[] = [
-  ["Agenda", "abonnement n°1", "P19"],
-  ["Notes", "un silo de plus", "P04"],
-  ["Tableur", "copie maison", "P09"],
-  ["Visio", "un compte de plus", "P18"],
-  ["Sauvegarde", "jamais testée", "P38"],
-  ["Assistant IA", "lit vos données", "P34"],
-];
-
-function soloTogether(): Html {
-  return h(
-    "section",
-    { class: "hero-seul-ensemble", "data-seul-ensemble": true, "aria-labelledby": "titre-accueil" },
-    h(
-      "div",
-      { class: "largeur" },
-      h(
-        "div",
-        { class: "entete" },
-        h(
-          "h1",
-          { id: "titre-accueil" },
-          "Seul, ou ",
-          h("span", { class: "degrade" }, "ensemble"),
-          " ?",
-        ),
-        h(
-          "p",
-          { class: "sous" },
-          "Ce que chacun réinvente seul, faisons-le ensemble. Décrivez un besoin, la fabrique le construit, tout le monde en profite.",
-        ),
-      ),
-      h(
-        "fieldset",
-        { class: "bascule-avancer" },
-        h("legend", {}, "Comment voulez-vous avancer ?"),
-        h(
-          "label",
-          {},
-          h("input", {
-            type: "radio",
-            name: "avancer",
-            value: "seul",
-            id: "avancer-seul",
-            checked: true,
-          }),
-          " Chacun seul",
-        ),
-        h(
-          "label",
-          {},
-          h("input", { type: "radio", name: "avancer", value: "ensemble", id: "avancer-ensemble" }),
-          " Ensemble",
-        ),
-      ),
-      h(
-        "div",
-        { class: "scene-avancer" },
-        h(
-          "ul",
-          { class: "cote-seul", "aria-label": "Chacun seul" },
-          SILOS.map(([tool, cost], index) =>
-            h("li", { class: `silo vol-${index + 1}` }, h("b", {}, tool), cost),
-          ),
-        ),
-        h(
-          "ul",
-          { class: "cote-ensemble", "aria-label": "Ensemble" },
-          SILOS.map(([, , ref], index) => {
-            const application = applicationOf(ref);
-            return h(
-              "li",
-              { class: `envol vol-${index + 1} univers-${application.universe}` },
-              emblem(ref),
-              h("span", {}, `Libre ${application.name}`),
-            );
-          }),
-        ),
-      ),
-      h("p", { class: "devise" }, "Vos outils. Vos données. Votre IA."),
-      h(
-        "div",
-        { class: "actions" },
-        h(
-          "a",
-          { class: "bouton bouton-aube", href: "/rejoindre/" },
-          "Rejoindre la liste d'attente",
-        ),
-        h("a", { class: "bouton bouton-trait", href: "#fabrique-commun" }, "Comment ça marche"),
-      ),
-    ),
-  );
-}
-
-function threeSteps(): Html {
-  const agenda = applicationOf("P19");
-  return block(
-    "fabrique-commun",
-    heading(
-      "La fabrique en commun",
-      "Décrivez un besoin. La fabrique le construit. Tout le monde en profite.",
-      "Au lieu de mille équipes qui réinventent chacune le même outil, une seule fabrique, ouverte, où des agents construisent sous garanties ce dont chacun a besoin. Chaque outil construit devient un commun.",
-    ),
-    h(
-      "ol",
-      { class: "trois-temps" },
-      h(
-        "li",
-        { class: "temps" },
-        h(
-          "div",
-          { class: "visuel" },
-          h("span", { class: "bulle" }, "« Un agenda qui ne me piste pas. »"),
-        ),
-        h("h3", {}, "Vous décrivez un besoin"),
-        h(
-          "p",
-          {},
-          "En une phrase. Avant le code, la fabrique écrit avec vous ce que « réussi » veut dire.",
-        ),
-      ),
-      h(
-        "li",
-        { class: `temps univers-${agenda.universe}` },
-        h("div", { class: "visuel" }, emblem(agenda.ref)),
-        h("h3", {}, "La fabrique le construit"),
-        h(
-          "p",
-          {},
-          "Des agents IA, encadrés par des garde-fous qu'ils ne peuvent pas contourner, relus et prouvés.",
-        ),
-      ),
-      h(
-        "li",
-        { class: `temps temps-commun univers-${agenda.universe}` },
-        h("div", { class: "visuel" }, emblem(agenda.ref)),
-        h("h3", {}, "Tout le monde en profite"),
-        h(
-          "p",
-          {},
-          "L'outil est libre, chez vous, et sert désormais tous ceux qui avaient le même besoin.",
-        ),
-      ),
-    ),
-  );
-}
 
 function socials(): Html {
   const links = (Object.keys(SOCIALS) as SocialNetwork[]).flatMap((network) => {
@@ -224,8 +77,8 @@ export function homeMain(): Html {
   return h(
     "div",
     {},
-    soloTogether(),
-    threeSteps(),
+    opening(),
+    moments(),
     block(
       "parcours",
       heading(

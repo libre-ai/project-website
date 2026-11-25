@@ -121,10 +121,10 @@ describe("rendered pages", () => {
       expect([entry.path, gaps]).toEqual([entry.path, []]);
       bound += text.match(/\S\u00a0[:;!?»]|«\u00a0\S/g)?.length ?? 0;
     }
-    // Volume: the home title, the authored demos and the quoted record of the fixture all count.
+    // Volume: the home moments, the authored demos and the quoted record of the fixture all count.
     expect(bound).toBeGreaterThan(routes.length);
     const home = pages.find(({ entry }) => entry.path === "/")?.html ?? "";
-    expect(home).toContain("ensemble</span>\u00a0?</h1>");
+    expect(home).toContain("En mots simples\u00a0: ce que");
     const brick = pages.find(({ entry }) => entry.path === "/fabrique/briques/project-governance/");
     expect(brick?.html).toContain("tel quel\u00a0: sans retouche.");
   });

@@ -122,15 +122,17 @@ if (universe.violations.length > 0) {
   throw new Error(`site.universe_refused:${universe.violations.join(",")}`);
 }
 
-// Fonts and their licences, byte for byte from the pinned packages (ADR 0004 §4).
+// Fonts and their licences, byte for byte from the pinned packages (ADR 0004 §4), or from the
+// subset the repository keeps for a face cut from its package (src/font.ts, CAVEAT_SUBSET).
 const fonts = new Map<string, Uint8Array>();
 for (const font of FONTS) {
   const packageRoot = join(process.cwd(), "node_modules", font.packageDir);
   for (const face of font.faces) {
-    fonts.set(
-      `assets/fonts/${face.file}`,
-      new Uint8Array(await Bun.file(join(packageRoot, "files", face.file)).arrayBuffer()),
-    );
+    const source =
+      face.subset === undefined
+        ? join(packageRoot, "files", face.file)
+        : join(process.cwd(), face.subset);
+    fonts.set(`assets/fonts/${face.file}`, new Uint8Array(await Bun.file(source).arrayBuffer()));
   }
   fonts.set(
     font.licenseFile,

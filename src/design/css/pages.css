@@ -1,11 +1,6 @@
-/* Page sections: first screen, blocks, factory steps, journeys, tour, explorer, join, application
-   pages. Static only; movement lives in effects.css. Ported from the accepted prototype. */
-/* The emphasised word of the first screen ("ensemble") names people acting together: it takes
-   the colour of the person role rather than a decorative gradient (ADR 0010 §1). */
-.degrade {
-  color: var(--personne);
-}
-
+/* Page sections: blocks, the opening and the four moments of the home page (ADR 0010 §8),
+   journeys, tour, explorer, join, application pages. Static only; movement lives in effects.css.
+   Ported from the accepted prototypes. */
 .chapeau {
   max-width: 40rem;
   color: var(--encre-attenuee);
@@ -69,171 +64,201 @@
   font-size: 1.1rem;
 }
 
-/* First screen: « Seul, ou ensemble ? » */
-.hero-seul-ensemble {
-  padding-block: clamp(2rem, 6vw, 4rem);
+/* Handwritten notes of the illustrations, in Caveat (ADR 0010 §2), pencilled in the agent's blue
+   of the prototype. */
+.note-main {
+  font-family: var(--police-main);
+  font-size: 1.45rem;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--agent);
 }
 
-.hero-seul-ensemble .entete {
-  max-width: 46rem;
+/* Opening (ADR 0010 §8): the promise on night, beside the plate of an application folded from
+   a sheet of paper. At rest the plate shows the folded icon; the fold itself is an enhancement. */
+.ouverture {
+  position: relative;
+  padding-block: clamp(2.5rem, 6vw, 5rem) clamp(4.5rem, 3rem + 4vw, 7rem);
+  background: var(--nuit);
+  color: var(--nuit-texte);
 }
 
-.hero-seul-ensemble .sous {
+.ouverture-grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: clamp(2rem, 4vw, 3rem);
+  align-items: center;
+}
+
+.ouverture h1 {
+  margin: 0;
+  font-size: clamp(2.8rem, 1.4rem + 5.4vw, 5.8rem);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.ouverture-sous {
+  max-width: 34ch;
+  margin: 1.4rem 0 0;
+  color: var(--nuit-doux);
+  font-size: clamp(1.1rem, 1rem + 0.4vw, 1.3rem);
+}
+
+.bouton-nuit {
+  background: var(--nuit-texte);
+  color: var(--nuit);
+}
+
+.ouverture-planche {
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+}
+
+.ouverture-note {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.2rem;
+  justify-self: start;
+  margin: 0 0 0 0.5rem;
+  color: var(--nuit-texte);
+  transform: rotate(-4deg);
+}
+
+.fleche-main {
+  flex: none;
+  width: 3.2rem;
+  margin-block-end: -1.4rem;
+  transform: rotate(8deg);
+}
+
+.planche {
+  box-sizing: border-box;
+  display: grid;
+  justify-items: center;
+  gap: 0.7rem;
+  width: min(100%, 24rem);
+  margin: 0;
+  padding: 1rem 1.2rem 1.25rem;
+  border-radius: 0.35rem;
+  background: var(--fond);
+  color: var(--encre);
+  box-shadow: 0 1.8rem 3rem -1.2rem color-mix(in srgb, var(--encre) 55%, transparent);
+  transform: rotate(-1.2deg);
+}
+
+.planche-titre {
+  justify-self: start;
+}
+
+.planche-feuille {
+  display: grid;
+  place-items: center;
+  width: min(100%, 16rem);
+  aspect-ratio: 1;
+  border-radius: 23%;
+  background: var(--teinte);
+}
+
+.planche-feuille .embleme {
+  width: 84%;
+  height: 84%;
+}
+
+.planche-nom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin: 0;
+  font-family: var(--police-titre);
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+.planche-nom a {
+  color: inherit;
+}
+
+.planche-univers {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: var(--teinte);
+  color: var(--couleur-texte);
+  font-family: var(--police-texte);
+  font-size: 0.78rem;
+}
+
+.planche-promesse {
+  max-width: 30ch;
+  margin: 0;
   color: var(--encre-attenuee);
+  text-align: center;
+}
+
+/* The folded paper edge where the opening meets the page. */
+.pli-bas {
+  position: absolute;
+  inset-inline: 0;
+  bottom: -2px;
+  width: 100%;
+  height: clamp(1.25rem, 0.8rem + 2.5vw, 3rem);
+}
+
+/* Four moments, from the need to the delivered application (ADR 0010 §8). */
+.titre-moments {
+  max-width: 26ch;
+  margin: 0 0 2.5rem;
+  text-wrap: balance;
+}
+
+.moments {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: 2rem 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.moment {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 0.35rem;
+  text-align: center;
+}
+
+.moment-dessin {
+  display: grid;
+  place-items: center;
+  width: 9rem;
+  height: 9rem;
+  border-radius: 50%;
+  background: var(--teinte);
+}
+
+.moment-dessin svg {
+  width: 66%;
+  height: 66%;
+}
+
+.moment-note {
+  margin: 0.4rem 0 0;
+  transform: rotate(-4deg);
+}
+
+.moment h3 {
+  margin: 0;
   font-size: 1.2rem;
 }
 
-.bascule-avancer {
-  display: inline-flex;
-  gap: 0.25rem;
-  margin: 1.25rem 0;
-  padding: 0.3rem;
-  border: 1px solid var(--bordure);
-  border-radius: 999px;
-  background: var(--surface);
-}
-
-.bascule-avancer legend {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-}
-
-.bascule-avancer label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.55rem 1.1rem;
-  border-radius: 999px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.bascule-avancer label:has(input:checked) {
-  background: var(--encre);
-  color: var(--fond);
-}
-
-.bascule-avancer label:has(input:focus-visible) {
-  outline: 0.19rem solid var(--focus);
-  outline-offset: 0.15rem;
-}
-
-/* The scene takes the height of its content: a fixed minimum left two thirds of it empty. */
-.scene-avancer {
-  padding: clamp(1rem, 3vw, 1.75rem);
-  border: 1px solid var(--bordure);
-  border-radius: 1.2rem;
-  background: var(--surface-2);
-}
-
-.cote-seul,
-.cote-ensemble {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr));
-  gap: 0.8rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.silo {
-  padding: 0.8rem;
-  border: 1px dashed var(--encre-attenuee);
-  border-radius: 0.8rem;
-  background: var(--surface);
-  color: var(--encre-attenuee);
-  filter: grayscale(1);
-}
-
-.silo b {
-  display: block;
-  color: var(--encre);
-}
-
-.envol {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.6rem;
-  border-radius: 0.8rem;
-  background: var(--teinte);
-  color: var(--couleur-texte);
-  font-weight: 700;
-}
-
-.envol .embleme {
-  width: 3rem;
-  height: 3rem;
-}
-
-.cote-ensemble {
-  display: none;
-}
-
-/* Without script the radio drives the scene; with script, data-etat does (view transition). */
-[data-seul-ensemble]:not([data-js]):has(#avancer-ensemble:checked) .cote-seul,
-[data-seul-ensemble][data-etat="ensemble"] .cote-seul {
-  display: none;
-}
-
-[data-seul-ensemble]:not([data-js]):has(#avancer-ensemble:checked) .cote-ensemble,
-[data-seul-ensemble][data-etat="ensemble"] .cote-ensemble {
-  display: grid;
-}
-
-.devise {
-  margin-block: 1.5rem 0;
-  font-family: var(--police-titre);
-  font-size: clamp(1.3rem, 1rem + 1.2vw, 1.8rem);
-  font-weight: 800;
-}
-
-/* The factory in three steps */
-.trois-temps {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
-  gap: 1rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.temps {
-  padding: 1.5rem;
-  border: 1px solid var(--bordure);
-  border-radius: 1rem;
-  background: var(--surface);
-}
-
-.temps h3 {
-  margin: 1rem 0 0.5rem;
-  font-size: 1.35rem;
-}
-
-.temps p {
+.moment p:last-child {
+  max-width: 24ch;
   margin: 0;
   color: var(--encre-attenuee);
-}
-
-.temps .visuel {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 7rem;
-  border-radius: 0.8rem;
-  background: var(--surface-2);
-}
-
-.temps .visuel .embleme {
-  width: 6rem;
-  height: 6rem;
-}
-
-.temps-commun .visuel {
-  background: var(--teinte);
 }
 
 .bulle {
