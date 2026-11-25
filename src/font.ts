@@ -8,17 +8,42 @@
  * (src/budget.ts), and the variable files of the two families weigh 86,492 bytes against 46,832
  * for these three faces (measured 2026-11-24 on the 5.3.0 packages). The sheets ask for 600, 700
  * and 800; CSS font matching renders each of them with the 700 face, the nearest available.
- * Caveat, the third family of ADR 0010 §2, is for the handwritten notes of illustrations only: no
- * page draws one yet, and it is added with the first illustration that does (48,836 bytes for its
- * lightest latin face would otherwise count on every page).
+ * Caveat, the third family of ADR 0010 §2, is for the handwritten notes of illustrations only. Its
+ * latin face would count 51,220 bytes on every page, so the site serves a subset of it holding only
+ * the characters of the notes, cut by tools/fonts/subset-caveat.ts and kept in the repository with
+ * its manifest (CAVEAT_SUBSET).
  */
 
 /** What a family is for; each role becomes a `--police-<role>` custom property. */
-export type FontRole = "titre" | "texte";
+export type FontRole = "titre" | "texte" | "main";
 
 export interface FontFace {
-  readonly weight: 400 | 700;
+  readonly weight: 400 | 600 | 700;
+  /** Served as /assets/fonts/<file>. */
   readonly file: string;
+  /** Repository path of a subset cut from the package; absent, the file comes from the package. */
+  readonly subset?: string;
+}
+
+/** Where the Caveat subset comes from and where it lives (tools/fonts/subset-caveat.ts). */
+export const CAVEAT_SUBSET = {
+  source: { package: "@fontsource/caveat", file: "files/caveat-latin-600-normal.woff2" },
+  output: "src/design/fonts/caveat-notes-600-normal.woff2",
+  manifest: "src/design/fonts/caveat-notes.json",
+} as const;
+
+/** What the subset script records, so a test can tie the served file to its source. */
+export interface SubsetManifest {
+  readonly source: {
+    readonly package: string;
+    readonly version: string;
+    readonly file: string;
+    readonly sha256: string;
+  };
+  readonly tool: string;
+  /** The characters kept, each once, in code point order. */
+  readonly characters: string;
+  readonly output: { readonly file: string; readonly sha256: string; readonly bytes: number };
 }
 
 export interface SelfHostedFont {
@@ -51,6 +76,14 @@ export const FONTS: readonly SelfHostedFont[] = [
     ],
     licenseFile: "assets/fonts/LICENSE-atkinson-hyperlegible-next.txt",
     packageDir: "@fontsource/atkinson-hyperlegible-next",
+  },
+  {
+    family: "Caveat",
+    role: "main",
+    fallback: "cursive",
+    faces: [{ weight: 600, file: "caveat-notes-600-normal.woff2", subset: CAVEAT_SUBSET.output }],
+    licenseFile: "assets/fonts/LICENSE-caveat.txt",
+    packageDir: CAVEAT_SUBSET.source.package,
   },
 ];
 

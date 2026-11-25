@@ -11,6 +11,7 @@
         "@electric-sql/pglite": "0.5.15",
         "@electric-sql/pglite-socket": "0.2.18",
         "@fontsource/atkinson-hyperlegible-next": "5.3.0",
+        "@fontsource/caveat": "5.3.0",
         "@fontsource/literata": "5.3.0",
         "@libre-ai/contracts-authority": "file:../schemas-and-contracts",
         "@libre-ai/governance": "file:../project-governance",
@@ -82,6 +83,8 @@
     "@electric-sql/pglite-socket": ["@electric-sql/pglite-socket@0.2.18", "", { "peerDependencies": { "@electric-sql/pglite": "0.5.15", "@electric-sql/pglite-age": "0.0.16", "@electric-sql/pglite-pg_hashids": "0.0.16", "@electric-sql/pglite-pg_ivm": "0.0.16", "@electric-sql/pglite-pg_textsearch": "0.0.17", "@electric-sql/pglite-pg_uuidv7": "0.0.16", "@electric-sql/pglite-pgtap": "0.0.16", "@electric-sql/pglite-pgvector": "0.0.16" }, "bin": { "pglite-server": "dist/scripts/server.js" } }, "sha512-Cin2T1pO0RkQDpgdPRsxCCny7ZKZEEciKoF3xl0/GCxmXVyOJe1g/FKm5G5eSCKCG3pPvEvN0C+txu7kOKYSjQ=="],
 
     "@fontsource/atkinson-hyperlegible-next": ["@fontsource/atkinson-hyperlegible-next@5.3.0", "", {}, "sha512-8p1tHVoPDo6oYwSO3sMw5snGwFwSf3TmeSF9Gcj792GXdsg6oqvhoItbj6Hj/XZIk0Xs+Cwu6pkLBAl3Q5HrwA=="],
+
+    "@fontsource/caveat": ["@fontsource/caveat@5.3.0", "", {}, "sha512-eHTfzQxFSW9ABERRLNruHoNJmKed2J7pqTUc5lp4a4POMgXGKpxmWj3d9Hz10kmAg6iuTTLe6UagbA4bnsmfQw=="],
 
     "@fontsource/literata": ["@fontsource/literata@5.3.0", "", {}, "sha512-9JGMT5+YfBK49thoMq9ASaMRJErHT4V4QuMhAEwKHRLreOsIMP2xP6ZRLhPJ0e6YlET+kjWTJuN7LAxt9/gWGQ=="],
 
