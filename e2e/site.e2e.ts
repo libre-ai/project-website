@@ -97,7 +97,7 @@ test.describe("zero serious or critical axe violation (WCAG 2.2 AA)", () => {
 });
 
 test.describe("the site is complete without script (ADR 0005 §1)", () => {
-  test("opening, moments, universes, tour and waitlist work with JavaScript disabled", async ({
+  test("opening, moments, trial, universes, tour and waitlist work with JavaScript disabled", async ({
     page,
   }, testInfo) => {
     test.skip(!scriptless(testInfo.project.name), "the scriptless project proves it");
@@ -108,6 +108,12 @@ test.describe("the site is complete without script (ADR 0005 §1)", () => {
     await expect(page.locator(".planche .embleme")).toBeVisible();
     await expect(page.locator(".moment")).toHaveCount(4);
     for (const moment of await page.locator(".moment").all()) await expect(moment).toBeVisible();
+    // The mission order shows all five sheets flat, and the transfer both halves.
+    await expect(page.locator(".ordre-feuille")).toHaveCount(5);
+    for (const sheet of await page.locator(".ordre-feuille").all())
+      await expect(sheet).toBeVisible();
+    await expect(page.locator(".virement-demi")).toHaveCount(2);
+    for (const half of await page.locator(".virement-demi").all()) await expect(half).toBeVisible();
     await expect(page.locator(".titre-univers").first()).toBeVisible();
     await expect(page.locator("[data-etape]")).toHaveCount(7);
     for (const step of await page.locator("[data-etape]").all()) await expect(step).toBeVisible();
@@ -158,6 +164,22 @@ test.describe("progressive enhancement (ADR 0005 §5)", () => {
     await page.keyboard.press("Home");
     await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
     await expect(page.getByRole("tabpanel")).toHaveCount(1);
+  });
+
+  test("the mission order shows one service at a time, chosen from its tabs", async ({
+    page,
+  }, testInfo) => {
+    test.skip(scriptless(testInfo.project.name), "needs the module");
+    await page.goto("/");
+    const services = page.getByRole("tablist", { name: "Services" });
+    const tabs = services.getByRole("tab");
+    await expect(tabs).toHaveCount(5);
+    await expect(page.locator(".ordre-feuille:visible")).toHaveCount(1);
+    await expect(page.locator("#ordre-compta")).toBeVisible();
+    await tabs.filter({ hasText: "Ressources humaines" }).click();
+    await expect(page.locator(".ordre-feuille:visible")).toHaveCount(1);
+    await expect(page.locator("#ordre-rh")).toBeVisible();
+    await expect(page.locator("#ordre-rh .ordre-talon")).toContainText("refusé par Autorisation");
   });
 
   // The fonts swap in after the script ran: the indicator has to follow a tab that changes size,

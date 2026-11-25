@@ -83,8 +83,11 @@ Ce dépôt l'a décidé de son côté (D243).
    - au repos, aucun texte ne reste sur une face inclinée ; un pli se voit par un trait
      pointillé et une ombre ;
    - le résultat d'une règle n'est jamais écrit à la main : il est calculé par une fonction
-     pure, au build pour le rendu sans script, et dans le module client pour le choix d'un
-     service ;
+     pure, au build, pour chaque service. Sans script, toutes les feuilles s'affichent à plat ;
+     le module client n'en montre qu'une à la fois et ne recalcule rien (précision du
+     2026-11-25, à la mise en page de l'ordre de mission : le texte d'origine faisait aussi
+     calculer le module client au choix d'un service, ce qui aurait recopié dans le module les
+     règles et les situations déjà calculées au build) ;
    - les vues sans script montrent le même contenu, à plat.
 
    La silhouette « Seul / Ensemble » et la visite guidée sont retirées.

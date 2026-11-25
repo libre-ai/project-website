@@ -1,8 +1,8 @@
 /**
  * Pages of the Libre IA site (ADR 0007). Copy comes from the prototype accepted on 2026-11-09.
  * The home page is being redrawn section by section to ADR 0010 §8: its opening and its four
- * moments come from src/web/home.ts; the sections below them are the 2026-11-09 ones until their
- * replacements land.
+ * moments come from src/web/home.ts, the mission order and the transfer from src/web/trial.ts;
+ * the other sections are the 2026-11-09 ones until their replacements land.
  */
 import { APPLICATIONS, type Application } from "../content/applications";
 import { commons, journeys, pillars } from "../content/journeys";
@@ -22,6 +22,7 @@ import {
   layerExplorer,
   universeTabs,
 } from "./sections";
+import { missionOrder, transfer } from "./trial";
 
 const heading = (overline: string, title: string, lead: string | null, id?: string): Html =>
   h(
@@ -79,6 +80,7 @@ export function homeMain(): Html {
     {},
     opening(),
     moments(),
+    missionOrder(),
     block(
       "parcours",
       heading(
@@ -97,6 +99,7 @@ export function homeMain(): Html {
       ),
       universeTabs(),
     ),
+    transfer(),
     block(
       "fabrication",
       heading(

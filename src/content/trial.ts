@@ -4,8 +4,8 @@
  * `regles_essai`, `composer`, `accueil.ordre`, `accueil.virement`).
  *
  * No situation says which rule stops it: actions state facts, and the rule engine of
- * src/client/logic.ts computes the refusals, at build time and in the client module. The
- * situations are illustrations of the intended chain, never records of a real company.
+ * src/client/logic.ts computes the refusals at build time, for every service (src/web/trial.ts).
+ * The situations are illustrations of the intended chain, never records of a real company.
  */
 import type { FactField, Facts, RuleCondition } from "../client/logic";
 
@@ -191,7 +191,8 @@ export const MISSION_REQUESTS: readonly MissionRequest[] = [
     until: "Midi",
     actions: [
       {
-        text: "Coller tous les e-mails dans un chatbot gratuit américain",
+        // « gratuit » in the prototype is a forbidden claim of the charter (G9, src/claims.ts).
+        text: "Coller tous les e-mails dans un chatbot grand public américain",
         facts: { destination: "hors-ue", modele: "non-admis" },
         why: "Les e-mails de votre client partiraient aux États-Unis, chez un service que vous n'avez pas choisi.",
       },
@@ -211,7 +212,8 @@ export const MISSION_REQUESTS: readonly MissionRequest[] = [
     until: "Ce soir",
     actions: [
       {
-        text: "Télécharger un « pilote miracle » trouvé sur un forum",
+        // « Télécharger » in the prototype is wording the site never shows (ADR 0007 §2).
+        text: "Installer un « pilote miracle » trouvé sur un forum",
         facts: { installe: true },
         why: "Un logiciel trouvé sur un forum n'entre pas chez vous sans que vous l'ayez décidé.",
       },
@@ -247,6 +249,42 @@ export const MISSION_REQUESTS: readonly MissionRequest[] = [
     outcome: "La réponse et le remboursement attendent votre accord.",
   },
 ];
+
+/** Words of the mission order sheet (`accueil.essai.titre`, `accueil.ordre`). */
+export const MISSION_ORDER = {
+  title: "Ce qu'un agent tente, et ce qui l'arrête.",
+  lead: "Choisissez un service. L'agent reçoit sa mission, essaie, et les vraies règles de la fabrique lui répondent, ligne par ligne.",
+  services: "Services",
+  sheet: "Ordre de mission",
+  requestedBy: "Demandé par",
+  task: "Tâche",
+  mayRead: "A le droit de lire",
+  until: "Jusqu'à",
+  tried: "Ce que l'agent tente",
+  done: "Fait",
+  stub: "Journal signé",
+  refusedBy: "refusé par",
+  nothingRefused: "rien de refusé",
+  seal: "Sceau",
+  tamper: "la moindre retouche le change",
+  /** Handwritten notes: on the tabs, on a refused line turned over, on the stub. */
+  noteTabs: "Choisissez un service",
+  noteFold: "rabattue, revers visible",
+  noteStub: "se détache sur ses pointillés",
+} as const;
+
+/** Words of the section around the transfer (`accueil.methode_*`, `accueil.virement`). */
+export const TRANSFER_SECTION = {
+  title: "Une règle ne connaît pas de chef.",
+  text: "Vous décidez. Des agents d'IA construisent. Des règles écrites bloquent le moindre écart, quel qu'en soit l'auteur. Chaque version sort signée, preuves à l'appui.",
+  /** Until the Method page lands (lot 6 of the redesign), « how it is held » is the factory page. */
+  call: { label: "Voir comment c'est tenu", href: "/fabrique/" },
+  requestedBy: "Demandé par",
+  object: "Objet",
+  reviewedBy: "Validé par",
+  respected: "Respectée",
+  blocks: "Bloque",
+} as const;
 
 /** One transfer form for everyone: « Une règle ne connaît pas de chef. » (ADR 0010 §8). */
 export const TRANSFER = {

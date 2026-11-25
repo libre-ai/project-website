@@ -7,6 +7,7 @@
  * (src/design/fonts). Every note the site draws is listed in HAND_NOTES, and a test fails when a
  * note uses a character the subset lacks.
  */
+import { MISSION_ORDER, TRANSFER } from "./trial";
 import type { UniverseId } from "./universes";
 
 export const OPENING = {
@@ -16,6 +17,8 @@ export const OPENING = {
   /** The instruction plate: an application icon, folded from a sheet of paper. */
   plate: { title: "Plier une application", application: "P04" },
   note: "Chaque oiseau est une application.",
+  /** The first call of the opening (`accueil.boutons`), to the trial below. */
+  trial: { label: "Essayer de piéger un agent", href: "#essai" },
 } as const;
 
 export type MomentId = "besoin" | "construire" | "verifier" | "signer";
@@ -68,6 +71,10 @@ export const HAND_NOTES: readonly string[] = [
   OPENING.plate.title,
   OPENING.note,
   ...MOMENTS.map((moment) => moment.note),
+  MISSION_ORDER.noteTabs,
+  MISSION_ORDER.noteFold,
+  MISSION_ORDER.noteStub,
+  TRANSFER.note,
 ];
 
 /** The characters of the handwritten notes, each once, in code point order. */

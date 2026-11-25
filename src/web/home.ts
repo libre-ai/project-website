@@ -76,14 +76,15 @@ export function opening(): Html {
         { class: "ouverture-texte" },
         h("h1", { id: "titre-accueil" }, OPENING.title),
         h("p", { class: "ouverture-sous" }, OPENING.subtitle),
-        // The prototype's two calls lead to the trial and to the ways to start, which come with
-        // their sections (lot 4 of the redesign); until then the call is the waitlist's.
+        // The prototype's second call leads to the ways to start, which come with their section
+        // (lot 4e of the redesign); until then the second call is the waitlist's.
         h(
           "p",
           { class: "actions" },
+          h("a", { class: "bouton bouton-nuit", href: OPENING.trial.href }, OPENING.trial.label),
           h(
             "a",
-            { class: "bouton bouton-nuit", href: "/rejoindre/" },
+            { class: "bouton bouton-nuit-trait", href: "/rejoindre/" },
             "Rejoindre la liste d'attente",
           ),
         ),

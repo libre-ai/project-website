@@ -62,8 +62,8 @@ export function defaultFacts(fields: readonly FactField[]): Facts {
 
 /**
  * The rules an action trips, in rule order (ADR 0010 §4: a rule's result is never written by
- * hand). The same function runs at build time, for the page without script, and in the client
- * module. Facts the action does not state keep their default.
+ * hand). It runs at build time, for every sheet of the trial; the client module only shows one
+ * at a time and computes nothing. Facts the action does not state keep their default.
  */
 export function trippedRules<R extends RuleCondition>(
   rules: readonly R[],
