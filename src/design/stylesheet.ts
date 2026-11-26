@@ -1,5 +1,5 @@
 /**
- * The site's single stylesheet (`/assets/site.css`): self-hosted font faces and their family
+ * The shared stylesheet (`/assets/site.css`): self-hosted font faces and their family
  * tokens, the paper and night colour tokens, then the static sheets in cascade order. Only
  * `effects.css` animates, and only without a reduced-motion preference (ADR 0005 §6).
  */
@@ -40,4 +40,8 @@ export async function renderStylesheet(): Promise<string> {
     ...sheets.map((sheet) => sheet.text.trim()),
     "",
   ].join("\n");
+}
+
+export function readHomeStylesheet(): Promise<string> {
+  return readFile(new URL("./css/home-sections.css", import.meta.url), "utf8");
 }

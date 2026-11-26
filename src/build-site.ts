@@ -204,4 +204,5 @@ console.log(
 console.log(
   `NFR fichiers partagés: script ${report.bytes.script} octets sur 16384, feuille ${report.bytes.stylesheet} sur 49152, sprite ${report.bytes.sprite} sur 81920`,
 );
+console.log(`NFR feuille d'accueil: ${report.bytes.homeStylesheet} octets sur 3072`);
 console.log(`NFR déterminisme: deux assemblages, ${files.size} fichiers, 0 différence`);

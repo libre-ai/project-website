@@ -78,16 +78,14 @@ export function opening(): Html {
         { class: "ouverture-texte" },
         h("h1", { id: "titre-accueil" }, OPENING.title),
         h("p", { class: "ouverture-sous" }, OPENING.subtitle),
-        // The prototype's second call leads to the ways to start, which come with their section
-        // (lot 4e of the redesign); until then the second call is the waitlist's.
         h(
           "p",
           { class: "actions" },
           h("a", { class: "bouton bouton-nuit", href: OPENING.trial.href }, OPENING.trial.label),
           h(
             "a",
-            { class: "bouton bouton-nuit-trait", href: "/rejoindre/" },
-            "Rejoindre la liste d'attente",
+            { class: "bouton bouton-nuit-trait", href: "#commencer" },
+            "Transformer mon entreprise",
           ),
         ),
       ),

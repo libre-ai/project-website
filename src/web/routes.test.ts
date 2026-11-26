@@ -111,6 +111,7 @@ describe("rendered pages", () => {
     );
     for (const asset of [
       "assets/site.css",
+      "assets/home.css",
       "assets/main.js",
       "assets/theme-init.js",
       "assets/volee.svg",

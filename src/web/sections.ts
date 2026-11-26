@@ -1,13 +1,12 @@
 /**
- * Content sections of the Libre IA pages (ADR 0007): application cards, universe tabs, journeys,
- * guided tour and layer explorer. Authored HTML from the accepted prototype (demos, result cards,
+ * Content sections of the Libre IA pages (ADR 0007): application cards, universe tabs,
+ * guided tour and layer explorer. Authored HTML from the accepted prototype (demos,
  * tour scenes) is hoisted with a fixed prefix per item, and `hoistedContentCss` hoists the same
  * items with the same prefixes, so every generated class has its rule in the stylesheet.
  */
 import { emblemUse } from "../brand/sprite";
 import { APPLICATIONS, type Application, applicationOf } from "../content/applications";
 import { type Layer, layers, type TourStep, tour } from "../content/factory";
-import { type Journey, journeys } from "../content/journeys";
 import { refOfPrototypeKey } from "../content/prototype-keys";
 import { showcaseOf } from "../content/showcases";
 import { UNIVERSES } from "../content/universes";
@@ -15,7 +14,6 @@ import { hoistStyles } from "./hoist";
 import { type Html, h, raw } from "./html";
 
 const demoPrefix = (ref: string): string => ref.toLowerCase();
-const journeyPrefix = (journey: Journey): string => `parcours-${journey.id}`;
 const stepPrefix = (step: TourStep): string => `etape-${step.id}`;
 
 export const applicationPath = (application: Application): string =>
@@ -84,54 +82,6 @@ export function universeTabs(): Html {
           { class: "cartes" },
           APPLICATIONS.filter((application) => application.universe === universe.id).map(appCard),
         ),
-      ),
-    ),
-  );
-}
-
-function journeyPanel(journey: Journey): Html {
-  const hoisted = hoistStyles(journey.card, journeyPrefix(journey));
-  return h(
-    "div",
-    { class: "scene-parcours" },
-    h(
-      "ol",
-      { class: "trajet" },
-      journey.apps.map((key) => {
-        const application = applicationOf(refOfPrototypeKey(key));
-        return h(
-          "li",
-          { class: `univers-${application.universe}` },
-          emblem(application.ref),
-          h("span", {}, `Libre ${application.name}`),
-        );
-      }),
-    ),
-    h(
-      "div",
-      { class: "resultat" },
-      h("span", { class: "illustration" }, "Illustration du résultat visé"),
-      raw(hoisted.html),
-    ),
-    h(
-      "div",
-      { class: "gain" },
-      h("p", { class: "obtenu" }, journey.result),
-      h("p", { class: "confort" }, journey.comfort),
-    ),
-  );
-}
-
-export function journeyAccordion(): Html {
-  return h(
-    "div",
-    { class: "parcours-grille" },
-    journeys.map((journey, index) =>
-      h(
-        "details",
-        { name: "parcours", open: index === 0 },
-        h("summary", {}, journey.intent),
-        journeyPanel(journey),
       ),
     ),
   );
@@ -221,7 +171,6 @@ export function hoistedContentCss(): string {
       (application) =>
         hoistStyles(showcaseOf(application.ref).demo, demoPrefix(application.ref)).css,
     ),
-    ...journeys.map((journey) => hoistStyles(journey.card, journeyPrefix(journey)).css),
     ...tour.map((step) => hoistStyles(step.scene, stepPrefix(step)).css),
   ]
     .filter((css) => css !== "")

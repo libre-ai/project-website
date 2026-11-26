@@ -97,7 +97,7 @@ test.describe("zero serious or critical axe violation (WCAG 2.2 AA)", () => {
 });
 
 test.describe("the site is complete without script (ADR 0005 §1)", () => {
-  test("opening, moments, trial, universes, delivery and waitlist work with JavaScript disabled", async ({
+  test("the home page, factory tour and waitlist work with JavaScript disabled", async ({
     page,
   }, testInfo) => {
     test.skip(!scriptless(testInfo.project.name), "the scriptless project proves it");
@@ -114,7 +114,25 @@ test.describe("the site is complete without script (ADR 0005 §1)", () => {
       await expect(sheet).toBeVisible();
     await expect(page.locator(".virement-demi")).toHaveCount(2);
     for (const half of await page.locator(".virement-demi").all()) await expect(half).toBeVisible();
-    await expect(page.locator(".titre-univers").first()).toBeVisible();
+    const comparison = page.locator("#parcours");
+    const rows = comparison.locator("tbody tr");
+    await page.setViewportSize({ width: 390, height: 900 });
+    await expect(comparison.getByRole("columnheader")).toHaveText(["Avant", "Après"]);
+    await expect(rows).toHaveCount(4);
+    for (const row of await rows.all()) {
+      const before = await row.getByRole("cell").first().boundingBox();
+      const after = await row.getByRole("cell").last().boundingBox();
+      if (before === null || after === null) throw new Error("missing comparison cells");
+      expect(after.y).toBe(before.y);
+      expect(after.x).toBeGreaterThanOrEqual(before.x + before.width);
+      expect(after.x + after.width).toBeLessThanOrEqual(390);
+    }
+    const aviary = page.locator("#univers");
+    await expect(aviary.getByRole("heading", { level: 3 })).toHaveCount(8);
+    await expect(aviary.getByRole("link", { name: "Voir les applications" })).toHaveAttribute(
+      "href",
+      "/applications/",
+    );
     const delivery = page.getByRole("region", { name: "L'application livrée, pièce par pièce." });
     await expect(delivery.getByText("Illustration", { exact: true })).toBeVisible();
     await expect(delivery.getByText("Agenda", { exact: true })).toBeVisible();
@@ -130,8 +148,24 @@ test.describe("the site is complete without script (ADR 0005 §1)", () => {
         expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);
       }
     }
-    await expect(page.locator('form[action="/inscription"]').first()).toBeVisible();
+    await expect(page.locator("#preuves li")).toHaveCount(6);
+    const questions = page.locator("#questions details");
+    await expect(questions).toHaveCount(3);
+    for (const question of await questions.all()) {
+      await question.locator("summary").click();
+      await expect(question.locator("p")).toBeVisible();
+    }
+    await page.getByRole("link", { name: "Transformer mon entreprise" }).click();
+    await expect(page).toHaveURL(/#commencer$/);
+    await expect(page.locator("#commencer li")).toHaveCount(3);
     await expect(page.locator("[data-theme-toggle]")).toBeHidden();
+    await page
+      .locator("#rejoindre")
+      .getByRole("link", { name: /Rejoindre la liste d['’]attente/ })
+      .click();
+    await expect(page.locator('form[action="/inscription"]')).toBeVisible();
+    await page.goto("/fabrique/");
+    await expect(page.locator(".visite")).toBeVisible();
   });
 });
 
