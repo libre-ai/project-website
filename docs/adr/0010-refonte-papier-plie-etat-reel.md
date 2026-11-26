@@ -88,7 +88,13 @@ Ce dépôt l'a décidé de son côté (D243).
      2026-11-25, à la mise en page de l'ordre de mission : le texte d'origine faisait aussi
      calculer le module client au choix d'un service, ce qui aurait recopié dans le module les
      règles et les situations déjà calculées au build) ;
-   - les vues sans script montrent le même contenu, à plat.
+   - les vues sans script montrent le même contenu, à plat. Le bouton de rangement n'est
+     proposé que si le script est chargé et que la préférence autorise le mouvement.
+
+   L'emblème d'ouverture est le seul à être sérialisé facette par facette dans la page : il
+   reprend les contours, couleurs et coordonnées du sprite (ADR 0004 §6), mais chaque facette
+   doit être accessible au navigateur pour pivoter. Ailleurs, les emblèmes restent des références
+   au sprite.
 
    La silhouette « Seul / Ensemble » et la visite guidée sont retirées.
 5. **Promesse (amende 0007 §1).**

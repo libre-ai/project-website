@@ -11,6 +11,7 @@ import { DELIVERY, MOMENTS, MOMENTS_TITLE, type MomentId, OPENING } from "../con
 import { TRIAL_RULES } from "../content/trial";
 import { UNIVERSES } from "../content/universes";
 import { type Html, h, raw } from "./html";
+import { foldingEmblem } from "./paper-fold";
 import { applicationPath, emblem } from "./sections";
 import { trialRulePictogram } from "./trial";
 
@@ -55,7 +56,7 @@ function plate(): Html {
     "figure",
     { class: `planche univers-${application.universe}` },
     h("figcaption", { class: "note-main planche-titre" }, OPENING.plate.title),
-    h("div", { class: "planche-feuille" }, emblem(application.ref)),
+    h("div", { class: "planche-feuille", "data-papier": true }, foldingEmblem(application.ref)),
     h(
       "p",
       { class: "planche-nom" },
@@ -183,6 +184,16 @@ export function explodedDelivery(): Html {
           h("strong", {}, application.name),
           h("span", {}, universe?.verb),
           h("span", { class: "illustration" }, "Illustration"),
+          h(
+            "button",
+            {
+              class: "bouton bouton-nuit-trait",
+              type: "button",
+              hidden: true,
+              "data-ranger": true,
+            },
+            "Animer le rangement des pièces",
+          ),
         ),
         deliveryPieces(DELIVERY.pieces.slice(0, half), "gauche"),
         deliveryPieces(DELIVERY.pieces.slice(half), "droite"),

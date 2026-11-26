@@ -87,7 +87,10 @@ describe("the mission order of the home page (ADR 0010 §8)", () => {
       support: "refusé par Traces, Vérification",
     };
     for (const request of MISSION_REQUESTS) {
-      const stub = read(missionSheet(request.id).split('<footer class="ordre-talon">')[1] ?? "");
+      const stub = read(
+        missionSheet(request.id).match(/<footer class="ordre-talon"[^>]*>(.*?)<\/footer>/s)?.[1] ??
+          "",
+      );
       expect(stub, request.id).toContain(
         `${request.time} · ${request.service} · ${refusedBy[request.id]}`,
       );
@@ -128,7 +131,7 @@ describe("the transfer: one form for everyone (ADR 0010 §8)", () => {
   });
 
   const half = (side: string): string => {
-    const start = home.indexOf(`<div class="virement-demi virement-${side}">`);
+    const start = home.indexOf(`<div class="virement-demi virement-${side}"`);
     expect(start, side).toBeGreaterThan(-1);
     const end = home.indexOf("</ol>", start);
     return home.slice(start, end);

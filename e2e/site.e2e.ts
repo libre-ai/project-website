@@ -89,7 +89,9 @@ test.describe("zero serious or critical axe violation (WCAG 2.2 AA)", () => {
         (violation) => violation.impact === "serious" || violation.impact === "critical",
       );
       expect(
-        blocking.map((violation) => `${violation.id}: ${violation.nodes.length} nœud(s)`),
+        blocking.flatMap((violation) =>
+          violation.nodes.map((node) => `${violation.id}: ${node.target.join(" > ")}`),
+        ),
         path,
       ).toEqual([]);
     });
@@ -134,6 +136,9 @@ test.describe("the site is complete without script (ADR 0005 §1)", () => {
       "/applications/",
     );
     const delivery = page.getByRole("region", { name: "L'application livrée, pièce par pièce." });
+    await expect(
+      delivery.getByRole("button", { name: "Animer le rangement des pièces" }),
+    ).toBeHidden();
     await expect(delivery.getByText("Illustration", { exact: true })).toBeVisible();
     await expect(delivery.getByText("Agenda", { exact: true })).toBeVisible();
     const pieces = delivery.getByRole("listitem");
@@ -261,12 +266,77 @@ test.describe("progressive enhancement (ADR 0005 §5)", () => {
   });
 });
 
+test.describe("homepage paper motions (ADR 0010 §4)", () => {
+  test.use({ reducedMotion: "no-preference" });
+
+  test("folds the illustrations and returns the panels to their readable state", async ({
+    page,
+  }, testInfo) => {
+    test.skip(scriptless(testInfo.project.name), "motions are a progressive enhancement");
+    await page.setViewportSize({ width: 390, height: 850 });
+    await page.addInitScript(() => {
+      document.addEventListener("animationstart", (event) => {
+        if (event.target instanceof Element) {
+          event.target.setAttribute("data-started", event.animationName);
+        }
+      });
+    });
+    await page.goto("/");
+    const plate = page.locator(".planche-feuille");
+    await plate.scrollIntoViewIfNeeded();
+    await expect(
+      plate.locator('[data-charniere][data-started="pliant-facette"]').first(),
+    ).toBeVisible();
+
+    const order = page.locator(".ordre-feuille:visible");
+    await order.locator(".ordre-pli").first().scrollIntoViewIfNeeded();
+    await expect(
+      order.locator('.ordre-pli .ordre-action[data-started="pliant-ligne"]').first(),
+    ).toBeVisible();
+    await expect(order.locator(".faite [data-started]")).toHaveCount(0);
+    await order.locator(".ordre-talon").scrollIntoViewIfNeeded();
+    await expect(order.locator(".ordre-talon")).toHaveAttribute("data-started", "pliant-talon");
+    const humanResources = page.getByRole("tab", { name: "Ressources humaines" });
+    await humanResources.click();
+    await order.locator(".ordre-pli").first().scrollIntoViewIfNeeded();
+    await expect(order.locator(".ordre-pli .ordre-action").first()).toHaveAttribute(
+      "data-started",
+      "pliant-ligne",
+    );
+    await order.locator(".ordre-talon").scrollIntoViewIfNeeded();
+    await expect(page.locator(".ordre-feuille:visible .ordre-talon")).toHaveAttribute(
+      "data-started",
+      "pliant-talon",
+    );
+    await expect(page.locator(".ordre-feuille:visible .ordre-pli .ordre-action").first()).toHaveCSS(
+      "transform",
+      "none",
+    );
+
+    const transfer = page.locator(".virement-dirigeant");
+    await transfer.locator("h3").scrollIntoViewIfNeeded();
+    await expect(transfer).toHaveAttribute("data-started", "pliant-virement");
+    await expect(transfer).toHaveCSS("transform", "none");
+
+    const replay = page.getByRole("button", { name: "Animer le rangement des pièces" });
+    await replay.focus();
+    await page.keyboard.press("Enter");
+    const cards = page.locator(".livraison-piece");
+    await expect(page.locator('.livraison-piece[data-started="pliant-livraison"]')).toHaveCount(6);
+    await expect(cards.first()).toHaveCSS("transform", "none");
+    for (const card of await cards.all()) await expect(card).toBeVisible();
+    await expect(replay).toBeFocused();
+  });
+});
+
 test.describe("reduced motion (ADR 0005 §6)", () => {
   test.use({ reducedMotion: "reduce" });
 
   test("nothing animates on the home page", async ({ page }, testInfo) => {
     test.skip(scriptless(testInfo.project.name), "getAnimations needs script");
     await page.goto("/");
+    await expect(page.getByRole("button", { name: "Animer le rangement des pièces" })).toBeHidden();
+    await expect(page.locator(".livraison-piece")).toHaveCount(6);
     expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
   });
 });

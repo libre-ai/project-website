@@ -117,7 +117,11 @@ function actionLine(action: MissionAction): Html {
   return h(
     "li",
     { class: "ordre-ligne refusee" },
-    h("div", { class: "ordre-pli" }, h("span", { class: "ordre-action" }, action.text)),
+    h(
+      "div",
+      { class: "ordre-pli", "data-papier": true },
+      h("span", { class: "ordre-action" }, action.text),
+    ),
     h(
       "div",
       { class: "ordre-marge" },
@@ -141,7 +145,7 @@ function stub(request: MissionRequest): Html {
   ];
   return h(
     "footer",
-    { class: "ordre-talon" },
+    { class: "ordre-talon", "data-papier": true },
     h("p", { class: "ordre-talon-titre" }, MISSION_ORDER.stub),
     h(
       "p",
@@ -230,7 +234,7 @@ function transferHalf(request: TransferRequest, side: "agent" | "dirigeant"): Ht
   const blocked = stopped.size > 0;
   return h(
     "div",
-    { class: `virement-demi virement-${side}` },
+    { class: `virement-demi virement-${side}`, "data-papier": side === "dirigeant" },
     h("h3", { class: "virement-type" }, TRANSFER.form),
     h(
       "dl",
