@@ -7,10 +7,12 @@
  * universe (`--facette-1` lit … `--facette-5` shadowed), set by its `univers-<id>` class.
  */
 import { applicationOf } from "../content/applications";
-import { MOMENTS, MOMENTS_TITLE, type MomentId, OPENING } from "../content/home";
+import { DELIVERY, MOMENTS, MOMENTS_TITLE, type MomentId, OPENING } from "../content/home";
+import { TRIAL_RULES } from "../content/trial";
 import { UNIVERSES } from "../content/universes";
 import { type Html, h, raw } from "./html";
 import { applicationPath, emblem } from "./sections";
+import { trialRulePictogram } from "./trial";
 
 const facet = (index: 1 | 2 | 3 | 4 | 5): string => `var(--facette-${index})`;
 
@@ -121,6 +123,71 @@ export function moments(): Html {
             h("p", {}, moment.text),
           ),
         ),
+      ),
+    ),
+  );
+}
+type DeliveryPiece = (typeof DELIVERY.pieces)[number];
+
+function deliveryIcon(icon: DeliveryPiece["icon"]): Html {
+  if (icon === "rules") {
+    return h(
+      "span",
+      { class: "livraison-regles", "aria-hidden": "true" },
+      TRIAL_RULES.map((rule) => trialRulePictogram(rule, "regle-pic")),
+    );
+  }
+  const [lit, mid, shade, dark] = [facet(1), facet(2), facet(3), facet(5)];
+  const body = {
+    request: `<path d="M16 8h34v48H16z" fill="${lit}"/><path d="M50 8v48H16z" fill="${mid}"/><path d="M22 19h21m-21 10h21m-21 10h14" fill="none" stroke="${dark}" stroke-width="4"/>`,
+    code: `<path d="M12 6h30l10 10v42H12z" fill="${lit}"/><path d="M42 6l10 10H42z" fill="${shade}"/><path d="m27 26-8 8 8 8m10-16 8 8-8 8" fill="none" stroke="${dark}" stroke-width="4"/>`,
+    record: `<path d="m22 42 8 3-6 15-7-4zm20 0-8 3 6 15 7-4z" fill="${shade}"/>${seal(32, 28, 22, mid, shade)}<circle cx="32" cy="28" r="12" fill="${dark}"/><path d="m26 28 5 5 8-10" fill="none" stroke="${lit}" stroke-width="4"/>`,
+    guide: `<path d="M12 32h40v26H12z" fill="${lit}"/><path d="M6 34 32 8v26z" fill="${shade}"/><path d="M32 8l26 26H32zM27 42h10v16H27z" fill="${dark}"/>`,
+    data: `<path d="m28 22 22 11-22 11L6 33z" fill="${lit}"/><path d="m6 33 22 11v18L6 51z" fill="${mid}"/><path d="M28 44l22-11v18L28 62z" fill="${shade}"/><path d="M38 4h22v22l-7-7-11 11-8-8 11-11z" fill="${dark}"/>`,
+  }[icon];
+  return raw(`<svg class="livraison-picto" viewBox="0 0 64 64" aria-hidden="true">${body}</svg>`);
+}
+
+function deliveryPieces(pieces: readonly DeliveryPiece[], side: "gauche" | "droite"): Html {
+  return h(
+    "ul",
+    { class: `livraison-pieces livraison-${side}`, role: "list" },
+    pieces.map((piece) =>
+      h(
+        "li",
+        { class: "livraison-piece" },
+        deliveryIcon(piece.icon),
+        h("div", {}, h("h3", {}, piece.title), h("p", {}, piece.text)),
+      ),
+    ),
+  );
+}
+
+export function explodedDelivery(): Html {
+  const application = applicationOf(DELIVERY.application);
+  const universe = UNIVERSES.find((candidate) => candidate.id === application.universe);
+  const half = DELIVERY.pieces.length / 2;
+  return h(
+    "section",
+    { class: "bloc livraison", id: "fabrication", "aria-labelledby": "titre-livraison" },
+    h(
+      "div",
+      { class: "largeur" },
+      h("h2", { id: "titre-livraison", class: "titre-section" }, DELIVERY.title),
+      h("p", { class: "livraison-intro" }, DELIVERY.lead),
+      h(
+        "figure",
+        { class: `livraison-plan univers-${application.universe}` },
+        h(
+          "figcaption",
+          { class: "livraison-coeur" },
+          h("span", { class: "livraison-tuile" }, emblem(application.ref)),
+          h("strong", {}, application.name),
+          h("span", {}, universe?.verb),
+          h("span", { class: "illustration" }, "Illustration"),
+        ),
+        deliveryPieces(DELIVERY.pieces.slice(0, half), "gauche"),
+        deliveryPieces(DELIVERY.pieces.slice(half), "droite"),
       ),
     ),
   );

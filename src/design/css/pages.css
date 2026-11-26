@@ -20,12 +20,6 @@
   text-decoration: none;
 }
 
-/* The main call to action: ink on paper turned over, like the header's call (components.css). */
-.bouton-aube {
-  background: var(--encre);
-  color: var(--fond);
-}
-
 .bouton-trait {
   border-color: var(--bordure);
   background: var(--surface);
@@ -398,7 +392,7 @@
 
 .champs .alerte,
 .ordre-regle strong,
-.virement-grille .arret span,
+.virement-grille :where(.arret) span,
 .virement-issue.non {
   color: var(--incident);
 }
@@ -546,6 +540,124 @@
 
 .virement-grille .arret {
   background: var(--incident-fond);
+}
+
+.livraison {
+  background: var(--nuit);
+  color: var(--nuit-texte);
+}
+
+.livraison-intro,
+.livraison-coeur {
+  color: var(--nuit-doux);
+}
+
+.livraison-plan,
+.livraison-pieces,
+.livraison-coeur {
+  display: grid;
+  gap: 1rem;
+}
+
+.livraison-plan {
+  max-width: 64rem;
+  margin: 2rem auto 0;
+}
+
+.livraison-coeur {
+  justify-items: center;
+  gap: 0.35rem;
+}
+
+.livraison-coeur strong {
+  color: var(--nuit-texte);
+  font-family: var(--police-titre);
+  font-size: 1.35rem;
+}
+
+.livraison-tuile {
+  display: grid;
+  place-items: center;
+  width: 9rem;
+  aspect-ratio: 1;
+  border-radius: 2rem;
+  background: linear-gradient(160deg, var(--facette-1), var(--facette-2));
+}
+
+.livraison-tuile .embleme {
+  width: 7.5rem;
+  height: 7.5rem;
+}
+
+.livraison-pieces {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.livraison-piece {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.65rem;
+  padding: 0.8rem;
+  border: 1px solid var(--bordure);
+  border-radius: 0.4rem;
+  background: var(--surface);
+  color: var(--encre);
+}
+
+.livraison-piece h3 {
+  margin: 0;
+  font: inherit;
+  font-weight: 700;
+}
+
+.livraison-piece p {
+  margin: 0.3rem 0 0;
+  color: var(--encre-attenuee);
+}
+
+.livraison-picto {
+  width: 100%;
+}
+
+.livraison-regles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.livraison-regles svg {
+  width: 100%;
+  height: auto;
+}
+
+@media (min-width: 52rem) {
+  .livraison-plan {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .livraison-coeur {
+    grid-area: 1 / 2;
+  }
+
+  .livraison-piece::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 1rem;
+    border-top: 1px dashed var(--nuit-doux);
+  }
+
+  .livraison-gauche .livraison-piece::after {
+    left: 100%;
+  }
+
+  .livraison-droite .livraison-piece::after {
+    right: 100%;
+  }
 }
 
 .bulle {

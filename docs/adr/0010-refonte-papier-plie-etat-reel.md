@@ -118,7 +118,9 @@ Ce dépôt l'a décidé de son côté (D243).
    - avant / après, à l'horizontale même sur téléphone ;
    - applications par univers ;
    - virement : « Une règle ne connaît pas de chef. » ;
-   - vue éclatée ;
+   - vue éclatée : un exemple fictif d'Agenda, son emblème et les six pièces de la livraison.
+     L'illustration reste entièrement lisible sans script. Elle remplace la visite guidée sur
+     l'accueil ; celle de `/fabrique/` reste en place ;
    - preuves, trois questions, puis trois façons de commencer.
 9. **Pages (amende 0007 §10).** Le menu porte trois pages : Accueil, Applications, et Méthode
    sous `/methode/`.

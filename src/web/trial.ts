@@ -75,8 +75,9 @@ function rulePictogram(id: string): string {
 const ARROW = `<svg class="fleche-main" viewBox="0 0 60 44" aria-hidden="true"><path d="M4 6 C 22 0, 44 10, 50 32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M42 27 L50 34 L54 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const ARROW_UP = `<svg class="fleche-main fleche-haut" viewBox="0 0 40 44" aria-hidden="true"><path d="M30 40 C 10 34, 8 18, 18 6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M11 12 L18 5 L23 14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-const pictogram = (rule: TrialRule, className: string): Html =>
-  h("span", { class: `${className} univers-se-proteger` }, raw(rulePictogram(rule.id)));
+export function trialRulePictogram(rule: TrialRule, className: string): Html {
+  return h("span", { class: `${className} univers-se-proteger` }, raw(rulePictogram(rule.id)));
+}
 
 /**
  * The seal of a sheet: the start of the SHA-256 of its request and of each action with the rules
@@ -124,7 +125,7 @@ function actionLine(action: MissionAction): Html {
         h(
           "p",
           { class: "ordre-regle" },
-          pictogram(rule, "regle-pic"),
+          trialRulePictogram(rule, "regle-pic"),
           h("span", {}, h("strong", {}, rule.name), " ", rule.rule),
         ),
       ),
@@ -245,7 +246,7 @@ function transferHalf(request: TransferRequest, side: "agent" | "dirigeant"): Ht
         h(
           "li",
           stopped.has(rule.id) ? { class: "arret" } : {},
-          pictogram(rule, "regle-pic"),
+          trialRulePictogram(rule, "regle-pic"),
           h("span", { class: "virement-regle" }, rule.rule),
           h(
             "span",

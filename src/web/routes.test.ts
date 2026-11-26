@@ -60,6 +60,29 @@ describe("route table (plan, Task 7)", () => {
 });
 
 describe("rendered pages", () => {
+  test("the home replaces the guided tour with the six parts of the illustrated Agenda delivery", () => {
+    const home = pages.find(({ entry }) => entry.path === "/")?.html ?? "";
+    const factory = pages.find(({ entry }) => entry.path === "/fabrique/")?.html ?? "";
+    const delivery =
+      home.match(/<section\b[^>]*id="fabrication"[^>]*>[\s\S]*?<\/section>/)?.[0] ?? "";
+    expect(delivery).toContain("Agenda");
+    expect(delivery).toContain("Illustration");
+    expect(delivery).toContain("/assets/volee.svg#embleme-p19");
+    for (const part of [
+      "Ce que vous avez demandé",
+      "Le code, à vous",
+      "Ce qu'elle ne fera jamais",
+      "Le carnet de bord",
+      "Le mode d'emploi pour déménager",
+      "Vos rendez-vous",
+    ]) {
+      expect(delivery).toContain(part.replaceAll("'", "&#39;"));
+    }
+    expect(home.indexOf('id="fabrication"')).toBeGreaterThan(home.indexOf('id="virement"'));
+    expect(home).not.toContain("data-visite");
+    expect(factory).toContain("data-visite");
+  });
+
   test("every page has exactly one h1", () => {
     for (const { entry, html } of pages)
       expect([entry.path, html.match(/<h1\b/g)?.length]).toEqual([entry.path, 1]);
