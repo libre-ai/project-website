@@ -1,24 +1,19 @@
-/**
- * Pages of the Libre IA site (ADR 0007). Copy comes from the prototype accepted on 2026-11-09.
- * The home page is being redrawn section by section to ADR 0010 §8: its opening and its four
- * moments come from src/web/home.ts, the mission order and the transfer from src/web/trial.ts;
- * the other sections are the 2026-11-09 ones until their replacements land.
- */
+/** Pages of the Libre IA site (ADR 0007; home page amended by ADR 0010 §8). */
 import { APPLICATIONS, type Application } from "../content/applications";
-import { commons, journeys, pillars } from "../content/journeys";
+import { journeys, pillars } from "../content/journeys";
 import { refOfPrototypeKey } from "../content/prototype-keys";
 import { showcaseOf } from "../content/showcases";
 import { SOCIAL_LABELS, SOCIALS, type SocialNetwork } from "../content/socials";
 import { UNIVERSES } from "../content/universes";
 import { waitlistForm } from "./components";
 import { explodedDelivery, moments, opening } from "./home";
+import { aviary, closing, comparison, proofs, questions, startingPaths } from "./home-sections";
 import { type Html, h, raw } from "./html";
 import {
   applicationPath,
   demoFigure,
   emblem,
   guidedTour,
-  journeyAccordion,
   layerExplorer,
   universeTabs,
 } from "./sections";
@@ -81,36 +76,14 @@ export function homeMain(): Html {
     opening(),
     moments(),
     missionOrder(),
-    block(
-      "parcours",
-      heading(
-        "Parcours",
-        "Je veux…",
-        "Choisissez ce que vous voulez accomplir : les applications Libre s'enchaînent, et vous obtenez le résultat.",
-      ),
-      journeyAccordion(),
-    ),
-    block(
-      "univers",
-      heading(
-        "Les univers",
-        "Une volée d'applications, nées de la même fabrique.",
-        "Chacune règle un besoin pour de bon, et toutes se parlent. Choisissez un univers et regardez-les travailler.",
-      ),
-      universeTabs(),
-    ),
+    comparison(),
+    aviary(),
     transfer(),
     explodedDelivery(),
-    block(
-      "commun",
-      h("h2", {}, "Un seul effort partagé plutôt que mille copies du même besoin."),
-      h(
-        "ul",
-        { class: "engagements" },
-        commons.map((item) => h("li", {}, h("h3", {}, item.title), h("p", {}, item.text))),
-      ),
-    ),
-    block("rejoindre", join(null, "accueil")),
+    proofs(),
+    questions(),
+    startingPaths(),
+    closing(),
   );
 }
 

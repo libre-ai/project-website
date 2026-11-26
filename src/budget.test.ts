@@ -120,16 +120,18 @@ describe("pageWeights counts every asset a page loads (plan, Task 9)", () => {
 });
 
 describe("checkAssetBudgets", () => {
-  test("holds the script, the stylesheet and the sprite to their own ceilings", () => {
+  test("holds the script, the stylesheets and the sprite to their own ceilings", () => {
     const files = new Map<string, string | Uint8Array>([
       ["assets/main.js", "j".repeat(ASSET_BUDGETS["assets/main.js"] + 1)],
       ["assets/site.css", "c".repeat(10)],
+      ["assets/home.css", "h".repeat(ASSET_BUDGETS["assets/home.css"] + 1)],
       ["assets/volee.svg", "v".repeat(10)],
     ]);
     const report = checkAssetBudgets(files);
-    expect(report.examined).toBe(3);
+    expect(report.examined).toBe(4);
     expect(report.violations).toEqual([
       `budget.asset_over:assets/main.js:${ASSET_BUDGETS["assets/main.js"] + 1}`,
+      `budget.asset_over:assets/home.css:${ASSET_BUDGETS["assets/home.css"] + 1}`,
     ]);
   });
 
@@ -137,6 +139,7 @@ describe("checkAssetBudgets", () => {
     expect(ASSET_BUDGETS).toEqual({
       "assets/main.js": 16 * 1024,
       "assets/site.css": 48 * 1024,
+      "assets/home.css": 3 * 1024,
       "assets/volee.svg": 80 * 1024,
     });
   });
@@ -145,6 +148,7 @@ describe("checkAssetBudgets", () => {
     expect(checkAssetBudgets(new Map()).violations).toEqual([
       "budget.asset_missing:assets/main.js",
       "budget.asset_missing:assets/site.css",
+      "budget.asset_missing:assets/home.css",
       "budget.asset_missing:assets/volee.svg",
     ]);
   });

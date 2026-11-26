@@ -2,18 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import { APPLICATIONS, applicationOf } from "../content/applications";
 import { layers, tour } from "../content/factory";
-import { journeys } from "../content/journeys";
 import { UNIVERSES } from "../content/universes";
 import { findInlineStyles } from "./gates";
 import { render } from "./html";
-import {
-  appCard,
-  guidedTour,
-  hoistedContentCss,
-  journeyAccordion,
-  layerExplorer,
-  universeTabs,
-} from "./sections";
+import { appCard, guidedTour, hoistedContentCss, layerExplorer, universeTabs } from "./sections";
 
 describe("application card (ADR 0007 §5)", () => {
   const card = render(appCard(applicationOf("P07")));
@@ -55,14 +47,7 @@ describe("universe tabs (ADR 0007 §6)", () => {
   });
 });
 
-describe("journeys, tour and layers (ADR 0007 §7)", () => {
-  test("journeys are one exclusive accordion, the first open, each result marked as an illustration", () => {
-    const accordion = render(journeyAccordion());
-    expect(accordion.match(/<details name="parcours"/g)).toHaveLength(journeys.length);
-    expect(accordion.match(/<details name="parcours" open>/g)).toHaveLength(1);
-    expect(accordion.match(/Illustration du résultat visé/g)).toHaveLength(journeys.length);
-  });
-
+describe("tour and layers (ADR 0007 §7)", () => {
   test("the tour lists every step without script and is marked for the module", () => {
     const visit = render(guidedTour());
     expect(visit).toContain("data-visite");
@@ -79,12 +64,7 @@ describe("journeys, tour and layers (ADR 0007 §7)", () => {
 
 describe("hoisted content styles", () => {
   test("every rendered section is free of inline styles", () => {
-    for (const html of [
-      render(universeTabs()),
-      render(journeyAccordion()),
-      render(guidedTour()),
-      render(layerExplorer()),
-    ]) {
+    for (const html of [render(universeTabs()), render(guidedTour()), render(layerExplorer())]) {
       expect(findInlineStyles(html)).toEqual([]);
     }
   });
@@ -92,7 +72,7 @@ describe("hoisted content styles", () => {
   test("every generated class used by a section has its rule, and the rules are deterministic", () => {
     const css = hoistedContentCss();
     const used = new Set(
-      [render(universeTabs()), render(journeyAccordion()), render(guidedTour())].flatMap((html) =>
+      [render(universeTabs()), render(guidedTour())].flatMap((html) =>
         [...html.matchAll(/\bs-[a-z0-9-]+-\d+\b/g)].map((match) => match[0]),
       ),
     );

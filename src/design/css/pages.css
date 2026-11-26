@@ -1,5 +1,5 @@
 /* Page sections: blocks, the opening and the four moments of the home page (ADR 0010 §8),
-   journeys, tour, explorer, join, application pages. Static only; movement lives in effects.css.
+   tour, explorer, join, application pages. Static only; movement lives in effects.css.
    Ported from the accepted prototypes. */
 .chapeau {
   max-width: 40rem;
@@ -667,110 +667,6 @@
   background: var(--encre);
   color: var(--fond);
   font-weight: 600;
-}
-
-/* Journeys */
-.parcours-grille details {
-  border-block-start: 1px solid var(--bordure);
-}
-
-.parcours-grille details:last-of-type {
-  border-block-end: 1px solid var(--bordure);
-}
-
-.parcours-grille summary {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 0.25rem;
-  cursor: pointer;
-  font-family: var(--police-titre);
-  font-size: clamp(1.1rem, 1rem + 0.6vw, 1.4rem);
-  font-weight: 700;
-  list-style: none;
-}
-
-.parcours-grille summary::-webkit-details-marker {
-  display: none;
-}
-
-.parcours-grille summary::before {
-  content: "";
-  flex: none;
-  width: 0.7rem;
-  height: 0.7rem;
-  border: 2px solid var(--encre-attenuee);
-  border-radius: 2px;
-}
-
-.parcours-grille details[open] summary::before {
-  border-color: var(--encre);
-  background: var(--encre);
-  rotate: 45deg;
-}
-
-.scene-parcours {
-  display: grid;
-  gap: 1.5rem;
-  margin-block-end: 1.5rem;
-  padding: clamp(1rem, 3vw, 2rem);
-  border: 1px solid var(--bordure);
-  border-radius: 1rem;
-  background: var(--surface);
-}
-
-.trajet {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.trajet li {
-  display: flex;
-  flex: 1 1 7rem;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-  text-align: center;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--couleur-texte);
-}
-
-.resultat {
-  position: relative;
-  padding: 1.2rem 1.25rem;
-  border-radius: 0.8rem;
-  background: var(--surface-2);
-}
-
-.resultat .illustration {
-  position: absolute;
-  inset-block-start: -0.7rem;
-  right: 1rem;
-  padding: 0.1rem 0.55rem;
-  border: 1px solid var(--bordure);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--encre-attenuee);
-  font-size: 0.75rem;
-}
-
-.gain p {
-  margin: 0;
-}
-
-.gain .obtenu {
-  font-family: var(--police-titre);
-  font-size: 1.15rem;
-  font-weight: 700;
-}
-
-.gain .confort {
-  color: var(--encre-attenuee);
 }
 
 /* Universe tabs: sections become panels once the module runs */

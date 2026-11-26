@@ -133,6 +133,7 @@ export function layout(page: PageFrame): string {
     h("link", { rel: "icon", href: "/assets/martinet.svg", type: "image/svg+xml" }),
     h("script", { src: "/assets/theme-init.js" }),
     h("link", { rel: "stylesheet", href: "/assets/site.css" }),
+    page.path === "/" ? h("link", { rel: "stylesheet", href: "/assets/home.css" }) : null,
     h("script", { src: "/assets/main.js", type: "module" }),
   );
   const body = h(

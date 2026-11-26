@@ -50,6 +50,7 @@ describe("buildLibreSite (plan, Task 9)", () => {
       "preuves/index.html",
       "404.html",
       "assets/site.css",
+      "assets/home.css",
       "assets/main.js",
       "assets/theme-init.js",
       "assets/volee.svg",
@@ -74,12 +75,22 @@ describe("buildLibreSite (plan, Task 9)", () => {
     expect(css).toMatch(/\.s-p01-1\{/);
   });
 
+  test("loads the home sections stylesheet only on the home page", () => {
+    expect(String(built.files.get("assets/home.css"))).toContain(".comparaison{");
+    expect(String(built.files.get("assets/site.css"))).not.toContain(".comparaison{");
+    for (const [path, output] of built.files) {
+      if (!path.endsWith(".html")) continue;
+      expect(String(output).includes('href="/assets/home.css"'), path).toBe(path === "index.html");
+    }
+  });
+
   // A renamed or removed token must not leave a sheet pointing at nothing: a custom property read
   // without a fallback and never declared silently drops the declaration that reads it.
   test("every custom property the stylesheet reads without a fallback is declared in it", () => {
     const css = String(built.files.get("assets/site.css"));
     const declared = new Set([...css.matchAll(/(--[\w-]+)\s*:/g)].map((match) => match[1]));
-    const read = new Set([...css.matchAll(/var\(\s*(--[\w-]+)\s*\)/g)].map((match) => match[1]));
+    const sheets = `${css}\n${built.files.get("assets/home.css")}`;
+    const read = new Set([...sheets.matchAll(/var\(\s*(--[\w-]+)\s*\)/g)].map((match) => match[1]));
     expect(read.size).toBeGreaterThan(0);
     expect([...read].filter((name) => !declared.has(name)).sort()).toEqual([]);
   });

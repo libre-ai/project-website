@@ -12,7 +12,7 @@ import { FAVICON_PATH, renderFavicon, renderSprite, SPRITE_PATH } from "../brand
 import { checkAssetBudgets, checkBudget } from "../budget";
 import { checkForbiddenClaims } from "../claims";
 import { deployBody } from "../deploy";
-import { renderStylesheet } from "../design/stylesheet";
+import { readHomeStylesheet, renderStylesheet } from "../design/stylesheet";
 import { licencesBody } from "../licences";
 import { SITE_ORIGIN } from "../origin";
 import type { PageExtras } from "../pages/extras";
@@ -56,7 +56,7 @@ export interface LibreSiteReport {
     readonly violations: number;
   };
   readonly assets: { readonly examined: number; readonly violations: number };
-  readonly bytes: Readonly<Record<"script" | "stylesheet" | "sprite", number>>;
+  readonly bytes: Readonly<Record<"script" | "stylesheet" | "homeStylesheet" | "sprite", number>>;
 }
 
 const COMMAND = "bun run build";
@@ -209,10 +209,12 @@ export async function buildLibreSite(
   for (const entry of routes) files.set(entry.file, renderRoute(entry));
 
   const stylesheet = await minifyCss(`${await renderStylesheet()}\n${hoistedContentCss()}\n`);
+  const homeStylesheet = await minifyCss(await readHomeStylesheet());
   const script = await bundle(join(import.meta.dir, "../client/dom/main.ts"));
   const themeInit = await bundle(join(import.meta.dir, "../client/dom/theme-init.ts"));
   const sprite = renderSprite();
   files.set("assets/site.css", stylesheet);
+  files.set("assets/home.css", homeStylesheet);
   files.set("assets/main.js", script);
   files.set("assets/theme-init.js", themeInit);
   files.set(SPRITE_PATH, sprite);
@@ -244,7 +246,7 @@ export async function buildLibreSite(
       command: COMMAND,
     },
     {
-      gate: "Poids du script, de la feuille et du sprite",
+      gate: "Poids du script, des feuilles et du sprite",
       examined: first.assets.examined,
       violations: first.assets.violations.length,
       command: COMMAND,
@@ -279,7 +281,12 @@ export async function buildLibreSite(
         violations: 0,
       },
       assets: { examined: assets.examined, violations: 0 },
-      bytes: { script: size(script), stylesheet: size(stylesheet), sprite: size(sprite) },
+      bytes: {
+        script: size(script),
+        stylesheet: size(stylesheet),
+        homeStylesheet: size(homeStylesheet),
+        sprite: size(sprite),
+      },
     },
   };
 }

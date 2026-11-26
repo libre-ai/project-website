@@ -78,6 +78,32 @@ describe("the four moments (ADR 0010 §8)", () => {
   });
 });
 
+describe("the rest of the home page (ADR 0010 §8)", () => {
+  test("preserves the reading order and links the opening to the three starting paths", () => {
+    const ids = [
+      "essai",
+      "parcours",
+      "univers",
+      "virement",
+      "fabrication",
+      "preuves",
+      "questions",
+      "commencer",
+      "rejoindre",
+    ];
+    let previous = -1;
+    for (const id of ids) {
+      const position = home.indexOf(`id="${id}"`);
+      expect(position, id).toBeGreaterThan(previous);
+      previous = position;
+    }
+    expect(text).toContain('href="#commencer">Transformer mon entreprise</a>');
+    expect(home).not.toContain('name="parcours"');
+    expect(home).not.toContain('action="/inscription"');
+    expect(home).not.toContain("/methode/");
+  });
+});
+
 describe("handwritten notes on the home page (ADR 0010 §2)", () => {
   test("every note drawn is one of HAND_NOTES, as served after typesetting", () => {
     expect(notes.length).toBeGreaterThanOrEqual(6);

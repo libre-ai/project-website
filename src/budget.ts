@@ -8,10 +8,11 @@
 
 export const PAGE_BUDGET_BYTES = 120 * 1024;
 
-/** Ceilings of the shared assets, uncompressed, independent of any page. */
+/** Ceilings of the assets, uncompressed, independent of any page. */
 export const ASSET_BUDGETS = {
   "assets/main.js": 16 * 1024,
   "assets/site.css": 48 * 1024,
+  "assets/home.css": 3 * 1024,
   "assets/volee.svg": 80 * 1024,
 } as const satisfies Readonly<Record<string, number>>;
 
