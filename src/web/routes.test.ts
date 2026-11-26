@@ -60,23 +60,27 @@ describe("route table (plan, Task 7)", () => {
 });
 
 describe("rendered pages", () => {
-  test("the home replaces the guided tour with the six parts of the illustrated Agenda delivery", () => {
+  test("all delivery illustrations match their emblem and expose six pieces without script", () => {
     const home = pages.find(({ entry }) => entry.path === "/")?.html ?? "";
     const factory = pages.find(({ entry }) => entry.path === "/fabrique/")?.html ?? "";
     const delivery =
       home.match(/<section\b[^>]*id="fabrication"[^>]*>[\s\S]*?<\/section>/)?.[0] ?? "";
-    expect(delivery).toContain("Agenda");
-    expect(delivery).toContain("Illustration");
-    expect(delivery).toContain("/assets/volee.svg#embleme-p19");
-    for (const part of [
-      "Ce que vous avez demandé",
-      "Le code, à vous",
-      "Ce qu'elle ne fera jamais",
-      "Le carnet de bord",
-      "Le mode d'emploi pour déménager",
-      "Vos rendez-vous",
-    ]) {
-      expect(delivery).toContain(part.replaceAll("'", "&#39;"));
+    const figures = delivery.match(/<figure\b[^>]*>[\s\S]*?<\/figure>/g) ?? [];
+    expect(figures).toHaveLength(4);
+    const examples = [
+      ["Agenda", "p19", "L'export de vos rendez-vous"],
+      ["Wiki", "p05", "L'export de vos procédures"],
+      ["Formulaires", "p13", "L'export de vos réponses"],
+      ["Site", "p25", "L'export de vos contenus"],
+    ] as const;
+    for (const [index, [app, ref, exportTitle]] of examples.entries()) {
+      const figure = figures[index] ?? "";
+      expect(figure).toContain(`<strong>${app}</strong>`);
+      expect(figure).toContain("Illustration");
+      expect(figure).not.toMatch(/^<figure\b[^>]*\bhidden\b/);
+      expect(figure).toContain(`/assets/volee.svg#embleme-${ref}`);
+      expect(figure.match(/class="livraison-piece"/g)).toHaveLength(6);
+      expect(figure).toContain(exportTitle.replaceAll("'", "&#39;"));
     }
     expect(home.indexOf('id="fabrication"')).toBeGreaterThan(home.indexOf('id="virement"'));
     expect(home).not.toContain("data-visite");

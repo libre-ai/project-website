@@ -253,7 +253,9 @@ export const MISSION_REQUESTS: readonly MissionRequest[] = [
 /** Words of the mission order sheet (`accueil.essai.titre`, `accueil.ordre`). */
 export const MISSION_ORDER = {
   title: "Ce qu'un agent tente, et ce qui l'arrête.",
-  lead: "Choisissez un service. L'agent reçoit sa mission, essaie, et les vraies règles de la fabrique lui répondent, ligne par ligne.",
+  lead: "Choisissez un service pour voir quelles actions les règles autorisent ou refusent dans chaque scénario simulé.",
+  accounting:
+    "Scénario simulé : une facture demande un changement de RIB. La règle refuse de traiter cette instruction comme un ordre. Aucun virement n'est exécuté.",
   services: "Services",
   sheet: "Ordre de mission",
   requestedBy: "Demandé par",
@@ -262,11 +264,9 @@ export const MISSION_ORDER = {
   until: "Jusqu'à",
   tried: "Ce que l'agent tente",
   done: "Fait",
-  stub: "Journal signé",
+  stub: "Résultat du scénario",
   refusedBy: "refusé par",
   nothingRefused: "rien de refusé",
-  seal: "Sceau",
-  tamper: "la moindre retouche le change",
   /** Handwritten notes: on the tabs, on a refused line turned over, on the stub. */
   noteTabs: "Choisissez un service",
   noteFold: "rabattue, revers visible",
@@ -276,7 +276,7 @@ export const MISSION_ORDER = {
 /** Words of the section around the transfer (`accueil.methode_*`, `accueil.virement`). */
 export const TRANSFER_SECTION = {
   title: "Une règle ne connaît pas de chef.",
-  text: "Vous décidez. Des agents d'IA construisent. Des règles écrites bloquent le moindre écart, quel qu'en soit l'auteur. Chaque version sort signée, preuves à l'appui.",
+  text: "Dans cet exemple, un virement ne part pas sans une deuxième validation, même si la demande vient de la direction.",
   /** Until the Method page lands (lot 6 of the redesign), « how it is held » is the factory page. */
   call: { label: "Voir comment c'est tenu", href: "/fabrique/" },
   requestedBy: "Demandé par",

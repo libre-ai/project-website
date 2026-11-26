@@ -11,6 +11,7 @@ import { DELIVERY, MOMENTS, MOMENTS_TITLE, type MomentId, OPENING } from "../con
 import { TRIAL_RULES } from "../content/trial";
 import { UNIVERSES } from "../content/universes";
 import { type Html, h, raw } from "./html";
+import { foldingEmblem } from "./paper-fold";
 import { applicationPath, emblem } from "./sections";
 import { trialRulePictogram } from "./trial";
 
@@ -55,7 +56,7 @@ function plate(): Html {
     "figure",
     { class: `planche univers-${application.universe}` },
     h("figcaption", { class: "note-main planche-titre" }, OPENING.plate.title),
-    h("div", { class: "planche-feuille" }, emblem(application.ref)),
+    h("div", { class: "planche-feuille", "data-papier": true }, foldingEmblem(application.ref)),
     h(
       "p",
       { class: "planche-nom" },
@@ -81,11 +82,15 @@ export function opening(): Html {
         h(
           "p",
           { class: "actions" },
-          h("a", { class: "bouton bouton-nuit", href: OPENING.trial.href }, OPENING.trial.label),
           h(
             "a",
-            { class: "bouton bouton-nuit-trait", href: "#commencer" },
-            "Transformer mon entreprise",
+            { class: "bouton bouton-nuit", href: OPENING.trial.href, "data-onglet-cible": true },
+            OPENING.trial.label,
+          ),
+          h(
+            "a",
+            { class: "bouton bouton-nuit-trait", href: OPENING.delivery.href },
+            OPENING.delivery.label,
           ),
         ),
       ),
@@ -125,7 +130,8 @@ export function moments(): Html {
     ),
   );
 }
-type DeliveryPiece = (typeof DELIVERY.pieces)[number];
+type DeliveryExample = (typeof DELIVERY.examples)[number];
+type DeliveryPiece = DeliveryExample["pieces"][number];
 
 function deliveryIcon(icon: DeliveryPiece["icon"]): Html {
   if (icon === "rules") {
@@ -161,10 +167,32 @@ function deliveryPieces(pieces: readonly DeliveryPiece[], side: "gauche" | "droi
   );
 }
 
-export function explodedDelivery(): Html {
-  const application = applicationOf(DELIVERY.application);
+function deliveryFigure(example: DeliveryExample): Html {
+  const application = applicationOf(example.application);
   const universe = UNIVERSES.find((candidate) => candidate.id === application.universe);
-  const half = DELIVERY.pieces.length / 2;
+  const half = example.pieces.length / 2;
+  return h(
+    "figure",
+    {
+      class: `livraison-plan univers-${application.universe}`,
+      "data-livraison-exemple": application.name,
+      "data-livraison-libelle": example.nextLabel,
+    },
+    h(
+      "figcaption",
+      { class: "livraison-coeur" },
+      h("span", { class: "livraison-tuile" }, emblem(application.ref)),
+      h("strong", {}, application.name),
+      h("span", {}, universe?.verb),
+      h("span", {}, example.caption),
+      h("span", { class: "illustration" }, "Illustration"),
+    ),
+    deliveryPieces(example.pieces.slice(0, half), "gauche"),
+    deliveryPieces(example.pieces.slice(half), "droite"),
+  );
+}
+
+export function explodedDelivery(): Html {
   return h(
     "section",
     { class: "bloc livraison", id: "fabrication", "aria-labelledby": "titre-livraison" },
@@ -173,20 +201,15 @@ export function explodedDelivery(): Html {
       { class: "largeur" },
       h("h2", { id: "titre-livraison", class: "titre-section" }, DELIVERY.title),
       h("p", { class: "livraison-intro" }, DELIVERY.lead),
-      h(
-        "figure",
-        { class: `livraison-plan univers-${application.universe}` },
-        h(
-          "figcaption",
-          { class: "livraison-coeur" },
-          h("span", { class: "livraison-tuile" }, emblem(application.ref)),
-          h("strong", {}, application.name),
-          h("span", {}, universe?.verb),
-          h("span", { class: "illustration" }, "Illustration"),
-        ),
-        deliveryPieces(DELIVERY.pieces.slice(0, half), "gauche"),
-        deliveryPieces(DELIVERY.pieces.slice(half), "droite"),
-      ),
+      h("button", {
+        class: "bouton bouton-nuit-trait",
+        type: "button",
+        hidden: true,
+        "aria-controls": "livraison-exemples",
+        "data-changer-exemple": true,
+      }),
+      h("p", { class: "visually-hidden", role: "status", "data-exemple-actif": true }),
+      h("div", { id: "livraison-exemples" }, DELIVERY.examples.map(deliveryFigure)),
     ),
   );
 }

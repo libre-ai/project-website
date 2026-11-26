@@ -72,7 +72,7 @@ export const PROOFS = [
   },
   {
     title: "La sortie",
-    text: "Comparer l'empreinte d'un export pour vérifier que rien ne manque.",
+    text: "Comparer l'empreinte de l'export reçu à celle de l'export annoncé pour vérifier qu'il est intact.",
     icon: "export",
     universe: "travailler-ensemble",
   },
@@ -98,19 +98,19 @@ export const QUESTIONS = [
 
 export const STARTING_PATHS = [
   {
-    title: "Adoptez une application",
+    title: "Explorez les applications",
     text: "Repérez une application et suivez son avancement jusqu'à sa publication.",
     href: "/applications/",
     label: "Voir les applications",
   },
   {
-    title: "Faites tourner la chaîne sur votre besoin",
+    title: "Découvrez comment la chaîne fonctionne",
     text: "Voyez comment une demande devient une application vérifiée sous vos règles.",
     href: "/fabrique/",
     label: "Comprendre la fabrique",
   },
   {
-    title: "Installez votre fabrique",
+    title: "Préparer un déploiement",
     text: "Découvrez ce qu'il faut préparer pour faire tourner la chaîne chez vous, avec vos règles et vos données.",
     href: "/deployer/",
     label: "Consulter les conditions de déploiement",

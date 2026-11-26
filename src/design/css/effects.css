@@ -34,6 +34,81 @@
     }
   }
 
+  .planche-feuille .embleme {
+    animation: none;
+  }
+
+  [data-papier-actif] [data-charniere] {
+    transform-origin: var(--pli-origine, center);
+    animation: pliant-facette 0.8s ease-out;
+  }
+
+  @keyframes pliant-facette {
+    from {
+      transform: rotate3d(var(--pli-axe, 1, 0), 0, 88deg);
+    }
+  }
+
+  .ordre-pli[data-papier-actif] .ordre-action {
+    transform-origin: top;
+    backface-visibility: hidden;
+    animation: pliant-ligne 0.64s ease-in-out;
+  }
+
+  @keyframes pliant-ligne {
+    49% {
+      transform: perspective(32rem) rotateX(89deg);
+    }
+    51% {
+      transform: perspective(32rem) rotateX(-89deg);
+    }
+  }
+
+  .ordre-talon[data-papier-actif] {
+    animation: pliant-talon 0.32s ease-out 0.64s;
+  }
+
+  @keyframes pliant-talon {
+    45% {
+      transform: translateY(0.25rem) rotate(0.6deg);
+    }
+  }
+
+  .virement-dirigeant[data-papier-actif] {
+    --pli-ferme: rotateX(-180deg);
+    transform-origin: top;
+    backface-visibility: hidden;
+    animation: pliant-virement 0.78s ease-out;
+  }
+
+  @media (min-width: 48rem) {
+    .virement-dirigeant[data-papier-actif] {
+      --pli-ferme: rotateY(-180deg);
+      transform-origin: left;
+    }
+  }
+
+  @keyframes pliant-virement {
+    from {
+      transform: perspective(48rem) var(--pli-ferme);
+    }
+  }
+
+  [data-rangement] .livraison-piece {
+    animation: pliant-livraison 0.44s ease-in-out var(--rangement-sens, normal) both;
+  }
+
+  [data-rangement="sortir"] {
+    --rangement-sens: reverse;
+  }
+
+  @keyframes pliant-livraison {
+    to {
+      transform: translate(var(--rangement-x, 0px), var(--rangement-y, 0px)) scale(0.12);
+      opacity: 0;
+    }
+  }
+
   /* Scroll-driven entrances where supported (Chrome, Edge); elsewhere content is simply there. */
   @supports (animation-timeline: view()) {
     .apparait {

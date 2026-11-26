@@ -8,6 +8,7 @@
  * A module script runs after parsing, so the DOM is ready here.
  */
 import { setupExplorer } from "./explorer";
+import { setupPaperMotion } from "./paper-motion";
 import { setupTabs } from "./tabs";
 import { setupThemeToggle } from "./theme";
 import { setupTour } from "./tour";
@@ -16,3 +17,4 @@ setupThemeToggle(document);
 setupTabs(document);
 setupTour(document);
 setupExplorer(document);
+setupPaperMotion(document);

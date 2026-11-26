@@ -1,9 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { MISSION_REQUESTS, type MissionRequest } from "../content/trial";
+import { MISSION_REQUESTS } from "../content/trial";
 import { render } from "./html";
 import { homeMain } from "./pages";
-import { missionSeal } from "./trial";
 import { typeset } from "./typography";
 
 const home = typeset(render(homeMain())).html;
@@ -45,8 +44,10 @@ describe("the mission order of the home page (ADR 0010 §8)", () => {
 
   test("the opening's first call leads to it", () => {
     expect(home).toMatch(
-      /<a class="bouton bouton-nuit" href="#essai">Essayer de piéger un agent<\/a>/,
+      /<a\b[^>]*href="#ordre-compta"[^>]*>Voir une règle bloquer un virement<\/a>/,
     );
+    expect(text).toContain("Aucun virement n'est exécuté.");
+    expect(text).toContain("Vérifiable aujourd'hui : les contrôles de ce site");
   });
 
   test("every service is a link to its own sheet, all drawn without script", () => {
@@ -78,7 +79,7 @@ describe("the mission order of the home page (ADR 0010 §8)", () => {
     }
   });
 
-  test("each stub names the rules that refused something that day, and seals the sheet", () => {
+  test("each stub names the rules without claiming to sign the result", () => {
     const refusedBy: Record<string, string> = {
       compta: "refusé par Consigne, Vérification",
       rh: "refusé par Autorisation",
@@ -87,37 +88,16 @@ describe("the mission order of the home page (ADR 0010 §8)", () => {
       support: "refusé par Traces, Vérification",
     };
     for (const request of MISSION_REQUESTS) {
-      const stub = read(missionSheet(request.id).split('<footer class="ordre-talon">')[1] ?? "");
+      const stub = read(
+        missionSheet(request.id).match(/<footer class="ordre-talon"[^>]*>(.*?)<\/footer>/s)?.[1] ??
+          "",
+      );
       expect(stub, request.id).toContain(
         `${request.time} · ${request.service} · ${refusedBy[request.id]}`,
       );
-      expect(stub, request.id).toContain(
-        `Sceau ${missionSeal(request)} · la moindre retouche le change`,
-      );
+      expect(stub, request.id).toContain("Résultat du scénario");
+      expect(stub, request.id).not.toMatch(/Journal signé|Sceau|[0-9a-f]{4}( [0-9a-f]{4}){3}/);
     }
-  });
-});
-
-describe("the seal of a mission order", () => {
-  const request = MISSION_REQUESTS[0] as MissionRequest;
-
-  test("is four groups of four hexadecimal digits, the same at every build", () => {
-    expect(missionSeal(request)).toMatch(/^[0-9a-f]{4}( [0-9a-f]{4}){3}$/);
-    expect(missionSeal(request)).toBe(missionSeal({ ...request }));
-  });
-
-  test("changes with a word of the request, and with a refusal", () => {
-    const seal = missionSeal(request);
-    expect(missionSeal({ ...request, request: `${request.request} ` })).not.toBe(seal);
-    const [first, ...rest] = request.actions;
-    if (first === undefined) throw new Error("a request without actions");
-    const refusedFirst = { ...first, facts: { destination: "hors-ue" } };
-    expect(missionSeal({ ...request, actions: [refusedFirst, ...rest] })).not.toBe(seal);
-  });
-
-  test("differs from one sheet to the next", () => {
-    const seals = MISSION_REQUESTS.map(missionSeal);
-    expect(new Set(seals).size).toBe(seals.length);
   });
 });
 
@@ -128,7 +108,7 @@ describe("the transfer: one form for everyone (ADR 0010 §8)", () => {
   });
 
   const half = (side: string): string => {
-    const start = home.indexOf(`<div class="virement-demi virement-${side}">`);
+    const start = home.indexOf(`<div class="virement-demi virement-${side}"`);
     expect(start, side).toBeGreaterThan(-1);
     const end = home.indexOf("</ol>", start);
     return home.slice(start, end);

@@ -256,6 +256,7 @@
 
 .bouton-nuit-trait {
   border-color: var(--nuit-doux);
+  background: transparent;
   color: var(--nuit-texte);
 }
 
@@ -358,7 +359,6 @@
 }
 
 .ordre-heure,
-.ordre-sceau,
 .essai .illustration,
 .virement .illustration,
 .champs dt,
@@ -573,6 +573,10 @@
   color: var(--nuit-texte);
   font-family: var(--police-titre);
   font-size: 1.35rem;
+}
+
+.livraison [hidden] {
+  display: none;
 }
 
 .livraison-tuile {

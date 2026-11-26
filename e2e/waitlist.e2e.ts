@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { expect, test } from "@playwright/test";
 
-import { OUTBOX } from "../playwright.config";
+import { DEMO_ORIGIN, OUTBOX } from "../playwright.config";
 
 // The whole waitlist journey (ADR 0006): subscribe from the join page, confirm from the link of
 // the message written to the demo outbox, then leave the list from the link of the same message.
@@ -27,7 +27,7 @@ async function latestMessageTo(address: string): Promise<string> {
 }
 
 const link = (raw: string, path: string): string => {
-  const match = new RegExp(`http://localhost:8080${path}\\?jeton=[A-Za-z0-9_-]+`).exec(raw);
+  const match = new RegExp(`${DEMO_ORIGIN}${path}\\?jeton=[A-Za-z0-9_-]+`).exec(raw);
   if (match === null) throw new Error(`no ${path} link`);
   return match[0];
 };

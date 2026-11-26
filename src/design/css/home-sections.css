@@ -43,7 +43,7 @@
   list-style: none;
 }
 
-.accueil-suite :is(h3, li p) {
+.accueil-suite :is(h3, h4, li p) {
   margin: 0;
 }
 
