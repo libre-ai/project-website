@@ -359,7 +359,6 @@
 }
 
 .ordre-heure,
-.ordre-sceau,
 .essai .illustration,
 .virement .illustration,
 .champs dt,
@@ -576,7 +575,7 @@
   font-size: 1.35rem;
 }
 
-.livraison [data-ranger][hidden] {
+.livraison [hidden] {
   display: none;
 }
 

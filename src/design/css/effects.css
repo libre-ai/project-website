@@ -95,12 +95,15 @@
   }
 
   [data-rangement] .livraison-piece {
-    animation: pliant-livraison 0.95s ease-in-out;
+    animation: pliant-livraison 0.44s ease-in-out var(--rangement-sens, normal) both;
+  }
+
+  [data-rangement="sortir"] {
+    --rangement-sens: reverse;
   }
 
   @keyframes pliant-livraison {
-    45%,
-    55% {
+    to {
       transform: translate(var(--rangement-x, 0px), var(--rangement-y, 0px)) scale(0.12);
       opacity: 0;
     }

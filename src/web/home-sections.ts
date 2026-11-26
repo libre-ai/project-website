@@ -136,7 +136,19 @@ export function proofs(): Html {
   return section(
     "preuves",
     "Ne nous croyez pas. Vérifiez.",
-    h("p", {}, "Voici ce que la chaîne prévoit de rendre vérifiable pour une version."),
+    h("h3", {}, "À vérifier aujourd'hui"),
+    h(
+      "p",
+      {},
+      "Le site publie les résultats de ses contrôles de fabrication : textes, liens et poids des pages.",
+    ),
+    h("p", {}, h("a", { href: "/preuves/" }, "Consulter les contrôles du site")),
+    h("h3", {}, "Prévu pour les applications"),
+    h(
+      "p",
+      {},
+      "La chaîne vise à publier les résultats des contrôles et la signature de chaque version livrée.",
+    ),
     h(
       "ul",
       { class: "preuves-accueil", role: "list" },
@@ -145,11 +157,10 @@ export function proofs(): Html {
           "li",
           { class: `accueil-fiche univers-${proof.universe}` },
           icon(proof.icon),
-          h("div", {}, h("h3", {}, proof.title), h("p", {}, proof.text)),
+          h("div", {}, h("h4", {}, proof.title), h("p", {}, proof.text)),
         ),
       ),
     ),
-    h("a", { class: "bouton", href: "/preuves/" }, "Consulter les preuves publiques"),
   );
 }
 

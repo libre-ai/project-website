@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
 
+import { DEMO_ORIGIN } from "../playwright.config";
 import { APPLICATIONS } from "../src/content/applications";
 
 // One route per kind of page: home, index, application, factory, join, about, privacy, forge,
@@ -20,7 +21,6 @@ const ROUTES = [
   "/fabrique/briques/project-governance/",
   "/inscription/merci/",
 ];
-const ORIGIN = "http://localhost:8080";
 
 const scriptless = (name: string): boolean => name === "chromium-no-js";
 
@@ -43,7 +43,7 @@ test.describe("every kind of page", () => {
     }) => {
       const outside: string[] = [];
       page.on("request", (request) => {
-        if (!request.url().startsWith(ORIGIN) && !request.url().startsWith("data:"))
+        if (!request.url().startsWith(`${DEMO_ORIGIN}/`) && !request.url().startsWith("data:"))
           outside.push(request.url());
       });
       const response = await page.goto(path);
@@ -135,14 +135,13 @@ test.describe("the site is complete without script (ADR 0005 §1)", () => {
       "href",
       "/applications/",
     );
-    const delivery = page.getByRole("region", { name: "L'application livrée, pièce par pièce." });
-    await expect(
-      delivery.getByRole("button", { name: "Animer le rangement des pièces" }),
-    ).toBeHidden();
-    await expect(delivery.getByText("Illustration", { exact: true })).toBeVisible();
-    await expect(delivery.getByText("Agenda", { exact: true })).toBeVisible();
+    const delivery = page.locator("#fabrication");
+    await expect(delivery.locator("[data-changer-exemple]")).toBeHidden();
+    await expect(delivery.getByText("Illustration", { exact: true })).toHaveCount(4);
+    for (const app of ["Agenda", "Wiki", "Formulaires", "Site"])
+      await expect(delivery.getByText(app, { exact: true })).toBeVisible();
     const pieces = delivery.getByRole("listitem");
-    await expect(pieces).toHaveCount(6);
+    await expect(pieces).toHaveCount(24);
     for (const width of [390, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       for (const piece of await pieces.all()) {
@@ -160,8 +159,6 @@ test.describe("the site is complete without script (ADR 0005 §1)", () => {
       await question.locator("summary").click();
       await expect(question.locator("p")).toBeVisible();
     }
-    await page.getByRole("link", { name: "Transformer mon entreprise" }).click();
-    await expect(page).toHaveURL(/#commencer$/);
     await expect(page.locator("#commencer li")).toHaveCount(3);
     await expect(page.locator("[data-theme-toggle]")).toBeHidden();
     await page
@@ -175,6 +172,27 @@ test.describe("the site is complete without script (ADR 0005 §1)", () => {
 });
 
 test.describe("progressive enhancement (ADR 0005 §5)", () => {
+  test("both opening links lead to their named examples", async ({ page }, testInfo) => {
+    await page.goto("/");
+    const accounting = page.locator("#ordre-compta");
+    const trial = page.getByRole("link", { name: "Voir une règle bloquer un virement" });
+    if (!scriptless(testInfo.project.name)) {
+      await page.getByRole("tab", { name: "Ressources humaines" }).click();
+      await expect(accounting).toBeHidden();
+    }
+    await trial.click();
+    await expect(page).toHaveURL(/#ordre-compta$/);
+    await expect(accounting.getByText(/Aucun virement n'est exécuté/)).toBeVisible();
+    if (!scriptless(testInfo.project.name)) {
+      await page.getByRole("tab", { name: "Ressources humaines" }).click();
+      await trial.click();
+      await expect(accounting).toBeVisible();
+    }
+    await page.getByRole("link", { name: "Voir ce que vous récupérez" }).click();
+    await expect(page).toHaveURL(/#fabrication$/);
+    await expect(page.locator('[data-livraison-exemple="Agenda"]')).toBeVisible();
+  });
+
   test("the theme toggle is a pressed button with an accessible name, remembered", async ({
     page,
   }, testInfo) => {
@@ -318,25 +336,65 @@ test.describe("homepage paper motions (ADR 0010 §4)", () => {
     await expect(transfer).toHaveAttribute("data-started", "pliant-virement");
     await expect(transfer).toHaveCSS("transform", "none");
 
-    const replay = page.getByRole("button", { name: "Animer le rangement des pièces" });
-    await replay.focus();
+    const nextExample = page.locator("[data-changer-exemple]");
+    const agenda = page.locator('[data-livraison-exemple="Agenda"]');
+    const wiki = page.locator('[data-livraison-exemple="Wiki"]');
+    await expect(agenda).toBeVisible();
+    await expect(wiki).toBeHidden();
+    await expect(nextExample).toHaveAccessibleName("Voir le Wiki");
+    await nextExample.focus();
     await page.keyboard.press("Enter");
-    const cards = page.locator(".livraison-piece");
-    await expect(page.locator('.livraison-piece[data-started="pliant-livraison"]')).toHaveCount(6);
+    const closing = agenda.locator('.livraison-piece[data-started="pliant-livraison"]');
+    const opening = wiki.locator('.livraison-piece[data-started="pliant-livraison"]');
+    await expect(closing).toHaveCount(6);
+    await expect(agenda).toBeHidden();
+    await expect(wiki).toBeVisible();
+    await expect(wiki.locator(".livraison-tuile use")).toHaveAttribute("href", /#embleme-p05$/);
+    await expect(wiki.getByRole("heading", { name: "L'export de vos procédures" })).toBeVisible();
+    await expect(opening).toHaveCount(6);
+    const cards = wiki.locator(".livraison-piece");
     await expect(cards.first()).toHaveCSS("transform", "none");
     for (const card of await cards.all()) await expect(card).toBeVisible();
-    await expect(replay).toBeFocused();
+    await expect(nextExample).toBeFocused();
+    await expect(page.locator("#fabrication [role=status]")).toHaveText("Exemple affiché : Wiki");
+    for (const [label, app, emblem] of [
+      ["Voir Formulaires", "Formulaires", "p13"],
+      ["Voir le Site", "Site", "p25"],
+      ["Voir l'Agenda", "Agenda", "p19"],
+    ]) {
+      await expect(nextExample).toHaveAccessibleName(label ?? "");
+      await page.keyboard.press("Enter");
+      const figure = page.locator(`[data-livraison-exemple="${app}"]`);
+      await expect(page.locator("[data-livraison-exemple]:visible")).toHaveCount(1);
+      await expect(figure).toBeVisible();
+      await expect(figure.locator(".livraison-tuile use")).toHaveAttribute(
+        "href",
+        new RegExp(`#embleme-${emblem}$`),
+      );
+      await expect(figure.getByRole("listitem")).toHaveCount(6);
+      await expect(page.locator("#fabrication [role=status]")).toHaveText(
+        `Exemple affiché : ${app}`,
+      );
+      await expect(nextExample).toBeFocused();
+    }
   });
 });
 
 test.describe("reduced motion (ADR 0005 §6)", () => {
   test.use({ reducedMotion: "reduce" });
 
-  test("nothing animates on the home page", async ({ page }, testInfo) => {
+  test("the delivery examples remain switchable without motion", async ({ page }, testInfo) => {
     test.skip(scriptless(testInfo.project.name), "getAnimations needs script");
     await page.goto("/");
-    await expect(page.getByRole("button", { name: "Animer le rangement des pièces" })).toBeHidden();
-    await expect(page.locator(".livraison-piece")).toHaveCount(6);
+    const agenda = page.locator('[data-livraison-exemple="Agenda"]');
+    const wiki = page.locator('[data-livraison-exemple="Wiki"]');
+    const nextExample = page.getByRole("button", { name: "Voir le Wiki" });
+    await expect(agenda).toBeVisible();
+    await expect(wiki).toBeHidden();
+    await nextExample.click();
+    await expect(agenda).toBeHidden();
+    await expect(wiki).toBeVisible();
+    await expect(wiki.getByRole("listitem")).toHaveCount(6);
     expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
   });
 });

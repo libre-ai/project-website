@@ -75,8 +75,8 @@ Ce dépôt l'a décidé de son côté (D243).
      son revers, son texte lisible et la règle qui l'a arrêtée en marge ; le talon se détache ;
    - **virement** : les deux demandes sont les deux moitiés d'une feuille, qui s'ouvre sur son
      pli central jusqu'à se poser à plat ;
-   - **vue éclatée** : les pièces de l'application livrée sortent au repos et se rangent dans
-     l'icône au toucher ;
+   - **vue éclatée** : le bouton nomme l'application suivante, replie les pièces dans l'emblème courant
+     puis déplie celles du nouvel exemple. L'emblème, le nom, la légende et les pièces basculent ensemble ;
    - les micro-interactions de l'ADR 0005 §5 sont gardées : thème, onglets, accordéons.
 
    Trois règles valent pour tous les mouvements :
@@ -88,8 +88,9 @@ Ce dépôt l'a décidé de son côté (D243).
      2026-11-25, à la mise en page de l'ordre de mission : le texte d'origine faisait aussi
      calculer le module client au choix d'un service, ce qui aurait recopié dans le module les
      règles et les situations déjà calculées au build) ;
-   - les vues sans script montrent le même contenu, à plat. Le bouton de rangement n'est
-     proposé que si le script est chargé et que la préférence autorise le mouvement.
+   - les vues sans script montrent le même contenu, à plat. La vue éclatée montre alors les
+     quatre exemples. Avec le script, la commande reste disponible en mouvement réduit, sans
+     animation ; le focus reste sur le bouton et le nouvel exemple est annoncé.
 
    L'emblème d'ouverture est le seul à être sérialisé facette par facette dans la page : il
    reprend les contours, couleurs et coordonnées du sprite (ADR 0004 §6), mais chaque facette
@@ -99,8 +100,8 @@ Ce dépôt l'a décidé de son côté (D243).
    La silhouette « Seul / Ensemble » et la visite guidée sont retirées.
 5. **Promesse (amende 0007 §1).**
    - Accroche : « Possédez la fabrique. ».
-   - Sous-titre : « Toute la chaîne pour produire avec l'IA et transformer votre entreprise.
-     Vos données, vos règles, vos agents. ».
+   - Sous-titre : « Une chaîne libre en construction pour créer vos applications avec l'IA, sous
+     vos règles et sans abandonner le contrôle de vos données. ».
    - Devise, gardée : « Ce que chacun réinvente seul, faisons-le ensemble. ».
    - Le public est l'entreprise ; les applications sont ce que la chaîne produit.
 6. **État réel (amende 0007 §3).** Chaque application montre son état, du moins avancé au plus
@@ -118,16 +119,18 @@ Ce dépôt l'a décidé de son côté (D243).
    - Noms provisoires : Remontées (P15) et Tickets (P41), comme les autres noms provisoires.
    - Les noms suivent les fiches de `project-governance`.
 8. **Accueil (amende 0007 §7 et §8).** De haut en bas :
-   - ouverture : accroche et planche de pliage ;
+   - ouverture : accroche, planche de pliage et deux liens vers le scénario Comptabilité et les exemples de livraison ;
    - quatre moments : « De votre besoin à l'application livrée » ;
-   - ordre de mission : « Ce qu'un agent tente, et ce qui l'arrête. » ;
+   - ordre de mission : « Ce qu'un agent tente, et ce qui l'arrête. » Les résultats simulés sont
+     annoncés comme tels. Le talon résume les refus et ne présente ni sceau ni signature ;
    - avant / après, à l'horizontale même sur téléphone ;
    - applications par univers ;
    - virement : « Une règle ne connaît pas de chef. » ;
-   - vue éclatée : un exemple fictif d'Agenda, son emblème et les six pièces de la livraison.
-     L'illustration reste entièrement lisible sans script. Elle remplace la visite guidée sur
-     l'accueil ; celle de `/fabrique/` reste en place ;
-   - preuves, trois questions, puis trois façons de commencer.
+   - vue éclatée : quatre exemples fictifs, Agenda, Wiki, Formulaires et Site, chacun avec son emblème
+     et les six pièces de la livraison. Les quatre illustrations restent lisibles sans script. Elles remplacent
+     la visite guidée sur l'accueil ; celle de `/fabrique/` reste en place ;
+   - preuves (contrôles publics du site séparés des preuves prévues par version), trois questions,
+     puis trois façons de commencer.
 9. **Pages (amende 0007 §10).** Le menu porte trois pages : Accueil, Applications, et Méthode
    sous `/methode/`.
    - Méthode a pour titre « Les règles, et comment les vérifier ». Elle reprend la méthode

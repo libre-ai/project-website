@@ -65,6 +65,21 @@ export function setupTabs(root: Document): void {
         select(next, true);
       });
     });
+    for (const shortcut of root.querySelectorAll<HTMLAnchorElement>("a[data-onglet-cible]")) {
+      const index = links.findIndex((link) => link.hash === shortcut.hash);
+      if (index < 0) continue;
+      shortcut.addEventListener("click", (event) => {
+        if (
+          !event.defaultPrevented &&
+          !event.metaKey &&
+          !event.ctrlKey &&
+          !event.shiftKey &&
+          !event.altKey
+        ) {
+          select(index, false);
+        }
+      });
+    }
     const initial = Math.max(
       0,
       links.findIndex((link) => link.hash === root.location.hash),

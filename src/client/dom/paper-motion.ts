@@ -35,36 +35,62 @@ export function setupPaperMotion(root: Document): void {
       switching.observe(sheet, { attributeFilter: ["hidden"] });
   }
 
-  const delivery = root.querySelector<HTMLElement>(".livraison-plan");
-  const icon = delivery?.querySelector<HTMLElement>(".livraison-tuile");
-  const button = delivery?.querySelector<HTMLButtonElement>("[data-ranger]");
-  if (delivery === null || icon == null || button == null) return;
-  const pieces = [...delivery.querySelectorAll<HTMLElement>(".livraison-piece")];
+  setupDeliveryExamples(root);
+}
+
+async function movePieces(figure: HTMLElement, direction: "entrer" | "sortir"): Promise<void> {
+  const icon = figure.querySelector<HTMLElement>(".livraison-tuile");
+  if (icon === null || typeof icon.getAnimations !== "function") return;
+  const pieces = [...figure.querySelectorAll<HTMLElement>(".livraison-piece")];
+  const origin = icon.getBoundingClientRect();
+  const boxes = pieces.map((piece) => piece.getBoundingClientRect());
+  pieces.forEach((piece, index) => {
+    const box = boxes[index];
+    if (box === undefined) return;
+    piece.style.setProperty(
+      "--rangement-x",
+      `${origin.left + origin.width / 2 - box.left - box.width / 2}px`,
+    );
+    piece.style.setProperty(
+      "--rangement-y",
+      `${origin.top + origin.height / 2 - box.top - box.height / 2}px`,
+    );
+  });
+  figure.dataset.rangement = direction;
+  const animations = pieces.flatMap((piece) => piece.getAnimations());
+  await Promise.allSettled(animations.map((animation) => animation.finished));
+  delete figure.dataset.rangement;
+}
+
+function setupDeliveryExamples(root: Document): void {
+  const button = root.querySelector<HTMLButtonElement>("[data-changer-exemple]");
+  const status = root.querySelector<HTMLElement>("[data-exemple-actif]");
+  const figures = [...root.querySelectorAll<HTMLElement>("[data-livraison-exemple]")];
+  if (button === null || status === null || figures.length < 2) return;
   const motion = matchMedia("(prefers-reduced-motion: no-preference)");
-  const sync = (): void => {
-    button.hidden = !motion.matches;
-  };
-  sync();
-  motion.addEventListener("change", sync);
+  let currentIndex = 0;
+  let switching = false;
+  const nextIndex = (): number => (currentIndex + 1) % figures.length;
+  for (const figure of figures.slice(1)) figure.hidden = true;
+  button.textContent = figures[nextIndex()]?.dataset.livraisonLibelle ?? "";
+  button.hidden = false;
   button.addEventListener("click", async () => {
-    if (!motion.matches || delivery.hasAttribute("data-rangement")) return;
-    const origin = icon.getBoundingClientRect();
-    const boxes = pieces.map((piece) => piece.getBoundingClientRect());
-    pieces.forEach((piece, index) => {
-      const box = boxes[index];
-      if (box === undefined) return;
-      piece.style.setProperty(
-        "--rangement-x",
-        `${origin.left + origin.width / 2 - box.left - box.width / 2}px`,
-      );
-      piece.style.setProperty(
-        "--rangement-y",
-        `${origin.top + origin.height / 2 - box.top - box.height / 2}px`,
-      );
-    });
-    delivery.dataset.rangement = "";
-    const animations = pieces.flatMap((piece) => piece.getAnimations());
-    await Promise.allSettled(animations.map((animation) => animation.finished));
-    delete delivery.dataset.rangement;
+    if (switching) return;
+    const current = figures[currentIndex];
+    const destination = nextIndex();
+    const next = figures[destination];
+    if (current === undefined || next === undefined) return;
+    switching = true;
+    try {
+      if (motion.matches) await movePieces(current, "entrer");
+      current.hidden = true;
+      next.hidden = false;
+      currentIndex = destination;
+      if (motion.matches) await movePieces(next, "sortir");
+      status.textContent = `Exemple affiché : ${next.dataset.livraisonExemple}`;
+      button.textContent = figures[nextIndex()]?.dataset.livraisonLibelle ?? "";
+    } finally {
+      switching = false;
+    }
   });
 }

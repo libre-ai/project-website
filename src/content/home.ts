@@ -13,12 +13,13 @@ import type { UniverseId } from "./universes";
 export const OPENING = {
   title: "Possédez la fabrique.",
   subtitle:
-    "Toute la chaîne pour produire avec l'IA et transformer votre entreprise. Vos données, vos règles, vos agents.",
+    "Nous construisons une chaîne libre pour créer des applications avec l'IA. Le but : récupérer le code, les règles et vos données, puis réinstaller l'application ailleurs.",
   /** The instruction plate: an application icon, folded from a sheet of paper. */
   plate: { title: "Plier une application", application: "P04" },
   note: "Chaque oiseau est une application.",
   /** The first call of the opening (`accueil.boutons`), to the trial below. */
-  trial: { label: "Essayer de piéger un agent", href: "#essai" },
+  trial: { label: "Voir une règle bloquer un virement", href: "#ordre-compta" },
+  delivery: { label: "Voir ce que vous récupérez", href: "#fabrication" },
 } as const;
 
 export type MomentId = "besoin" | "construire" | "verifier" | "signer";
@@ -52,15 +53,15 @@ export const MOMENTS: readonly Moment[] = [
   },
   {
     id: "verifier",
-    title: "Les règles vérifient",
-    text: "Un seul écart, et tout s'arrête. Vous tranchez ce qui compte.",
+    title: "Les contrôles bloquent les actions interdites",
+    text: "Par exemple, un agent peut préparer un virement, mais il ne peut pas l'envoyer sans validation humaine.",
     universe: "s-informer",
     note: "personne n'y échappe",
   },
   {
     id: "signer",
-    title: "Vous recevez, signé",
-    text: "Une application prête, avec ses preuves. Ce qui a servi resservira.",
+    title: "Vous recevez le code et ses preuves",
+    text: "Le code source, les résultats des contrôles pour cette version et un guide pour réinstaller l'application ailleurs.",
     universe: "travailler-ensemble",
     note: "c'est à vous",
   },
@@ -82,39 +83,156 @@ export function handCharacters(notes: readonly string[] = HAND_NOTES): string {
   return [...new Set([...notes.join("")])].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)).join("");
 }
 export const DELIVERY = {
-  application: "P19",
-  title: "L'application livrée, pièce par pièce.",
-  lead: "Un exemple fictif : un cabinet fait réaliser son application de prise de rendez-vous.",
-  pieces: [
+  title: "Ce que vous recevriez avec l'application",
+  lead: "Exemples fictifs de livraison. Le besoin change ; l'objectif reste de pouvoir récupérer le code, les règles et vos données.",
+  examples: [
     {
-      icon: "request",
-      title: "Ce que vous avez demandé",
-      text: "« Que nos clients prennent rendez-vous en ligne, et que l'équipe voie le planning sur son téléphone. »",
+      application: "P19",
+      nextLabel: "Voir l'Agenda",
+      caption: "Réinstaller l'Agenda et restaurer les rendez-vous.",
+      pieces: [
+        {
+          icon: "request",
+          title: "Ce que vous avez demandé",
+          text: "« Que nos clients puissent choisir un créneau sans voir le reste de notre calendrier. »",
+        },
+        {
+          icon: "code",
+          title: "Le code source",
+          text: "Le code de prise de rendez-vous, pour le relire ou le faire modifier.",
+        },
+        {
+          icon: "rules",
+          title: "Les règles de l'application",
+          text: "Montrer les créneaux libres, jamais les autres rendez-vous.",
+        },
+        {
+          icon: "record",
+          title: "Le journal des versions",
+          text: "Pour chaque version : qui l'a faite, qui l'a relue et quels contrôles ont été effectués.",
+        },
+        {
+          icon: "guide",
+          title: "Le guide de réinstallation",
+          text: "Comment réinstaller Agenda sur un autre serveur et y restaurer les rendez-vous.",
+        },
+        {
+          icon: "data",
+          title: "L'export de vos rendez-vous",
+          text: "Un fichier CSV que vous pouvez ouvrir dans un tableur.",
+        },
+      ],
     },
     {
-      icon: "code",
-      title: "Le code, à vous",
-      text: "Demain, vous pouvez le confier à n'importe quel prestataire.",
+      application: "P05",
+      nextLabel: "Voir le Wiki",
+      caption: "Réinstaller le Wiki et restaurer les pages et leur historique.",
+      pieces: [
+        {
+          icon: "request",
+          title: "Ce que vous avez demandé",
+          text: "« Que l'équipe retrouve la procédure en vigueur et sache qui l'a validée. »",
+        },
+        {
+          icon: "code",
+          title: "Le code source",
+          text: "Le code qui permet de rédiger, relire et publier les procédures.",
+        },
+        {
+          icon: "rules",
+          title: "Les règles de l'application",
+          text: "Ne publier aucune nouvelle version sans relecture par une autre personne.",
+        },
+        {
+          icon: "record",
+          title: "Le journal des versions",
+          text: "Pour chaque procédure : les modifications, leur date et le nom de la personne qui a validé la version.",
+        },
+        {
+          icon: "guide",
+          title: "Le guide de réinstallation",
+          text: "Comment réinstaller Wiki et y restaurer les pages et leur historique.",
+        },
+        {
+          icon: "data",
+          title: "L'export de vos procédures",
+          text: "Les pages et leur historique dans un format ouvert.",
+        },
+      ],
     },
     {
-      icon: "rules",
-      title: "Ce qu'elle ne fera jamais",
-      text: "Envoyer les rendez-vous de vos clients hors d'Europe, ou changer sans être relue.",
+      application: "P13",
+      nextLabel: "Voir Formulaires",
+      caption: "Réinstaller les formulaires et restaurer les réponses.",
+      pieces: [
+        {
+          icon: "request",
+          title: "Ce que vous avez demandé",
+          text: "« Recueillir les inscriptions à nos ateliers sans rendre les réponses publiques. »",
+        },
+        {
+          icon: "code",
+          title: "Le code source",
+          text: "Le code qui affiche les formulaires et enregistre les réponses.",
+        },
+        {
+          icon: "rules",
+          title: "Les règles de l'application",
+          text: "Seules les personnes qui organisent l'atelier peuvent lire les réponses.",
+        },
+        {
+          icon: "record",
+          title: "Le journal des versions",
+          text: "Les changements apportés aux champs et aux droits de lecture, version par version.",
+        },
+        {
+          icon: "guide",
+          title: "Le guide de réinstallation",
+          text: "Comment recréer les formulaires ailleurs et vérifier les droits avant de les rouvrir.",
+        },
+        {
+          icon: "data",
+          title: "L'export de vos réponses",
+          text: "Les définitions des formulaires et les réponses dans des fichiers séparés.",
+        },
+      ],
     },
     {
-      icon: "record",
-      title: "Le carnet de bord",
-      text: "Chaque version dit qui l'a faite, qui l'a relue, et ce qui a été vérifié.",
-    },
-    {
-      icon: "guide",
-      title: "Le mode d'emploi pour déménager",
-      text: "Pour l'installer sur votre serveur, ou chez un autre hébergeur.",
-    },
-    {
-      icon: "data",
-      title: "Vos rendez-vous",
-      text: "Récupérables en un clic, dans un fichier que tout tableur ouvre.",
+      application: "P25",
+      nextLabel: "Voir le Site",
+      caption: "Réinstaller le Site et retrouver les pages et leurs images.",
+      pieces: [
+        {
+          icon: "request",
+          title: "Ce que vous avez demandé",
+          text: "« Publier les informations de l'association et pouvoir changer d'hébergeur. »",
+        },
+        {
+          icon: "code",
+          title: "Le code source",
+          text: "Le code qui transforme les contenus en pages du site.",
+        },
+        {
+          icon: "rules",
+          title: "Les règles de l'application",
+          text: "Les brouillons ne sont pas publics. Une personne autorisée décide de leur publication.",
+        },
+        {
+          icon: "record",
+          title: "Le journal des versions",
+          text: "Pour chaque publication : les pages modifiées et les résultats du contrôle des liens.",
+        },
+        {
+          icon: "guide",
+          title: "Le guide de réinstallation",
+          text: "Comment reconstruire le site chez un autre hébergeur et y raccorder votre nom de domaine.",
+        },
+        {
+          icon: "data",
+          title: "L'export de vos contenus",
+          text: "Les textes en Markdown et les images dans leurs fichiers d'origine.",
+        },
+      ],
     },
   ],
 } as const;

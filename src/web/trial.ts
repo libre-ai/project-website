@@ -8,8 +8,6 @@
  * without script (ADR 0005 §1): the five services are an in-page menu and five sheets, which the
  * shared tabs module (src/client/dom/tabs.ts) turns into tabs.
  */
-import { createHash } from "node:crypto";
-
 import { defaultFacts, type Facts, trippedRules } from "../client/logic";
 import {
   MISSION_ORDER,
@@ -79,22 +77,6 @@ export function trialRulePictogram(rule: TrialRule, className: string): Html {
   return h("span", { class: `${className} univers-se-proteger` }, raw(rulePictogram(rule.id)));
 }
 
-/**
- * The seal of a sheet: the start of the SHA-256 of its request and of each action with the rules
- * it trips, in groups of four. Changing a word, or a refusal, changes it.
- */
-export function missionSeal(request: MissionRequest): string {
-  const content = JSON.stringify({
-    demande: request.request,
-    actions: request.actions.map((action) => [
-      action.text,
-      refusals(action.facts).map((r) => r.id),
-    ]),
-  });
-  const hex = createHash("sha256").update(content).digest("hex").slice(0, 16);
-  return hex.match(/.{4}/g)?.join(" ") ?? hex;
-}
-
 function field(term: string, value: string, wide = false, alert = false): Html {
   return h(
     "div",
@@ -155,11 +137,6 @@ function stub(request: MissionRequest): Html {
         ? `${MISSION_ORDER.refusedBy} ${names.join(", ")}`
         : MISSION_ORDER.nothingRefused,
     ),
-    h(
-      "p",
-      { class: "ordre-sceau" },
-      `${MISSION_ORDER.seal} ${missionSeal(request)} · ${MISSION_ORDER.tamper}`,
-    ),
     h("p", { class: "note-main ordre-note-talon" }, MISSION_ORDER.noteStub, raw(ARROW)),
   );
 }
@@ -182,6 +159,7 @@ function sheet(request: MissionRequest): Html {
     ),
     // The company and its day are drawn to show the rules at work (ADR 0007 §4).
     h("p", { class: "illustration" }, ILLUSTRATION),
+    request.id === "compta" ? h("p", {}, MISSION_ORDER.accounting) : null,
     h(
       "dl",
       { class: "champs" },
@@ -224,6 +202,11 @@ export function missionOrder(): Html {
         ),
         h("p", { class: "note-main ordre-note-onglets" }, MISSION_ORDER.noteTabs, raw(ARROW_UP)),
         MISSION_REQUESTS.map(sheet),
+      ),
+      h(
+        "p",
+        {},
+        h("a", { href: "/preuves/" }, "Vérifiable aujourd'hui : les contrôles de ce site"),
       ),
     ),
   );
