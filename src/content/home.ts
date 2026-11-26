@@ -81,3 +81,40 @@ export const HAND_NOTES: readonly string[] = [
 export function handCharacters(notes: readonly string[] = HAND_NOTES): string {
   return [...new Set([...notes.join("")])].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)).join("");
 }
+export const DELIVERY = {
+  application: "P19",
+  title: "L'application livrée, pièce par pièce.",
+  lead: "Un exemple fictif : un cabinet fait réaliser son application de prise de rendez-vous.",
+  pieces: [
+    {
+      icon: "request",
+      title: "Ce que vous avez demandé",
+      text: "« Que nos clients prennent rendez-vous en ligne, et que l'équipe voie le planning sur son téléphone. »",
+    },
+    {
+      icon: "code",
+      title: "Le code, à vous",
+      text: "Demain, vous pouvez le confier à n'importe quel prestataire.",
+    },
+    {
+      icon: "rules",
+      title: "Ce qu'elle ne fera jamais",
+      text: "Envoyer les rendez-vous de vos clients hors d'Europe, ou changer sans être relue.",
+    },
+    {
+      icon: "record",
+      title: "Le carnet de bord",
+      text: "Chaque version dit qui l'a faite, qui l'a relue, et ce qui a été vérifié.",
+    },
+    {
+      icon: "guide",
+      title: "Le mode d'emploi pour déménager",
+      text: "Pour l'installer sur votre serveur, ou chez un autre hébergeur.",
+    },
+    {
+      icon: "data",
+      title: "Vos rendez-vous",
+      text: "Récupérables en un clic, dans un fichier que tout tableur ouvre.",
+    },
+  ],
+} as const;

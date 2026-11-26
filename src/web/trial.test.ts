@@ -23,12 +23,12 @@ const read = (html: string): string =>
     .replace(/[  ]/g, " ");
 const text = read(home);
 
-/** The markup of one element, from its opening tag to the next opening tag of the same name. */
-function element(tag: string, id: string): string {
-  const start = home.indexOf(`<${tag} id="${id}"`);
-  expect(start, `${tag}#${id}`).toBeGreaterThanOrEqual(0);
-  const next = home.indexOf(`<${tag} `, start + 1);
-  return home.slice(start, next === -1 ? undefined : next);
+function missionSheet(id: string): string {
+  const start = home.indexOf(`<article id="ordre-${id}"`);
+  expect(start, `article#ordre-${id}`).toBeGreaterThanOrEqual(0);
+  const end = home.indexOf("</article>", start);
+  expect(end, `closing article#ordre-${id}`).toBeGreaterThan(start);
+  return home.slice(start, end);
 }
 
 describe("the mission order of the home page (ADR 0010 §8)", () => {
@@ -67,7 +67,7 @@ describe("the mission order of the home page (ADR 0010 §8)", () => {
 
   test("each line shows the rules that refuse it, or « Fait »", () => {
     for (const request of MISSION_REQUESTS) {
-      const sheet = element("article", `ordre-${request.id}`);
+      const sheet = missionSheet(request.id);
       const lines = sheet.split('<li class="ordre-ligne ').slice(1);
       const shown = lines.map((line) =>
         line.startsWith("faite")
@@ -87,9 +87,7 @@ describe("the mission order of the home page (ADR 0010 §8)", () => {
       support: "refusé par Traces, Vérification",
     };
     for (const request of MISSION_REQUESTS) {
-      const stub = read(
-        element("article", `ordre-${request.id}`).split('<footer class="ordre-talon">')[1] ?? "",
-      );
+      const stub = read(missionSheet(request.id).split('<footer class="ordre-talon">')[1] ?? "");
       expect(stub, request.id).toContain(
         `${request.time} · ${request.service} · ${refusedBy[request.id]}`,
       );

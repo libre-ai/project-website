@@ -11,7 +11,7 @@ import { showcaseOf } from "../content/showcases";
 import { SOCIAL_LABELS, SOCIALS, type SocialNetwork } from "../content/socials";
 import { UNIVERSES } from "../content/universes";
 import { waitlistForm } from "./components";
-import { moments, opening } from "./home";
+import { explodedDelivery, moments, opening } from "./home";
 import { type Html, h, raw } from "./html";
 import {
   applicationPath,
@@ -100,20 +100,7 @@ export function homeMain(): Html {
       universeTabs(),
     ),
     transfer(),
-    block(
-      "fabrication",
-      heading(
-        "Comment c'est fait",
-        "Suivez une demande, de l'intention au résultat.",
-        "Une visite guidée en sept étapes : la fabrique, ses garde-fous et ses briques, au travail sur un besoin réel.",
-      ),
-      guidedTour(),
-      h(
-        "p",
-        { class: "actions" },
-        h("a", { class: "bouton bouton-trait", href: "/fabrique/" }, "Explorer toutes les couches"),
-      ),
-    ),
+    explodedDelivery(),
     block(
       "commun",
       h("h2", {}, "Un seul effort partagé plutôt que mille copies du même besoin."),

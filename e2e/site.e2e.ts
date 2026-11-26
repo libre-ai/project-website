@@ -97,7 +97,7 @@ test.describe("zero serious or critical axe violation (WCAG 2.2 AA)", () => {
 });
 
 test.describe("the site is complete without script (ADR 0005 §1)", () => {
-  test("opening, moments, trial, universes, tour and waitlist work with JavaScript disabled", async ({
+  test("opening, moments, trial, universes, delivery and waitlist work with JavaScript disabled", async ({
     page,
   }, testInfo) => {
     test.skip(!scriptless(testInfo.project.name), "the scriptless project proves it");
@@ -115,8 +115,21 @@ test.describe("the site is complete without script (ADR 0005 §1)", () => {
     await expect(page.locator(".virement-demi")).toHaveCount(2);
     for (const half of await page.locator(".virement-demi").all()) await expect(half).toBeVisible();
     await expect(page.locator(".titre-univers").first()).toBeVisible();
-    await expect(page.locator("[data-etape]")).toHaveCount(7);
-    for (const step of await page.locator("[data-etape]").all()) await expect(step).toBeVisible();
+    const delivery = page.getByRole("region", { name: "L'application livrée, pièce par pièce." });
+    await expect(delivery.getByText("Illustration", { exact: true })).toBeVisible();
+    await expect(delivery.getByText("Agenda", { exact: true })).toBeVisible();
+    const pieces = delivery.getByRole("listitem");
+    await expect(pieces).toHaveCount(6);
+    for (const width of [390, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      for (const piece of await pieces.all()) {
+        await expect(piece).toBeVisible();
+        const bounds = await piece.boundingBox();
+        if (bounds === null) throw new Error("missing delivery piece bounds");
+        expect(bounds.x).toBeGreaterThanOrEqual(0);
+        expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);
+      }
+    }
     await expect(page.locator('form[action="/inscription"]').first()).toBeVisible();
     await expect(page.locator("[data-theme-toggle]")).toBeHidden();
   });
